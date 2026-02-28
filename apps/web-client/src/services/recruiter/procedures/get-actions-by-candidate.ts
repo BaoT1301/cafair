@@ -1,6 +1,6 @@
 import { authedProcedure } from "@/server/init";
 import { recruiterActions } from "../schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 
 export const getActionsByCandidate = authedProcedure
@@ -10,6 +10,7 @@ export const getActionsByCandidate = authedProcedure
       tx
         .select()
         .from(recruiterActions)
-        .where(eq(recruiterActions.candidateId, input.candidateId)),
+        .where(eq(recruiterActions.candidateId, input.candidateId))
+        .orderBy(desc(recruiterActions.createdAt)),
     );
   });

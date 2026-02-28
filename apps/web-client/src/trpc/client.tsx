@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import { createTRPCClient, httpBatchLink, retryLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
 import { makeQueryClient } from "./query-client";
@@ -33,6 +33,15 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
       links: [
+        retryLink({
+          retry(opts) {
+            // Only retry on network errors or 5xx, not on 4xx client errors
+            if (opts.error.data?.httpStatus && opts.error.data.httpStatus < 500) {
+              return false;
+            }
+            return opts.attempts < 3;
+          },
+        }),
         httpBatchLink({
           transformer: superjson,
           url: getUrl(),
