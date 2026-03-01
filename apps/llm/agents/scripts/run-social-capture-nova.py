@@ -610,21 +610,38 @@ def build_local_browser_instruction(
 
     if linkedin_url:
         lines.append("LINKEDIN STAGE:")
-        lines.extend(
-            [
-                "1. Start on Google search, not LinkedIn directly.",
-                "2. Search this exact query on Google: Nguyen Phan Nguyen Virginia Tech LinkedIn",
-                "3. From the Google results page, click the most relevant LinkedIn profile result for Nguyen Phan Nguyen.",
-                "4. If LinkedIn shows a sign-in pop-up or modal and there is a visible X close button, click the X to dismiss it.",
-                "5. Stay on the public page only. Do not log in or attempt private-only sections.",
-                "6. If LinkedIn forces an authwall page and no public profile content is visible, stop trying to bypass it and move on after noting that the public profile is blocked.",
-                "7. Scan the top card and report visible headline, location, follower or connection counts, employer, school, and public links.",
-                "8. Scroll down slowly through About, Activity, Experience, Education, Featured, and any visible Skills sections.",
-                "9. Scroll back upward if needed to re-check details.",
-                "10. If a visible hyperlink labeled Portfolio appears under the Virginia Tech section or nearby profile links, click it and inspect the opened page for recruiter-useful signals such as projects, work samples, technical stack, or contact links.",
-                "11. After scanning the portfolio page, summarize the most recruiter-relevant findings before moving on.",
-            ]
-        )
+
+        if linkedin_manual_login:
+            lines.extend(
+                [
+                    "1. You are starting from an already authenticated LinkedIn session after the human operator logged in manually.",
+                    "2. Stay inside the current LinkedIn tab and do not navigate away before using the LinkedIn search bar.",
+                    "3. In the LinkedIn global search bar, search this exact query: Nguyen Phan Nguyen Virginia Tech",
+                    "4. On the LinkedIn search results page, make sure the result set is focused on People if that filter is visible.",
+                    "5. Click the first and most relevant people profile result for Nguyen Phan Nguyen.",
+                    "6. Once on the profile page, scan the top card and report visible headline, location, follower or connection counts, employer, school, and visible public links.",
+                    "7. Scroll down slowly through About, Activity, Experience, Education, Featured, and any visible Skills or projects sections.",
+                    "8. Scroll back up when useful to re-check the strongest recruiting signals.",
+                    "9. If a visible public hyperlink such as Portfolio or https://dot.cards/steegle appears, click it and inspect the opened page for recruiter-useful signals such as projects, work samples, technical stack, awards, contact links, or portfolio evidence.",
+                    "10. After scanning the portfolio page, return to the LinkedIn profile tab if it is still open and summarize the most recruiter-relevant findings from LinkedIn.",
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    "1. Start on Google search, not LinkedIn directly.",
+                    "2. Search this exact query on Google: Nguyen Phan Nguyen Virginia Tech LinkedIn",
+                    "3. From the Google results page, click the most relevant LinkedIn profile result for Nguyen Phan Nguyen.",
+                    "4. If LinkedIn shows a sign-in pop-up or modal and there is a visible X close button, click the X to dismiss it.",
+                    "5. Stay on the public page only. Do not log in or attempt private-only sections.",
+                    "6. If LinkedIn forces an authwall page and no public profile content is visible, stop trying to bypass it and move on after noting that the public profile is blocked.",
+                    "7. Scan the top card and report visible headline, location, follower or connection counts, employer, school, and public links.",
+                    "8. Scroll down slowly through About, Activity, Experience, Education, Featured, and any visible Skills sections.",
+                    "9. Scroll back upward if needed to re-check details.",
+                    "10. If a visible hyperlink labeled Portfolio appears under the Virginia Tech section or nearby profile links, click it and inspect the opened page for recruiter-useful signals such as projects, work samples, technical stack, or contact links.",
+                    "11. After scanning the portfolio page, summarize the most recruiter-relevant findings before moving on.",
+                ]
+            )
 
     if github_url:
         lines.extend(
@@ -679,6 +696,7 @@ def run_local_browser_mode(
     linkedin_url: Optional[str],
     github_url: Optional[str],
     web_queries: List[str],
+    manual_linkedin_login: bool = False,
 ) -> SocialCaptureOutput:
     api_key = clean_text(os.getenv("NOVA_ACT_API"))
     if not api_key:
@@ -701,7 +719,10 @@ def run_local_browser_mode(
             "--remote-debugging-port=9222 --no-first-run --no-default-browser-check"
         )
 
-    starting_page = "https://www.google.com" if linkedin_url else (github_url or "https://www.google.com")
+    if manual_linkedin_login and linkedin_url:
+        starting_page = "https://www.linkedin.com/feed/"
+    else:
+        starting_page = "https://www.google.com" if linkedin_url else (github_url or "https://www.google.com")
     if local_debug_enabled():
         eprint(f"[INFO] Local browser starting page: {starting_page}")
         eprint(f"[INFO] Prefer Chrome enabled: {prefer_chrome_enabled()}")
@@ -731,7 +752,7 @@ def run_local_browser_mode(
         linkedin_url=linkedin_url,
         github_url=github_url,
         web_queries=web_queries,
-        linkedin_manual_login=False,
+        linkedin_manual_login=manual_linkedin_login,
     )
     nova = NovaAct(
         starting_page=starting_page,
@@ -740,6 +761,13 @@ def run_local_browser_mode(
     )
 
     nova.start()
+    if manual_linkedin_login and linkedin_url:
+        wait_for_manual_login(
+            "\n[MANUAL STEP] LinkedIn manual login mode is enabled.\n"
+            "The browser is open on LinkedIn. Please finish logging into your LinkedIn account manually,\n"
+            "navigate until you can see the authenticated LinkedIn UI (for example the feed page),\n"
+            "then press Enter here in the terminal so Nova Act can continue from the signed-in session..."
+        )
     try:
         act_result = nova.act(instruction)
     except Exception as exc:
@@ -789,6 +817,7 @@ def run_local_browser_mode(
         warnings=[
             "Local visible browser mode was used.",
             "This mode is best for debugging because you can see the browser and Nova Act actions directly.",
+            "If manual LinkedIn login mode is enabled, the agent continues from your already signed-in LinkedIn session and uses the LinkedIn search bar first.",
             "The local instruction now uses staged LinkedIn -> GitHub -> web-search steps with slower observable actions.",
             "Structured extraction is still a placeholder in this mode until you add page parsing/mapping.",
             "If NOVA_ACT_PREFER_CHROME is enabled, the script prefers launching NovaAct itself in Chrome/Chromium.",
@@ -798,6 +827,7 @@ def run_local_browser_mode(
         ],
         raw={
             "startingPage": starting_page,
+            "manualLinkedInLogin": manual_linkedin_login,
             "instruction": instruction,
             "actResult": act_result,
             "preferChrome": prefer_chrome_enabled(),
@@ -1362,6 +1392,11 @@ def parse_args() -> argparse.Namespace:
         help="Open target URLs in Google Chrome first for visual debugging (best-effort, macOS only).",
     )
     parser.add_argument(
+        "--manual-linkedin-login",
+        action="store_true",
+        help="Open LinkedIn first, let the human log in manually, then continue the agent from the signed-in LinkedIn session.",
+    )
+    parser.add_argument(
         "--pretty",
         action="store_true",
         help="Pretty-print JSON output",
@@ -1422,6 +1457,7 @@ def main() -> int:
                 linkedin_url=linkedin_url,
                 github_url=github_url,
                 web_queries=web_queries,
+                manual_linkedin_login=args.manual_linkedin_login,
             )
         except Exception as exc:
             eprint(f"[ERROR] Local browser mode failed: {exc}")
