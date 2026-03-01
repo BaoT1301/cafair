@@ -13,7 +13,7 @@
 - [ ] Unified ranking endpoint  
   Combine triage + verify + bedrock screen into one recruiter score.
 
-- [ ] Nova Act for candidate GitHub + LinkedIn  
+- [x] Nova Act for candidate GitHub + LinkedIn (in progress- Stephen- 40%)
   Use Nova Act to help gather and verify candidate-side profile signals.
 
 - [ ] Combine Bedrock + Nova Act  
@@ -29,3 +29,5 @@
 - [ ] Chatbot for Candidate side
 
 - [ ] Use SerpAPI for AI stalker search/Chatbot Search/.....
+
+- [ ] Text Embedding model AWS
