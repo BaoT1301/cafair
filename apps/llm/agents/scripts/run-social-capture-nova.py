@@ -12,7 +12,8 @@ Priority:
 Purpose:
 - starts Nova Act in workflow mode when available
 - polls until completion (or timeout)
-- fetches the final workflow result
+- fetches the final workflow result using multiple possible read APIs
+- extracts structured output from common response shapes
 - normalizes capture output for the social-screen pipeline
 - falls back to API-key mode for local/dev usage
 
@@ -30,7 +31,7 @@ import sys
 import time
 import uuid
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import boto3
@@ -142,7 +143,13 @@ def has_api_key_mode() -> bool:
 
 
 def extract_run_id(payload: Dict[str, Any]) -> Optional[str]:
-    for key in ("workflowRunId", "runId", "id", "workflowExecutionId"):
+    for key in (
+        "workflowRunId",
+        "runId",
+        "id",
+        "workflowExecutionId",
+        "executionId",
+    ):
         value = payload.get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()
@@ -153,10 +160,19 @@ def get_status(payload: Optional[Dict[str, Any]]) -> Optional[str]:
     if not payload:
         return None
 
-    for key in ("status", "workflowRunStatus", "state"):
+    for key in (
+        "status",
+        "workflowRunStatus",
+        "state",
+        "executionStatus",
+    ):
         value = payload.get(key)
         if isinstance(value, str) and value.strip():
             return value.strip().upper()
+
+    nested = find_first_dict_with_keys(payload, ["status"], max_depth=4)
+    if nested and isinstance(nested.get("status"), str):
+        return nested["status"].strip().upper()
 
     return None
 
@@ -172,6 +188,7 @@ def is_terminal_status(status: Optional[str]) -> bool:
         "ERROR",
         "CANCELLED",
         "TIMED_OUT",
+        "TIMEOUT",
     }
 
 
@@ -183,12 +200,14 @@ def is_success_status(status: Optional[str]) -> bool:
 
 def to_int(value: Any) -> Optional[int]:
     try:
-        if value is None:
+        if value is None or isinstance(value, bool):
             return None
-        if isinstance(value, bool):
-            return None
-        n = int(value)
-        return n
+        if isinstance(value, str):
+            digits = "".join(ch for ch in value if ch.isdigit())
+            if not digits:
+                return None
+            return int(digits)
+        return int(value)
     except Exception:
         return None
 
@@ -225,6 +244,31 @@ def deep_get(data: Any, path: List[str]) -> Any:
     return cur
 
 
+def maybe_parse_json_string(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+
+    text = value.strip()
+    if not text:
+        return value
+
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+
+    if text.startswith("{") or text.startswith("["):
+        try:
+            return json.loads(text)
+        except Exception:
+            return value
+
+    return value
+
+
 def find_first_dict_with_keys(
     data: Any,
     required_keys: List[str],
@@ -233,6 +277,8 @@ def find_first_dict_with_keys(
     def _walk(node: Any, depth: int) -> Optional[Dict[str, Any]]:
         if depth > max_depth:
             return None
+
+        node = maybe_parse_json_string(node)
 
         if isinstance(node, dict):
             if all(key in node for key in required_keys):
@@ -261,10 +307,14 @@ def maybe_find_section(data: Any, names: List[str], max_depth: int = 6) -> Optio
         if depth > max_depth:
             return None
 
+        node = maybe_parse_json_string(node)
+
         if isinstance(node, dict):
             for key, value in node.items():
-                if key.lower() in target_names and isinstance(value, dict):
-                    return value
+                if key.lower() in target_names:
+                    value = maybe_parse_json_string(value)
+                    if isinstance(value, dict):
+                        return value
 
             for value in node.values():
                 found = _walk(value, depth + 1)
@@ -280,6 +330,43 @@ def maybe_find_section(data: Any, names: List[str], max_depth: int = 6) -> Optio
         return None
 
     return _walk(data, 0)
+
+
+def try_extract_structured_output(payload: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not payload:
+        return None
+
+    candidates: List[Any] = [payload]
+
+    direct_paths = [
+        ["output"],
+        ["result"],
+        ["results"],
+        ["response"],
+        ["data"],
+        ["payload"],
+        ["executionResult"],
+        ["workflowResult"],
+        ["finalOutput"],
+    ]
+
+    for path in direct_paths:
+        value = deep_get(payload, path)
+        if value is not None:
+            candidates.append(value)
+
+    message_content = deep_get(payload, ["output", "message", "content"])
+    if isinstance(message_content, list):
+        for item in message_content:
+            if isinstance(item, dict) and "text" in item:
+                candidates.append(item.get("text"))
+
+    for candidate in candidates:
+        parsed = maybe_parse_json_string(candidate)
+        if isinstance(parsed, dict):
+            return parsed
+
+    return None
 
 
 # ---------------------------
@@ -380,8 +467,8 @@ def start_workflow_run(client) -> Dict[str, Any]:
             modelId=get_model_id(),
             clientToken=str(uuid.uuid4()),
             clientInfo={
-                "compatibilityVersion": 1,  # must be int
-                "sdkVersion": "custom-local-0.1.0",
+                "compatibilityVersion": 1,
+                "sdkVersion": "custom-local-0.2.0",
             },
         )
     except Exception as exc:
@@ -391,13 +478,20 @@ def start_workflow_run(client) -> Dict[str, Any]:
 def get_workflow_run(client, run_id: str) -> Optional[Dict[str, Any]]:
     """
     Best-effort read of workflow run status/result.
-    Tries a few possible SDK method/parameter shapes.
+    Tries multiple possible SDK method/parameter shapes.
+    Returns the first successful response.
     """
-    method_specs = [
+    method_specs: List[Tuple[str, Dict[str, Any]]] = [
         ("get_workflow_run", {"workflowRunId": run_id}),
         ("get_workflow_run", {"runId": run_id}),
         ("describe_workflow_run", {"workflowRunId": run_id}),
         ("describe_workflow_run", {"runId": run_id}),
+        ("get_workflow_run_result", {"workflowRunId": run_id}),
+        ("get_workflow_run_result", {"runId": run_id}),
+        ("get_workflow_execution", {"workflowRunId": run_id}),
+        ("get_workflow_execution", {"runId": run_id}),
+        ("describe_workflow_execution", {"workflowRunId": run_id}),
+        ("describe_workflow_execution", {"runId": run_id}),
     ]
 
     last_error: Optional[str] = None
@@ -408,7 +502,9 @@ def get_workflow_run(client, run_id: str) -> Optional[Dict[str, Any]]:
             continue
 
         try:
-            return method(**kwargs)
+            payload = method(**kwargs)
+            if isinstance(payload, dict):
+                return payload
         except Exception as exc:
             last_error = str(exc)
             continue
@@ -427,7 +523,8 @@ def poll_workflow_run(
 ) -> Optional[Dict[str, Any]]:
     """
     Poll until terminal state or timeout.
-    Returns the latest payload seen.
+    Keeps the latest payload. If a payload appears to contain final output,
+    keep it even if status remains inconsistent.
     """
     deadline = time.time() + timeout_seconds
     last_payload: Optional[Dict[str, Any]] = None
@@ -436,17 +533,57 @@ def poll_workflow_run(
         try:
             payload = get_workflow_run(client, run_id)
         except Exception:
-            payload = last_payload
+            payload = None
 
         if payload:
             last_payload = payload
             status = get_status(payload)
+            structured = try_extract_structured_output(payload)
+
             if is_terminal_status(status):
+                return payload
+
+            if structured and status in {None, "RUNNING", "IN_PROGRESS", "PENDING"}:
+                # Some APIs may already expose final-ish payloads before status settles.
                 return payload
 
         time.sleep(poll_interval_seconds)
 
     return last_payload
+
+
+def fetch_final_workflow_output(
+    client,
+    run_id: str,
+    latest_payload: Optional[Dict[str, Any]],
+    extra_attempts: int = 4,
+    sleep_seconds: float = 2.0,
+) -> Optional[Dict[str, Any]]:
+    """
+    After polling stops, try a few extra reads to fetch the completed remote output.
+    This helps when status flips to terminal slightly before output becomes readable.
+    """
+    current = latest_payload
+
+    for _ in range(max(0, extra_attempts)):
+        structured = try_extract_structured_output(current)
+        if structured:
+            return current
+
+        try:
+            candidate = get_workflow_run(client, run_id)
+        except Exception:
+            candidate = current
+
+        if candidate:
+            current = candidate
+            structured = try_extract_structured_output(current)
+            if structured:
+                return current
+
+        time.sleep(sleep_seconds)
+
+    return current
 
 
 def extract_capture_from_workflow_output(
@@ -457,39 +594,28 @@ def extract_capture_from_workflow_output(
     final_response: Optional[Dict[str, Any]],
 ) -> Dict[str, Any]:
     """
-    Best-effort mapper from unknown workflow output shape into normalized capture sections.
-
-    This is intentionally flexible:
-    - first looks for obvious named sections
-    - then scans deeper for likely objects
-    - if nothing is found, returns placeholder notes
+    Best-effort mapper from workflow output into normalized capture sections.
+    First unwrap likely output containers, then look for obvious sections.
     """
+    root = try_extract_structured_output(final_response) or final_response
+
     linkedin_section = None
     github_section = None
     web_section = None
 
-    if final_response:
-        linkedin_section = maybe_find_section(final_response, ["linkedin", "linkedIn"])
-        github_section = maybe_find_section(final_response, ["github", "gitHub"])
-        web_section = maybe_find_section(final_response, ["web", "search", "google", "webSearch"])
+    if root:
+        linkedin_section = maybe_find_section(root, ["linkedin", "linkedIn"])
+        github_section = maybe_find_section(root, ["github", "gitHub"])
+        web_section = maybe_find_section(root, ["web", "search", "google", "webSearch"])
 
         if linkedin_section is None:
-            linkedin_section = find_first_dict_with_keys(
-                final_response,
-                ["headline"],
-            )
+            linkedin_section = find_first_dict_with_keys(root, ["headline"], max_depth=6)
 
         if github_section is None:
-            github_section = find_first_dict_with_keys(
-                final_response,
-                ["username"],
-            )
+            github_section = find_first_dict_with_keys(root, ["username"], max_depth=6)
 
         if web_section is None:
-            web_section = find_first_dict_with_keys(
-                final_response,
-                ["results"],
-            )
+            web_section = find_first_dict_with_keys(root, ["results"], max_depth=6)
 
     linkedin = (
         LinkedInCapture(
@@ -551,14 +677,8 @@ def extract_capture_from_workflow_output(
                     deep_get(github_section, ["contributionsLastYear"]) if github_section else None,
                     deep_get(github_section, ["contributions"]) if github_section else None,
                 )
-                or (
-                    deep_get(github_section, ["contributionsLastYear"])
-                    if github_section else None
-                )
-                or (
-                    deep_get(github_section, ["contributions"])
-                    if github_section else None
-                )
+                or (deep_get(github_section, ["contributionsLastYear"]) if github_section else None)
+                or (deep_get(github_section, ["contributions"]) if github_section else None)
             ),
             pinnedRepos=(
                 deep_get(github_section, ["pinnedRepos"])
@@ -634,6 +754,7 @@ def normalize_workflow_capture(
     workflow_name = get_workflow_name()
     run_id = extract_run_id(start_response)
     final_status = get_status(final_response)
+    structured_output = try_extract_structured_output(final_response)
 
     extracted = extract_capture_from_workflow_output(
         candidate_name=candidate_name,
@@ -653,6 +774,11 @@ def normalize_workflow_capture(
             warnings.append(f"Workflow finished with non-success status: {final_status}")
         elif final_status:
             warnings.append(f"Workflow finished with status: {final_status}")
+        else:
+            warnings.append("Workflow payload fetched, but no explicit final status was found.")
+
+    if structured_output is None and final_response is not None:
+        warnings.append("Final workflow payload was fetched, but no structured output block was detected yet.")
 
     if extracted["linkedin"] and extracted["linkedin"].notes:
         warnings.append("LinkedIn extraction not fully mapped yet.")
@@ -675,6 +801,7 @@ def normalize_workflow_capture(
         raw={
             "start": start_response,
             "final": final_response,
+            "structuredOutput": structured_output,
         },
     )
 
@@ -693,11 +820,18 @@ def run_workflow_mode(
 
     final_response: Optional[Dict[str, Any]] = None
     if run_id:
-        final_response = poll_workflow_run(
+        latest = poll_workflow_run(
             client,
             run_id,
             timeout_seconds=timeout_seconds,
             poll_interval_seconds=poll_interval_seconds,
+        )
+        final_response = fetch_final_workflow_output(
+            client,
+            run_id,
+            latest_payload=latest,
+            extra_attempts=4,
+            sleep_seconds=max(1.0, poll_interval_seconds),
         )
 
     return normalize_workflow_capture(
