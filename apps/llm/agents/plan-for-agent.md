@@ -18,6 +18,8 @@
 
 - [ ] Combine Bedrock + Nova Act  
   Improve speed, automation, and decision accuracy by pairing reasoning with actions.
+  
+- [ ] Investigate OpenClaw integration possibility
 
 - [ ] Reinforcement learning pipeline + reward function  
   Adapt scoring and recommendations based on recruiter feedback signals such as positive and negative outcomes.
