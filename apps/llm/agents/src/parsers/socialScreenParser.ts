@@ -1,17 +1,48 @@
 // Path: apps/llm/agents/src/parsers/socialScreenParser.ts
 //
-// Normalizes model output for AI Social Intelligence / verification screening.
-// Accepts raw model text and converts it to a stable internal shape for recruiter UI.
+// Parser for AI Social Intelligence output.
+// Supports:
+// - fenced JSON
+// - raw JSON object
+// - light normalization
+//
+// It returns a richer social-screen structure while also exposing
+// legacy convenience fields for UI compatibility.
+
+export type SocialFindingSeverity =
+  | "VERIFIED"
+  | "WARNING"
+  | "CRITICAL"
+  | "INFO";
+
+export type SocialFindingSource = "linkedin" | "github" | "web";
 
 export type SocialRisk = "low" | "medium" | "high";
 
+export interface SocialFindingParsed {
+  severity: SocialFindingSeverity;
+  source: SocialFindingSource;
+  title: string;
+  detail: string;
+  confidence: number; // 0..1
+}
+
 export interface SocialScreenParsed {
+  socialScore: number;
+  verifiedCount: number;
+  warningCount: number;
+  criticalCount: number;
+  infoCount: number;
+  findings: SocialFindingParsed[];
+  recommendation: string;
+  summary: string;
+
+  // legacy convenience aliases
   fitScore: number;
   risk: SocialRisk;
   strengths: string[];
   concerns: string[];
   flags: string[];
-  summary: string;
 }
 
 export interface SocialScreenParseResult {
@@ -22,40 +53,59 @@ export interface SocialScreenParseResult {
 }
 
 const DEFAULT_VALUE: SocialScreenParsed = {
+  socialScore: 80,
+  verifiedCount: 0,
+  warningCount: 0,
+  criticalCount: 0,
+  infoCount: 0,
+  findings: [],
+  recommendation: "Proceed with normal recruiter review.",
+  summary: "Social screening completed.",
   fitScore: 80,
   risk: "low",
   strengths: [],
   concerns: [],
   flags: [],
-  summary: "Social screening completed.",
 };
 
 function cleanText(text?: string): string {
   return (text ?? "").trim();
 }
 
-function uniqStrings(items: unknown): string[] {
-  if (!Array.isArray(items)) return [];
-  const out = items
-    .map((x) => (typeof x === "string" ? x.trim() : ""))
-    .filter(Boolean);
-  return Array.from(new Set(out));
+function clamp01(n: number): number {
+  return Math.max(0, Math.min(1, n));
 }
 
 function clampScore(n: unknown): number {
   const value = typeof n === "number" ? n : Number(n);
-  if (!Number.isFinite(value)) return DEFAULT_VALUE.fitScore;
+  if (!Number.isFinite(value)) return DEFAULT_VALUE.socialScore;
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function normalizeRisk(value: unknown): SocialRisk {
+function normalizeSeverity(value: unknown): SocialFindingSeverity {
+  const v = String(value ?? "").trim().toUpperCase();
+
+  if (v === "VERIFIED") return "VERIFIED";
+  if (v === "WARNING") return "WARNING";
+  if (v === "CRITICAL") return "CRITICAL";
+  return "INFO";
+}
+
+function normalizeSource(value: unknown): SocialFindingSource {
   const v = String(value ?? "").trim().toLowerCase();
 
-  if (v === "high") return "high";
-  if (v === "medium") return "medium";
-  if (v === "low") return "low";
+  if (v === "linkedin") return "linkedin";
+  if (v === "github") return "github";
+  return "web";
+}
 
-  return DEFAULT_VALUE.risk;
+function normalizeRiskFromCounts(args: {
+  criticalCount: number;
+  warningCount: number;
+}): SocialRisk {
+  if (args.criticalCount > 0) return "high";
+  if (args.warningCount > 0) return "medium";
+  return "low";
 }
 
 function extractJsonBlock(text: string): string | null {
@@ -63,14 +113,10 @@ function extractJsonBlock(text: string): string | null {
   if (!trimmed) return null;
 
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fenced?.[1]) {
-    return fenced[1].trim();
-  }
+  if (fenced?.[1]) return fenced[1].trim();
 
   const objectMatch = trimmed.match(/\{[\s\S]*\}/);
-  if (objectMatch?.[0]) {
-    return objectMatch[0].trim();
-  }
+  if (objectMatch?.[0]) return objectMatch[0].trim();
 
   return null;
 }
@@ -84,6 +130,46 @@ function safeParseObject(text: string): { parsed: any | null; error?: string } {
       error: err instanceof Error ? err.message : "JSON parse failed",
     };
   }
+}
+
+function normalizeFindings(value: unknown): SocialFindingParsed[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      const obj =
+        item && typeof item === "object"
+          ? (item as Record<string, unknown>)
+          : {};
+
+      const title = cleanText(
+        typeof obj.title === "string" ? obj.title : "Untitled finding"
+      );
+
+      const detail = cleanText(
+        typeof obj.detail === "string"
+          ? obj.detail
+          : typeof obj.summary === "string"
+            ? obj.summary
+            : ""
+      );
+
+      const confidenceRaw =
+        typeof obj.confidence === "number"
+          ? obj.confidence
+          : Number(obj.confidence);
+
+      return {
+        severity: normalizeSeverity(obj.severity),
+        source: normalizeSource(obj.source),
+        title,
+        detail,
+        confidence: Number.isFinite(confidenceRaw)
+          ? clamp01(confidenceRaw)
+          : 0.75,
+      };
+    })
+    .filter((f) => Boolean(f.title));
 }
 
 export function parseSocialScreenText(
@@ -110,13 +196,59 @@ export function parseSocialScreenText(
     };
   }
 
+  const findings = normalizeFindings(parsed.findings);
+
+  const verifiedCount = findings.filter(
+    (f) => f.severity === "VERIFIED"
+  ).length;
+  const warningCount = findings.filter(
+    (f) => f.severity === "WARNING"
+  ).length;
+  const criticalCount = findings.filter(
+    (f) => f.severity === "CRITICAL"
+  ).length;
+  const infoCount = findings.filter((f) => f.severity === "INFO").length;
+
+  const socialScore = clampScore(
+    parsed.socialScore ?? parsed.fitScore ?? parsed.score
+  );
+
+  const strengths = findings
+    .filter((f) => f.severity === "VERIFIED")
+    .map((f) => `${f.title} — ${f.detail}`)
+    .slice(0, 6);
+
+  const concerns = findings
+    .filter((f) => f.severity === "WARNING" || f.severity === "CRITICAL")
+    .map((f) => `${f.title} — ${f.detail}`)
+    .slice(0, 6);
+
+  const flags = findings
+    .filter((f) => f.severity === "WARNING" || f.severity === "CRITICAL")
+    .map((f) => f.title)
+    .slice(0, 6);
+
+  const risk = normalizeRiskFromCounts({
+    criticalCount,
+    warningCount,
+  });
+
   const value: SocialScreenParsed = {
-    fitScore: clampScore(parsed.fitScore),
-    risk: normalizeRisk(parsed.risk),
-    strengths: uniqStrings(parsed.strengths),
-    concerns: uniqStrings(parsed.concerns),
-    flags: uniqStrings(parsed.flags),
+    socialScore,
+    verifiedCount,
+    warningCount,
+    criticalCount,
+    infoCount,
+    findings,
+    recommendation:
+      cleanText(parsed.recommendation) ||
+      DEFAULT_VALUE.recommendation,
     summary: cleanText(parsed.summary) || DEFAULT_VALUE.summary,
+    fitScore: socialScore,
+    risk,
+    strengths,
+    concerns,
+    flags,
   };
 
   return {

@@ -21,3 +21,9 @@
 
 - [ ] Reinforcement learning pipeline + reward function  
   Adapt scoring and recommendations based on recruiter feedback signals such as positive and negative outcomes.
+
+- [ ] Chatbot for Recruiter side
+
+- [ ] Chatbot for Candidate side
+
+- [ ] Use SerpAPI for AI stalker search/Chatbot Search/.....
