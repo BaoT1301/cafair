@@ -600,30 +600,37 @@ def build_local_browser_instruction(
     linkedin_manual_login: bool = False,
 ) -> str:
     lines: List[str] = [
-        "You are helping capture public recruiting signals for a software engineering candidate.",
-        "Only inspect information that is visible in the current browser session.",
-        "Do not enter credentials. Do not type into login forms. Do not submit forms unless explicitly instructed below.",
+        "You are helping gather visible public profile information for research and profile review.",
+        "Only inspect information that is already visible in the current browser session.",
         "Narrate your actions briefly while you move so the operator can follow along.",
-        "Scroll slowly and visibly. Pause briefly after major actions so the operator can observe the cursor.",
-        f"Candidate name: {candidate_name}.",
+        "Scroll only when needed. Avoid repetitive scrolling. Prefer targeted clicks and concise movement.",
+        "If you complete a stage, move to the next stage immediately instead of revisiting earlier sections repeatedly.",
+        f"Primary candidate name: {candidate_name}.",
     ]
 
     if linkedin_url:
-        lines.append("LINKEDIN STAGE:")
+        lines.append("LINKEDIN STAGE: NGUYEN PHAN NGUYEN PROFILE")
 
         if linkedin_manual_login:
             lines.extend(
                 [
                     "1. You are starting from an already authenticated LinkedIn session after the human operator logged in manually.",
-                    "2. Stay inside the current LinkedIn tab and do not navigate away before using the LinkedIn search bar.",
-                    "3. In the LinkedIn global search bar, search this exact query: Nguyen Phan Nguyen Virginia Tech",
-                    "4. On the LinkedIn search results page, make sure the result set is focused on People if that filter is visible.",
-                    "5. Click the first and most relevant people profile result for Nguyen Phan Nguyen.",
-                    "6. Once on the profile page, scan the top card and report visible headline, location, follower or connection counts, employer, school, and visible public links.",
-                    "7. Scroll down slowly through About, Activity, Experience, Education, Featured, and any visible Skills or projects sections.",
-                    "8. Scroll back up when useful to re-check the strongest recruiting signals.",
-                    "9. If a visible public hyperlink such as Portfolio or https://dot.cards/steegle appears, click it and inspect the opened page for recruiter-useful signals such as projects, work samples, technical stack, awards, contact links, or portfolio evidence.",
-                    "10. After scanning the portfolio page, return to the LinkedIn profile tab if it is still open and summarize the most recruiter-relevant findings from LinkedIn.",
+                    "2. Stay inside the current LinkedIn tab.",
+                    "3. First, in the LinkedIn global search bar, search this exact query: Bao Tran George Mason University",
+                    "4. On the search results page, use the People filter if visible.",
+                    "5. Click the relevant Bao Tran George Mason University result, top 3 result from search result, whose title is AI Software Intern @ Deepiri",
+                    "6. On Bao Tran's profile, click message button, write message \"Test002: Hi Bao Tran, I think you are a very good fit for our Cloud Engineer New Grad in the Cloud Mobile team at XYZZZZ.\",",
+                    "7. After writing the message, hit button send to send the message to Bao Tran."
+                    "8. If an Experience section shows a button like 'Show all 6 experiences' or similar, click it, review the expanded experience list, then return to the main profile page if needed.",
+                    "9. Summarize the strongest visible findings from Bao Tran, then continue.",
+                    "10. Next, in the LinkedIn global search bar, search this exact query: Nguyen Phan Nguyen Virginia Tech",
+                    "11. On the search results page, use the People filter if visible.",
+                    "12. Click the first and most relevant Nguyen Phan Nguyen result.",
+                    "13. On Nguyen Phan Nguyen's profile, capture the top card: headline, location, connection count, employer, school, and visible public links.",
+                    "14. Scroll down through About, Activity, Experience, Education, Featured, and Skills, but do not overscroll past useful sections more than once.",
+                    "15. If a visible public hyperlink such as Portfolio or https://dot.cards/steegle appears, click it, inspect the portfolio page for useful public signals, then return to the LinkedIn profile tab.",
+                    "16. Back on the LinkedIn profile, if an Experience section shows a button like 'Show all 6 experiences' or similar, click it, review the expanded experience list, then return to the main profile page if needed.",
+                    "17. Summarize the strongest visible findings from Nguyen Phan Nguyen before moving on.",
                 ]
             )
         else:
@@ -631,15 +638,12 @@ def build_local_browser_instruction(
                 [
                     "1. Start on Google search, not LinkedIn directly.",
                     "2. Search this exact query on Google: Nguyen Phan Nguyen Virginia Tech LinkedIn",
-                    "3. From the Google results page, click the most relevant LinkedIn profile result for Nguyen Phan Nguyen.",
-                    "4. If LinkedIn shows a sign-in pop-up or modal and there is a visible X close button, click the X to dismiss it.",
-                    "5. Stay on the public page only. Do not log in or attempt private-only sections.",
-                    "6. If LinkedIn forces an authwall page and no public profile content is visible, stop trying to bypass it and move on after noting that the public profile is blocked.",
-                    "7. Scan the top card and report visible headline, location, follower or connection counts, employer, school, and public links.",
-                    "8. Scroll down slowly through About, Activity, Experience, Education, Featured, and any visible Skills sections.",
-                    "9. Scroll back upward if needed to re-check details.",
-                    "10. If a visible hyperlink labeled Portfolio appears under the Virginia Tech section or nearby profile links, click it and inspect the opened page for recruiter-useful signals such as projects, work samples, technical stack, or contact links.",
-                    "11. After scanning the portfolio page, summarize the most recruiter-relevant findings before moving on.",
+                    "3. Click the most relevant LinkedIn result for Nguyen Phan Nguyen.",
+                    "4. If a sign-in modal appears and there is a visible X, click the X to dismiss it.",
+                    "5. If LinkedIn blocks access with an authwall and no public content is visible, stop trying to bypass it and note that the public page is blocked.",
+                    "6. If the public profile is visible, capture the top card, then scan About, Activity, Experience, Education, Featured, and Skills.",
+                    "7. If a visible portfolio link appears, click it, inspect it, then return to the LinkedIn profile.",
+                    "8. Summarize the strongest visible findings from Nguyen Phan Nguyen before moving on.",
                 ]
             )
 
@@ -647,13 +651,12 @@ def build_local_browser_instruction(
         lines.extend(
             [
                 "GITHUB STAGE:",
-                f"11. Use the GitHub URL directly by navigating to this exact link: {github_url}",
-                "12. Inspect the public profile header and report username, display name, bio, follower count, following count, and any visible location or organization.",
-                "13. Inspect contribution activity if visible.",
-                "14. Inspect pinned repositories and open the most relevant pinned repositories one by one if needed.",
-                "15. For each strong repo, gather recruiter-useful evidence: repo name, description, language, stars, signs of software engineering quality, CI/CD, docs, tests, issues, or real product relevance.",
-                "16. Scroll down and up as needed to inspect additional visible sections.",
-                "17. Focus on signals useful for software engineer, tech, data, CS, internship, and new graduate recruiting.",
+                f"11. Navigate directly to this GitHub URL: {github_url}",
+                "12. Capture the GitHub profile header: username, display name, bio, followers, following, location, organization, and contribution activity if visible.",
+                "13. Review pinned repositories first. Open the strongest one or two only, not more.",
+                "14. For each strong repo, gather useful evidence: repo name, description, language, stars, documentation quality, code organization, tests, issues, pull requests, actions, security, and overall engineering maturity if visible.",
+                "15. Return to the main GitHub profile after reviewing each repo.",
+                "16. Keep GitHub exploration efficient and avoid unnecessary extra clicks.",
             ]
         )
 
@@ -667,16 +670,16 @@ def build_local_browser_instruction(
 
     if effective_queries:
         lines.append("WEB SEARCH STAGE:")
-        lines.append("18. Use web search to look for public evidence such as hackathons, conference talks, portfolios, technical blogs, internships, or awards.")
+        lines.append("17. Use web search for public evidence such as hackathons, conference talks, portfolios, technical blogs, internships, or awards.")
         for idx, query in enumerate(effective_queries, start=1):
-            lines.append(f"18.{idx}. Search this exact query: {query}")
-        lines.append("19. Open only clearly relevant public results and summarize recruiter-relevant findings.")
+            lines.append(f"17.{idx}. Search this exact query: {query}")
+        lines.append("18. Open only clearly relevant public results and summarize only the strongest visible findings.")
 
     lines.extend(
         [
             "FINAL REPORT:",
-            "20. End with a concise report of the strongest positive signals, any warnings, and any missing information.",
-            "21. Keep actions observable and sequential. Do not close the main browser window.",
+            "19. End with a concise report of the strongest positive signals, any warnings, and any missing information.",
+            "20. Once all requested stages are complete, stop and return control immediately. Do not continue exploring.",
         ]
     )
 
@@ -817,8 +820,8 @@ def run_local_browser_mode(
         warnings=[
             "Local visible browser mode was used.",
             "This mode is best for debugging because you can see the browser and Nova Act actions directly.",
-            "If manual LinkedIn login mode is enabled, the agent continues from your already signed-in LinkedIn session and uses the LinkedIn search bar first.",
-            "The local instruction now uses staged LinkedIn -> GitHub -> web-search steps with slower observable actions.",
+            "If manual LinkedIn login mode is enabled, the agent continues from your already signed-in LinkedIn session, reviews Bao Tran first for visible profile signals, then reviews Nguyen Phan Nguyen before GitHub.",
+            "The local instruction now uses staged LinkedIn Nguyen scan -> Bao Tran outreach draft -> GitHub -> web-search steps with fewer redundant actions to reduce max-step failures.",
             "Structured extraction is still a placeholder in this mode until you add page parsing/mapping.",
             "If NOVA_ACT_PREFER_CHROME is enabled, the script prefers launching NovaAct itself in Chrome/Chromium.",
             "Local mode now starts on Google when LinkedIn is requested, so the agent searches for the public LinkedIn result instead of opening the profile URL directly.",

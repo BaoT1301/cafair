@@ -14,7 +14,7 @@
   Combine triage + verify + bedrock screen into one recruiter score.
 
 - [x] Nova Act for candidate GitHub + LinkedIn (in progress- Stephen- 40%)
-  Use Nova Act to help gather and verify candidate-side profile signals.
+  Use Nova Act to help gather and verify candidate-side profile signals. ?! how to bypass sign-in page auth wall security linkedin
 
 - [ ] Combine Bedrock + Nova Act  
   Improve speed, automation, and decision accuracy by pairing reasoning with actions.
