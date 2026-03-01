@@ -1,15 +1,8 @@
 ## Stephen Current Status
 
-### Command
-```bash
-python apps/llm/agents/scripts/run-social-capture-nova.py \
-  "Nguyen Phan Nguyen" \
-  --linkedin "https://www.linkedin.com/in/nguyenpn1/" \
-  --github "https://github.com/ngstephen1" \
-  --web-query "Nguyen Phan Nguyen hackathon" \
-  --web-query "Nguyen Phan Nguyen developer" \
-  --pretty
-```
+### to-do: 
+1. make code to see the actions working on browser and logs in terminal, integrate BRock/SerpAPI/PlayWright
+2. update the Nova workflow polling script
 
 ### workflow mode is starting correctly
 
@@ -21,12 +14,14 @@ python apps/llm/agents/scripts/run-social-capture-nova.py \
   --github "https://github.com/ngstephen1" \
   --web-query "Nguyen Phan Nguyen hackathon" \
   --web-query "Nguyen Phan Nguyen developer" \
+  --timeout-seconds 60 \
+  --poll-interval-seconds 3 \
   --pretty
 {
   "ok": true,
   "mode": "workflow",
   "candidateName": "Nguyen Phan Nguyen",
-  "workflowRunId": "019ca9f6-7f1e-7ece-9f15-4ae990af8a43",
+  "workflowRunId": "019ca9fd-b287-7ab4-b455-554b6b181c30",
   "workflowDefinitionName": "aihireai-act",
   "modelId": "nova-act-preview",
   "linkedin": {
@@ -37,7 +32,7 @@ python apps/llm/agents/scripts/run-social-capture-nova.py \
     "school": null,
     "skills": null,
     "experiences": null,
-    "notes": "Workflow started. Parse workflow output here once your workflow returns structured browser capture data."
+    "notes": "No structured LinkedIn extraction found in workflow output yet."
   },
   "github": {
     "url": "https://github.com/ngstephen1",
@@ -50,7 +45,7 @@ python apps/llm/agents/scripts/run-social-capture-nova.py \
     "contributionsLastYear": null,
     "pinnedRepos": null,
     "topLanguages": null,
-    "notes": "Workflow started. Parse workflow output here once your workflow returns structured browser capture data."
+    "notes": "No structured GitHub extraction found in workflow output yet."
   },
   "web": {
     "queries": [
@@ -58,28 +53,30 @@ python apps/llm/agents/scripts/run-social-capture-nova.py \
       "Nguyen Phan Nguyen developer"
     ],
     "results": [],
-    "notes": "Workflow started. Map workflow search/browser outputs here after you confirm response fields."
+    "notes": "No structured web/search extraction found in workflow output yet."
   },
   "warnings": [
-    "Workflow mode started successfully.",
-    "This script currently normalizes workflow metadata, but not full browser extraction fields yet.",
-    "Next step: map your actual workflow output JSON into linkedin/github/web fields."
+    "Workflow started, but no final workflow payload was retrieved before timeout.",
+    "Increase timeout or inspect the run manually using workflowRunId.",
+    "LinkedIn extraction not fully mapped yet.",
+    "GitHub extraction not fully mapped yet.",
+    "Web extraction not fully mapped yet."
   ],
   "raw": {
     "start": {
       "ResponseMetadata": {
-        "RequestId": "f866fa9e-97fb-4fa2-b46d-eef5a1f8a951",
+        "RequestId": "60e9818e-42a8-498c-bedf-997c1767d74b",
         "HTTPStatusCode": 201,
         "HTTPHeaders": {
-          "date": "Sun, 01 Mar 2026 15:13:49 GMT",
+          "date": "Sun, 01 Mar 2026 15:21:41 GMT",
           "content-type": "application/json",
           "content-length": "75",
           "connection": "keep-alive",
-          "x-amzn-requestid": "f866fa9e-97fb-4fa2-b46d-eef5a1f8a951"
+          "x-amzn-requestid": "60e9818e-42a8-498c-bedf-997c1767d74b"
         },
         "RetryAttempts": 0
       },
-      "workflowRunId": "019ca9f6-7f1e-7ece-9f15-4ae990af8a43",
+      "workflowRunId": "019ca9fd-b287-7ab4-b455-554b6b181c30",
       "status": "RUNNING"
     },
     "final": null
