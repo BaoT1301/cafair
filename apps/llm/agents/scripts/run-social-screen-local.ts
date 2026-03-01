@@ -1,53 +1,29 @@
+// Path: apps/llm/agents/scripts/run-social-screen-local.ts
+
 import { runSocialScreen } from "../src/agents/socialScreen";
 
 async function main() {
   const result = await runSocialScreen({
     candidateId: "cand_np_001",
-    candidateName: "Nguyen Phan Nguyen",
-    github: {
-      url: "https://github.com/ngstephen1",
-      username: "ngstephen1",
-      displayName: "Nguyen Phan Nguyen",
-      bio: "Software engineer building tools for travel industry",
-      followers: 89,
-      following: 124,
-      contributionsLastYear: 847,
-      pinnedRepos: [
-        {
-          name: "react-travel-ui",
-          description: "Component library for travel apps",
-          language: "TypeScript",
-          stars: 67,
-        },
-        {
-          name: "ai-booking-engine",
-          description: "ML-powered hotel recommendation system",
-          language: "Python",
-          stars: 45,
-        },
-      ],
-      topLanguages: ["TypeScript", "Python", "JavaScript", "Go"],
-    },
-    web: {
-      queries: [
-        "Nguyen Phan Nguyen Virginia Tech developer",
-        "Nguyen Phan Nguyen hackathon",
-      ],
-      results: [
-        {
-          title: "Stephen Nguyen - Software Engineer | LinkedIn",
-          snippet: "Software Engineer at Marriott International. Virginia Tech CS '23.",
-          source: "google",
-        },
-        {
-          title: "HokieHacks 2023 Winners",
-          snippet: "1st place - AI travel recommendation engine.",
-          source: "google",
-        },
-      ],
-    },
+    name: "Nguyen Phan Nguyen",
+    roleTitle: "AI Music Engineer",
+    school: "Georgia Tech",
+    githubUrl: "https://github.com/ngstephen1",
+    linkedinUrl: "https://www.linkedin.com/in/nguyenpn1/",
+    resumeText: [
+      "Developed real-time AI music transcription engine processing audio with <100ms latency.",
+      "Built React-based music visualization dashboard used by 10K+ users.",
+      "3 years of ML and web development experience with strong PyTorch and full-stack skills.",
+      "Open-source work includes TypeScript UI components and Python ML projects.",
+    ].join(" "),
+    googleSummary: [
+      "Public web references suggest active engineering presence.",
+      "Hackathon-related and developer-profile results appear consistent with technical background.",
+      "No obvious negative public signal in this local demo input.",
+    ].join(" "),
   });
 
+  console.log("=== SOCIAL SCREEN RESULT ===");
   console.log(JSON.stringify(result, null, 2));
 }
 
