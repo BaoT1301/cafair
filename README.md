@@ -1,8 +1,17 @@
-# AI Hire AI - Amazon Nova AI 1-month Hackathon
-## [amazon-nova.devpost.com](https://amazon-nova.devpost.com)
+<p align="center">
+  <span style="font-size: 2rem; font-weight: 700; vertical-align: middle;">
+    AI Hire AI - Amazon Nova AI 1-month Hackathon
+  </span>
+  <img
+    src="./logo.png"
+    alt="AI Hire AI logo"
+    width="42"
+    style="margin-left: 10px; vertical-align: middle;"
+  />
+</p>
 
 <p align="center">
-  <img src="./logo.png" alt="AI Hire AI logo" width="220" />
+  <a href="https://amazon-nova.devpost.com"><strong>amazon-nova.devpost.com</strong></a>
 </p>
 
 AI Hire AI is a dual-sided multi-agent app that automates BOTH candidate applications and recruiter workflows in a busy world.
