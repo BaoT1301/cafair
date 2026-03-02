@@ -2,31 +2,6 @@
   <img src="./assets/ai-hire-ai-banner.svg" alt="AI Hire AI banner" width="900" />
 </div>
 
-<!-- <h1>
-  <span>
-     <strong>AI Hire AI</strong> 
-  </span>
-  <img src="./logo.png" alt="AI Hire AI logo" width="72" style="vertical-align: middle; margin-left: 10px;" />
-</h1>
-
-<h2>
-  <span style="color:#7B61FF;">Amazon Nova AI 1-month Hackathon</span>
-</h2>
-
-<h3>
-  <a href="https://amazon-nova.devpost.com">amazon-nova.devpost.com</a>
-</h3>
-
-<p><em>
-  AI Hire AI is a dual-sided multi-agent app that automates <strong>BOTH</strong> candidate applications and recruiter workflows in a busy world.
-</em></p>
-
-<p><em>
-  We envision the 2nd Earth where AI comes to <strong>HIRE</strong> another AI. So please stay tuned!
-</em></p>
-
-</div> --> 
-
 <p align="center">
   <img src="https://img.shields.io/badge/Amazon%20Nova-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
   <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white" />
