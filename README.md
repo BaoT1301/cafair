@@ -1,6 +1,28 @@
 <div align="center">
-  <img src="./assets/ai-hire-ai-banner.svg" alt="AI Hire AI banner" width="900" />
+  <picture>
+    <img src="./assets/ai-hire-ai-banner.svg" alt="AI Hire AI banner" width="900" />
+  </picture>
 </div>
+
+<br />
+
+<div align="center">
+  <img src="./logo.png" alt="AI Hire AI logo" width="110" />
+</div>
+
+<br />
+
+<div align="center">
+  <p><em>
+    AI Hire AI is a dual-sided multi-agent app that automates <strong>BOTH</strong> candidate applications and recruiter workflows in a busy world.
+  </em></p>
+
+  <p><em>
+    We envision the 2nd Earth where AI comes to <strong>HIRE</strong> another AI. So please stay tuned!
+  </em></p>
+</div>
+
+---
 
 <p align="center">
   <img src="https://img.shields.io/badge/Amazon%20Nova-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
