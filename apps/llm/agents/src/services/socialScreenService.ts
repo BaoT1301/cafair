@@ -344,3 +344,28 @@ export async function runSocialScreenService(
     };
   }
 }
+
+export interface BatchSocialScreenItemInput extends SocialScreenServiceInput {}
+
+export interface BatchSocialScreenItemResult {
+  candidateId: string;
+  ok: boolean;
+  response: SocialScreenServiceResponse;
+}
+
+export async function runSocialScreenServiceBatch(
+  inputs: BatchSocialScreenItemInput[],
+): Promise<BatchSocialScreenItemResult[]> {
+  const results: BatchSocialScreenItemResult[] = [];
+
+  for (const input of inputs) {
+    const response = await runSocialScreenService(input);
+    results.push({
+      candidateId: input.candidateId,
+      ok: response.ok,
+      response,
+    });
+  }
+
+  return results;
+}
