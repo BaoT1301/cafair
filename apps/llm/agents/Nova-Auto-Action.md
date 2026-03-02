@@ -23,9 +23,30 @@ python apps/llm/agents/scripts/run-social-capture-nova.py \
   --pretty
 ```
 
+*consider add  --timeout-seconds 600 \ or more if try workflow mode* 
+*add debug print lines if you can*
+
+
+e.g.
+
+```bash
+python apps/llm/agents/scripts/run-social-capture-nova.py \
+  "Nguyen Phan Nguyen" \
+  --linkedin "https://www.linkedin.com/in/nguyenpn1/" \
+  --github "https://github.com/ngstephen1" \
+  --web-query "Nguyen Phan Nguyen Virginia Tech" \
+  --web-query "Nguyen Phan Nguyen Software Engineer" \
+  --timeout-seconds 600 \
+  --poll-interval-seconds 5 \
+  --debug-logs \
+  --prefer-chrome \
+  --pretty
+```
+
 
 ### Output 1
-file:///var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmp1k8g5p_4_nova_act_logs/019cab68-2b3b-738a-8c2c-86cf243e822e/act_019cab68-92af-7470-a670-a3a8dd4b540f_You_are_helping_gather_visible.html
+https://drive.google.com/file/d/1wsuLAV1LtI2MAngCv6JrN_EEJYLtcEVR/view?usp=sharing
+(from terminal: file:///var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmp1k8g5p_4_nova_act_logs/019cab68-2b3b-738a-8c2c-86cf243e822e/act_019cab68-92af-7470-a670-a3a8dd4b540f_You_are_helping_gather_visible.html)
 
 ```bash
 (.venv) macbook@Stephens-McDonalds-air cafair % python apps/llm/agents/scripts/run-social-capture-nova.py \

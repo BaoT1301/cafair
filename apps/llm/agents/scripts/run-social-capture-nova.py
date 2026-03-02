@@ -1282,11 +1282,15 @@ def run_workflow_mode(
             timeout_seconds=timeout_seconds,
             poll_interval_seconds=poll_interval_seconds,
         )
+        extra_fetch_attempts = max(
+            4,
+            min(12, int(max(1, timeout_seconds // max(1.0, poll_interval_seconds))))
+        )
         final_response, fetch_history, fetch_errors = fetch_final_workflow_output(
             client,
             run_id,
             latest_payload=latest,
-            extra_attempts=4,
+            extra_attempts=extra_fetch_attempts,
             sleep_seconds=max(1.0, poll_interval_seconds),
         )
 
@@ -1314,6 +1318,8 @@ def run_workflow_mode(
     output.raw["workflowDefinitionName"] = get_workflow_name()
     output.raw["startSummary"] = summarize_payload(start_response)
     output.raw["finalSummary"] = summarize_payload(final_response)
+    output.raw["timeoutSeconds"] = timeout_seconds
+    output.raw["pollIntervalSeconds"] = poll_interval_seconds
 
     if poll_errors:
         output.warnings.append("Some workflow polling attempts failed. Check raw.pollErrors.")
@@ -1322,10 +1328,14 @@ def run_workflow_mode(
     if not final_response:
         output.warnings.append("No readable workflow payload was returned after polling + fetch attempts.")
     elif timed_out:
-        output.warnings.append("Workflow did not complete before timeout; rerun with a larger timeout or inspect the remote run.")
-
+        final_status = get_status(final_response)
+        if final_status == "RUNNING":
+            output.warnings.append(
+                "Workflow did not complete before timeout and is still RUNNING remotely; rerun with a larger timeout or inspect the remote run."
+            )
+        else:
+            output.warnings.append("Workflow did not complete before timeout; rerun with a larger timeout or inspect the remote run.")
     return output
-
 
 # ---------------------------
 # API-key mode
@@ -1370,9 +1380,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--timeout-seconds",
         type=int,
-        default=45,
-        help="Workflow polling timeout in seconds (default: 45)",
+        default=180,
+        help="Workflow polling timeout in seconds (default: 180)",
     )
+    
     parser.add_argument(
         "--poll-interval-seconds",
         type=float,
@@ -1423,8 +1434,11 @@ def main() -> int:
     # These older profile env vars are intentionally ignored by the current
     # local NovaAct launcher path because passing --user-data-dir causes
     # Playwright launch failures in this SDK flow.
-    if clean_text(os.getenv("NOVA_ACT_CHROME_USER_DATA_DIR")) or clean_text(
-        os.getenv("NOVA_ACT_CHROME_PROFILE_DIRECTORY")
+    # These older profile env vars are only relevant to local browser mode and are intentionally ignored there
+    # because passing --user-data-dir causes Playwright launch failures in this SDK flow.
+    if args.local_browser and (
+        clean_text(os.getenv("NOVA_ACT_CHROME_USER_DATA_DIR"))
+        or clean_text(os.getenv("NOVA_ACT_CHROME_PROFILE_DIRECTORY"))
     ):
         eprint(
             "[WARN] Ignoring NOVA_ACT_CHROME_USER_DATA_DIR / NOVA_ACT_CHROME_PROFILE_DIRECTORY in local mode. "
@@ -1467,6 +1481,11 @@ def main() -> int:
             return 1
     else:
         if has_workflow_mode():
+            if local_debug_enabled():
+                eprint(
+                    f"[INFO] Workflow mode enabled: definition={get_workflow_name()} model={get_model_id()} "
+                    f"timeout={args.timeout_seconds}s poll_interval={args.poll_interval_seconds}s"
+                )
             try:
                 output = run_workflow_mode(
                     candidate_name=candidate_name,
@@ -1479,7 +1498,7 @@ def main() -> int:
             except Exception as exc:
                 workflow_error = str(exc)
                 eprint(f"[WARN] Workflow mode failed: {workflow_error}")
-
+    
         if output is None and has_api_key_mode():
             try:
                 output = run_api_key_mode(
@@ -1502,11 +1521,20 @@ def main() -> int:
         return 1
 
     payload = make_json_safe(asdict(output))
+
+    if local_debug_enabled() and output.mode == "workflow":
+        eprint(
+            f"[INFO] Workflow result status: timedOut={payload.get('timedOut')} "
+            f"runId={payload.get('workflowRunId')}"
+        )
+
     if args.pretty:
         print(json.dumps(payload, indent=2))
     else:
         print(json.dumps(payload))
     return 0
+
+    
 
 
 if __name__ == "__main__":

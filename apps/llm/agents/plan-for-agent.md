@@ -1,4 +1,4 @@
-- [ ] Social screen endpoint  
+- [x] Social screen endpoint (Stephen - 60%)
   LinkedIn, GitHub, Google summary + risk flags.
 
 - [ ] Resume tailor endpoint  
@@ -15,6 +15,8 @@
 
 - [x] Nova Act for candidate GitHub + LinkedIn (in progress- Stephen- 40%)
   Use Nova Act to help gather and verify candidate-side profile signals. ?! how to bypass sign-in page auth wall security linkedin
+  Generalize router so it scan any kind of website portfolio e.g. lamanhtruong.com ; https://trangcaoportfolio.framer.website/
+  to improve router, Cmd+A function to process prompt first, combine with screenshot where needed
 
 - [ ] Combine Bedrock + Nova Act  
   Improve speed, automation, and decision accuracy by pairing reasoning with actions.
