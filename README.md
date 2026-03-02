@@ -53,6 +53,15 @@ We envision the 2nd Earth where AI comes to HIRE another AI. So please stay tune
 
 ---
 
+Hiring is getting faster, noisier, and more automated.
+
+AI Hire AI explores a future where:
+- candidates use AI to apply smarter,
+- recruiters use AI to screen faster,
+- and eventually, **AI agents interact with other AI agents** in the hiring loop.
+
+---
+
 - **Candidate-side AI**
   - application planning
   - resume tailoring
@@ -65,15 +74,6 @@ We envision the 2nd Earth where AI comes to HIRE another AI. So please stay tune
   - micro-screening
   - social screening
   - recruiter-ready summaries and ATS-style handoff
-
----
-
-Hiring is getting faster, noisier, and more automated.
-
-AI Hire AI explores a future where:
-- candidates use AI to apply smarter,
-- recruiters use AI to screen faster,
-- and eventually, **AI agents interact with other AI agents** in the hiring loop.
 
 ---
 
