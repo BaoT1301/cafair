@@ -34,3 +34,5 @@
 - [ ] Use SerpAPI for AI stalker search/Chatbot Search/.....
 
 - [ ] Text Embedding model AWS
+
+- [ ] Implement MCP (Model Context Protocol) Server ideas

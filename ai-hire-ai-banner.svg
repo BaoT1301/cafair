@@ -1,0 +1,230 @@
+<svg width="1400" height="320" viewBox="0 0 1400 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- dzai co gi la sai -->
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="1400" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0B1020" />
+      <stop offset="50%" stop-color="#131A33" />
+      <stop offset="100%" stop-color="#1B1145" />
+      <animate attributeName="x1" values="0;200;0" dur="12s" repeatCount="indefinite" />
+      <animate attributeName="x2" values="1400;1200;1400" dur="12s" repeatCount="indefinite" />
+    </linearGradient>
+
+   
+    <linearGradient id="titleGradient" x1="250" y1="80" x2="980" y2="210" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7DD3FC" />
+      <stop offset="35%" stop-color="#60A5FA" />
+      <stop offset="68%" stop-color="#A78BFA" />
+      <stop offset="100%" stop-color="#F472B6" />
+      <animate attributeName="x1" values="250;350;250" dur="8s" repeatCount="indefinite" />
+      <animate attributeName="x2" values="980;880;980" dur="8s" repeatCount="indefinite" />
+    </linearGradient>
+
+
+    <linearGradient id="accentGradient" x1="0" y1="0" x2="1400" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#8B5CF6" stop-opacity="1" />
+      <stop offset="100%" stop-color="#EC4899" stop-opacity="0.8" />
+    </linearGradient>
+
+   
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur1" />
+      <feColorMatrix
+        in="blur1"
+        type="matrix"
+        values="1 0 0 0 0
+                0 0.8 0 0 0
+                0 0 1 0 0
+                0 0 0 0.8 0"
+        result="glow1"
+      />
+      <feMerge>
+        <feMergeNode in="glow1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="textGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blurA" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blurB" />
+      <feMerge>
+        <feMergeNode in="blurB" />
+        <feMergeNode in="blurA" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+
+    <linearGradient id="shimmerGradient" x1="0" y1="0" x2="300" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="white" stop-opacity="0" />
+      <stop offset="50%" stop-color="white" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="white" stop-opacity="0" />
+    </linearGradient>
+
+    <mask id="shimmerMask">
+      <rect x="0" y="0" width="1400" height="320" fill="black" />
+      <rect x="-300" y="0" width="300" height="320" fill="url(#shimmerGradient)">
+        <animate attributeName="x" values="-300;1600" dur="4.5s" repeatCount="indefinite" />
+      </rect>
+    </mask>
+  </defs>
+
+
+  <rect width="1400" height="320" rx="28" fill="url(#bgGradient)" />
+
+ 
+  <g opacity="0.45">
+    <circle cx="180" cy="85" r="70" fill="#38BDF8">
+      <animate attributeName="cy" values="85;95;85" dur="6s" repeatCount="indefinite" />
+      <animate attributeName="cx" values="180;190;180" dur="7s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="1180" cy="90" r="82" fill="#8B5CF6">
+      <animate attributeName="cy" values="90;78;90" dur="7s" repeatCount="indefinite" />
+      <animate attributeName="cx" values="1180;1160;1180" dur="8s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="1260" cy="245" r="66" fill="#EC4899">
+      <animate attributeName="cy" values="245;232;245" dur="6.5s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="260" cy="255" r="58" fill="#22D3EE">
+      <animate attributeName="cy" values="255;242;255" dur="5.5s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+
+  <g opacity="0.14">
+    <path d="M80 60H1320" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M80 110H1320" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M80 160H1320" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M80 210H1320" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M80 260H1320" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M190 35V285" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M390 35V285" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M590 35V285" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M790 35V285" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M990 35V285" stroke="url(#accentGradient)" stroke-width="1" />
+    <path d="M1190 35V285" stroke="url(#accentGradient)" stroke-width="1" />
+  </g>
+
+
+  <g opacity="0.9">
+    <circle cx="150" cy="230" r="3.5" fill="#7DD3FC">
+      <animate attributeName="cy" values="230;205;230" dur="4s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.2;1;0.2" dur="4s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="310" cy="70" r="2.5" fill="#C4B5FD">
+      <animate attributeName="cy" values="70;52;70" dur="5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.3;1;0.3" dur="5s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="980" cy="255" r="3" fill="#F9A8D4">
+      <animate attributeName="cy" values="255;235;255" dur="4.7s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.25;1;0.25" dur="4.7s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="1220" cy="135" r="2.5" fill="#67E8F9">
+      <animate attributeName="cy" values="135;118;135" dur="4.2s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.35;1;0.35" dur="4.2s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="1090" cy="58" r="2.8" fill="#DDD6FE">
+      <animate attributeName="cy" values="58;42;58" dur="6.2s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.2;0.95;0.2" dur="6.2s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+
+  <g transform="translate(88 92)" filter="url(#softGlow)">
+    <rect x="0" y="0" width="92" height="92" rx="22" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.16)" />
+    <path d="M24 65V27H36L46 51L56 27H68V65H58V43L49 62H43L34 43V65H24Z" fill="#E9D5FF" />
+    <circle cx="70" cy="24" r="5" fill="#7DD3FC">
+      <animate attributeName="r" values="5;7;5" dur="2.8s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+
+  <g filter="url(#textGlow)">
+
+    <text
+      x="250"
+      y="150"
+      font-family="Inter, Segoe UI, Arial, sans-serif"
+      font-size="84"
+      font-weight="900"
+      letter-spacing="1.5"
+      fill="rgba(255,255,255,0.08)"
+    >
+      AI HIRE AI
+    </text>
+
+    <text
+      x="250"
+      y="150"
+      font-family="Inter, Segoe UI, Arial, sans-serif"
+      font-size="84"
+      font-weight="900"
+      letter-spacing="1.5"
+      fill="url(#titleGradient)"
+    >
+      AI HIRE AI
+      <animate attributeName="opacity" values="0.95;1;0.95" dur="3.2s" repeatCount="indefinite" />
+    </text>
+
+   
+    <text
+      x="250"
+      y="150"
+      font-family="Inter, Segoe UI, Arial, sans-serif"
+      font-size="84"
+      font-weight="900"
+      letter-spacing="1.5"
+      fill="white"
+      opacity="0.75"
+      mask="url(#shimmerMask)"
+    >
+      AI HIRE AI
+    </text>
+  </g>
+
+ 
+  <text
+    x="254"
+    y="198"
+    font-family="Inter, Segoe UI, Arial, sans-serif"
+    font-size="26"
+    font-weight="700"
+    letter-spacing="5"
+    fill="#D1D5DB"
+    opacity="0.95"
+  >
+    AMAZON NOVA HACKATHON
+  </text>
+
+
+  <text
+    x="254"
+    y="238"
+    font-family="Inter, Segoe UI, Arial, sans-serif"
+    font-size="20"
+    font-weight="500"
+    fill="#CBD5E1"
+    opacity="0.92"
+  >
+    Dual-sided multi-agent hiring automation for candidates and recruiters
+  </text>
+
+ 
+  <g transform="translate(1230 160)">
+    <circle r="44" fill="rgba(125,211,252,0.08)" stroke="rgba(125,211,252,0.35)" stroke-width="2">
+      <animate attributeName="r" values="44;52;44" dur="4s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.45;0.12;0.45" dur="4s" repeatCount="indefinite" />
+    </circle>
+    <circle r="24" fill="rgba(167,139,250,0.18)" stroke="rgba(244,114,182,0.45)" stroke-width="2">
+      <animate attributeName="r" values="24;28;24" dur="3s" repeatCount="indefinite" />
+    </circle>
+    <circle r="8" fill="#F8FAFC">
+      <animate attributeName="opacity" values="1;0.4;1" dur="2.2s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+
+  <rect x="120" y="278" width="1160" height="4" rx="2" fill="url(#accentGradient)" opacity="0.9">
+    <animate attributeName="opacity" values="0.65;1;0.65" dur="3.8s" repeatCount="indefinite" />
+  </rect>
+</svg>
