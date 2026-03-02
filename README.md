@@ -1,9 +1,15 @@
 <div align="center">
 
 <h1>
-  <span style="font-size: 2.4em;">AI Hire AI - Amazon Nova AI 1-month Hackathon</span>
-  <img src="./logo.png" alt="AI Hire AI logo" width="62" style="vertical-align: middle; margin-left: 12px;" />
+  <span>
+     <strong>AI Hire AI</strong> 
+  </span>
+  <img src="./logo.png" alt="AI Hire AI logo" width="72" style="vertical-align: middle; margin-left: 10px;" />
 </h1>
+
+<h2>
+  <span style="color:#7B61FF;">Amazon Nova AI 1-month Hackathon</span>
+</h2>
 
 <h3>
   <a href="https://amazon-nova.devpost.com">amazon-nova.devpost.com</a>
