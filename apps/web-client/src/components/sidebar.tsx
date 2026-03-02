@@ -61,6 +61,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
                 active
@@ -79,6 +80,7 @@ export function Sidebar() {
       <div className="px-3 pb-4 space-y-0.5">
         <Link
           href="/dev"
+          aria-current={pathname === "/dev" ? "page" : undefined}
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
             pathname === "/dev"
@@ -91,6 +93,7 @@ export function Sidebar() {
         </Link>
         <Link
           href="/recruiter/settings"
+          aria-current={pathname === "/recruiter/settings" ? "page" : undefined}
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
             pathname === "/recruiter/settings"

@@ -4,13 +4,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
   DndContext, DragEndEvent, DragOverEvent, DragStartEvent, DragOverlay, useDroppable,
-  PointerSensor, useSensor, useSensors, rectIntersection,
+  PointerSensor, KeyboardSensor, useSensor, useSensors, rectIntersection,
 } from "@dnd-kit/core";
 import {
   SortableContext, verticalListSortingStrategy, useSortable,
+  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronRight } from "lucide-react";
+import { getInitials, getScoreColor } from "@/lib/recruiter-utils";
 
 type Stage = "fair" | "screen" | "interview" | "offer" | "day1";
 
@@ -104,15 +106,6 @@ const LAST_TOUCH: Record<string, string[]> = {
 
 const TIME_LABELS = ["3h ago", "1h ago", "30m ago", "45m ago", "2h ago", "1d ago", "4h ago", "5h ago"];
 
-function getInitials(name: string) {
-  return name.split(" ").map(n => n[0]).slice(0, 2).join("");
-}
-
-function getScoreColor(score: number) {
-  if (score >= 90) return "bg-emerald-500";
-  if (score >= 70) return "bg-yellow-500";
-  return "bg-red-500";
-}
 
 function CandidateCard({
   candidate, stage, index, isDragging = false,
@@ -222,7 +215,10 @@ export default function PipelinePage() {
   const [overColumn, setOverColumn] = useState<Stage | null>(null);
 
   const displayCandidates = localCandidates.length > 0 ? localCandidates : candidates;
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   function getCandidatesByStage(stage: Stage) {
     return displayCandidates.filter(c => (c.stage ?? "fair") === stage);

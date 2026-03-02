@@ -9,9 +9,11 @@ import {
   Code,
   PenLine,
   ChevronRight,
-  ShieldCheck,
   Star,
 } from "lucide-react";
+import { FitScoreBar } from "@/components/recruiter/FitScoreBar";
+import { RiskBadge } from "@/components/recruiter/RiskBadge";
+import { getInitials } from "@/lib/recruiter-utils";
 
 // ─── Evidence Tags ───────────────────────────────────────
 const evidenceConfig: Record<string, { icon: React.ElementType; label: string }> = {
@@ -31,30 +33,6 @@ function EvidenceTag({ type }: { type: string }) {
   );
 }
 
-// ─── Fit Score Bar ───────────────────────────────────────
-function FitScoreBar({ score }: { score: number }) {
-  const color =
-    score >= 90
-      ? "bg-primary"
-      : score >= 80
-      ? "bg-primary"
-      : score >= 70
-      ? "bg-yellow-500"
-      : "bg-red-500";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-16 h-2 bg-border rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full ${color}`}
-          style={{ width: `${score}%` }}
-        />
-      </div>
-      <span className="text-sm font-bold text-foreground tabular-nums">
-        {score}
-      </span>
-    </div>
-  );
-}
 
 // ─── Stage + Lane Badge ─────────────────────────────────
 function StageLaneBadge({
@@ -92,24 +70,6 @@ function StageLaneBadge({
   );
 }
 
-// ─── Risk Badge ──────────────────────────────────────────
-function RiskBadge({ level }: { level: string | null }) {
-  const map: Record<string, string> = {
-    low: "text-emerald-600",
-    medium: "text-amber-600",
-    high: "text-red-600",
-  };
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs font-medium capitalize ${
-        map[level ?? "low"] ?? map.low
-      }`}
-    >
-      <ShieldCheck className="w-3.5 h-3.5" />
-      {level}
-    </span>
-  );
-}
 
 // ─── Main Page ───────────────────────────────────────────
 export default function CandidatesPage() {
@@ -261,6 +221,7 @@ export default function CandidatesPage() {
               ].map((h, i) => (
                 <th
                   key={i}
+                  scope="col"
                   className="text-left text-[10px] font-semibold text-muted-foreground px-3 py-3 uppercase tracking-wider first:pl-4 last:pr-4"
                 >
                   {h}
@@ -303,11 +264,7 @@ export default function CandidatesPage() {
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <span className="text-xs font-semibold text-primary">
-                            {c.name
-                              .split(" ")
-                              .map((n: string) => n[0])
-                              .slice(0, 2)
-                              .join("")}
+                            {getInitials(c.name)}
                           </span>
                         </div>
                       )}
@@ -359,7 +316,7 @@ export default function CandidatesPage() {
 
                   {/* Risk */}
                   <td className="px-3 py-3">
-                    <RiskBadge level={c.riskLevel} />
+                    <RiskBadge risk={(c.riskLevel as "low" | "medium" | "high") ?? "low"} />
                   </td>
 
                   {/* Owner */}

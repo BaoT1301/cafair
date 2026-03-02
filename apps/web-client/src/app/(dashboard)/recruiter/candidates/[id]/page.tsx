@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { RiskBadge } from "@/components/recruiter/RiskBadge";
 import { StageBadge } from "@/components/recruiter/StageBadge";
+import { getInitials, STAGE_ORDER } from "@/lib/recruiter-utils";
 import { useState } from "react";
 import {
   ArrowLeft,
@@ -66,12 +67,7 @@ export default function CandidateDetailPage() {
     );
   }
 
-  const initials = candidate.name
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = getInitials(candidate.name);
 
   const strengths: string[] = (candidate.strengths as string[]) ?? [];
   const gaps: string[] = (candidate.gaps as string[]) ?? [];
@@ -85,8 +81,7 @@ export default function CandidateDetailPage() {
   const codeEvidence = evidenceList.filter((e: any) => e.type === "code");
   const essayEvidence = evidenceList.filter((e: any) => e.type === "essay");
 
-  const stageOrder = ["fair", "screen", "interview", "offer", "day1"];
-  const currentStageIndex = stageOrder.indexOf(candidate.stage ?? "fair");
+  const currentStageIndex = STAGE_ORDER.indexOf((candidate.stage ?? "fair") as typeof STAGE_ORDER[number]);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
@@ -191,7 +186,7 @@ export default function CandidateDetailPage() {
               {/* Fit Score */}
               <div className="bg-card border border-border rounded-xl shadow-sm p-5 flex flex-col items-center justify-center gap-3">
                 <div className="relative w-24 h-24">
-                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90" role="img" aria-label={`Fit score: ${score} out of 100`}>
                     <circle
                       cx="50" cy="50" r="36"
                       fill="none" stroke="#e5e7eb" strokeWidth="10"
@@ -486,7 +481,7 @@ export default function CandidateDetailPage() {
               Pipeline
             </p>
             <div className="flex gap-1 mb-2">
-              {stageOrder.map((s, i) => (
+              {STAGE_ORDER.map((s, i) => (
                 <div
                   key={s}
                   className={`h-1.5 flex-1 rounded-full transition-colors ${

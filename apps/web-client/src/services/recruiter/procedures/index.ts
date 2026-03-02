@@ -7,7 +7,8 @@ import {
   recruiterActions,
 } from "../schema";
 import { z } from "zod";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 // ─── New split procedures ────────────────────────────────
 import { getActionsByCandidate } from "./get-actions-by-candidate";
@@ -34,6 +35,9 @@ export const recruiterRouter = createTRPCRouter({
       const [candidate] = await ctx.secureDb!.rls((tx) =>
         tx.select().from(candidates).where(eq(candidates.id, input.id)),
       );
+      if (!candidate) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Candidate not found" });
+      }
       return candidate;
     }),
 
@@ -43,6 +47,9 @@ export const recruiterRouter = createTRPCRouter({
       const [candidate] = await ctx.secureDb!.rls((tx) =>
         tx.select().from(candidates).where(eq(candidates.id, input.id)),
       );
+      if (!candidate) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Candidate not found" });
+      }
       const candidateEvidence = await ctx.secureDb!.rls((tx) =>
         tx.select().from(evidence).where(eq(evidence.candidateId, input.id)),
       );
@@ -126,18 +133,24 @@ export const recruiterRouter = createTRPCRouter({
   // ─── Dashboard Stats ──────────────────────────────────────
 
   getDashboardStats: authedProcedure.query(async ({ ctx }) => {
-    const allCandidates = await ctx.secureDb!.rls((tx) =>
-      tx.select().from(candidates),
+    const stageCounts = await ctx.secureDb!.rls((tx) =>
+      tx
+        .select({ stage: candidates.stage, count: count() })
+        .from(candidates)
+        .groupBy(candidates.stage),
     );
     const allRoles = await ctx.secureDb!.rls((tx) =>
       tx.select().from(jobRoles),
     );
 
+    const getCount = (stage: string) =>
+      stageCounts.find((s) => s.stage === stage)?.count ?? 0;
+
     return {
-      totalCandidates: allCandidates.length,
-      inQueue: allCandidates.filter((c) => c.stage === "fair").length,
-      inInterview: allCandidates.filter((c) => c.stage === "interview").length,
-      offers: allCandidates.filter((c) => c.stage === "offer").length,
+      totalCandidates: stageCounts.reduce((sum, s) => sum + s.count, 0),
+      inQueue: getCount("fair"),
+      inInterview: getCount("interview"),
+      offers: getCount("offer"),
       projectedHires: allRoles.reduce(
         (sum, r) => sum + (r.targetHires ?? 0),
         0,
@@ -171,6 +184,12 @@ export const recruiterRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const [candidate] = await ctx.secureDb!.rls((tx) =>
+        tx.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)),
+      );
+      if (!candidate) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Candidate not found" });
+      }
       const [action] = await ctx.secureDb!.rls((tx) =>
         tx
           .insert(recruiterActions)

@@ -2,17 +2,14 @@
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Users,
-  Clock,
-  Calendar,
-  Target,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  ChevronRight,
-  BarChart3,
-  Zap,
+  Users, Clock, Calendar, Target, TrendingUp, TrendingDown,
+  AlertTriangle, CheckCircle, ChevronRight, BarChart3, Zap,
+  Activity, UserPlus, Shuffle,
 } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell,
+  LineChart, Line, Tooltip,
+} from "recharts";
 
 // ─── Status Badge ─────────────────────────────────────────
 function StatusBadge({ status }: { status: string | null }) {
@@ -44,7 +41,7 @@ function CoverageBar({ sent, needed }: { sent: number; needed: number }) {
   );
 }
 
-// ─── Sparkline ────────────────────────────────────────────
+// ─── Sparkline SVG ────────────────────────────────────────
 function Sparkline({ status }: { status: string | null }) {
   const color = status === "on_track" ? "#2d6a4f" : status === "critical" ? "#c53030" : "#b7791f";
   const points = status === "critical"
@@ -54,33 +51,47 @@ function Sparkline({ status }: { status: string | null }) {
     : "0,20 15,14 30,10 45,6 60,4";
   return (
     <svg viewBox="0 0 60 24" className="w-16 h-6">
-      <polyline
-        points={points}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-// ─── Main Dashboard ───────────────────────────────────────
+// ─── Delta ────────────────────────────────────────────────
+function Delta({ value, positive }: { value: string; positive: boolean }) {
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${positive ? "text-emerald-600" : "text-red-500"}`}>
+      {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+      {value}
+    </span>
+  );
+}
+
+// ─── Util Bar ─────────────────────────────────────────────
+function UtilBar({ pct, color }: { pct: number; color: string }) {
+  return (
+    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-1.5">
+      <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+const sparkData = [{ v: 4 }, { v: 6 }, { v: 5 }, { v: 8 }, { v: 7 }, { v: 9 }, { v: 11 }];
+const funnelData = [
+  { stage: "Registered", count: 80 },
+  { stage: "Screened", count: 54 },
+  { stage: "Interviewed", count: 24 },
+  { stage: "Offer", count: 9 },
+  { stage: "Accepted", count: 4 },
+];
+const funnelDrops = ["", "-33%", "-55%", "-64%", "-56%"];
+
 export default function RecruiterDashboard() {
   const trpc = useTRPC();
+  const { data: stats, isLoading } = useQuery(trpc.recruiter.getDashboardStats.queryOptions());
+  const { data: activeEvent } = useQuery(trpc.recruiter.getActiveEvent.queryOptions());
+  const { data: candidates } = useQuery(trpc.recruiter.getCandidates.queryOptions());
 
-  const { data: stats, isLoading: statsLoading } = useQuery(
-    trpc.recruiter.getDashboardStats.queryOptions()
-  );
-  const { data: activeEvent } = useQuery(
-    trpc.recruiter.getActiveEvent.queryOptions()
-  );
-  const { data: candidates } = useQuery(
-    trpc.recruiter.getCandidates.queryOptions()
-  );
-
-  if (statsLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -88,96 +99,53 @@ export default function RecruiterDashboard() {
     );
   }
 
-  // Stage counts for funnel
-  const stageCounts = {
-    registered: candidates?.length ?? 0,
-    screened: candidates?.filter(c => ["screen", "interview", "offer", "day1"].includes(c.stage ?? "")).length ?? 0,
-    interviewed: candidates?.filter(c => ["interview", "offer", "day1"].includes(c.stage ?? "")).length ?? 0,
-    offer: candidates?.filter(c => ["offer", "day1"].includes(c.stage ?? "")).length ?? 0,
-    accepted: candidates?.filter(c => c.stage === "day1").length ?? 0,
-  };
-
-  const maxStage = stageCounts.registered || 1;
-
-  // Stage movement (last 24h simulation)
-  const stageMovement = [
-    { label: "Verified", value: "+12", icon: CheckCircle, color: "text-emerald-600" },
-    { label: "Screens Done", value: "+9", icon: TrendingUp, color: "text-primary" },
-    { label: "Interviews Sched.", value: "+6", icon: Calendar, color: "text-blue-600" },
-    { label: "Offers Sent", value: "+2", icon: Target, color: "text-purple-600" },
-  ];
-
   return (
-    <div className="space-y-5 max-w-[1200px]">
+    <div className="space-y-6 w-full">
 
-      {/* Live Event Banner + Stat Cards row */}
-      <div className="flex gap-4 items-stretch">
-        {/* Live Event Banner */}
+      {/* ── Row 1: Live Banner + Stat Pills ── */}
+      <div className="flex gap-5 items-stretch">
         {activeEvent && (
-          <div className="flex items-center gap-4 rounded-xl bg-primary px-5 py-4 min-w-[280px] shadow-sm">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 shrink-0">
-              <Zap className="h-5 w-5 text-white" />
+          <div className="relative flex items-center gap-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 px-6 py-5 min-w-[300px] shadow-md overflow-hidden">
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 70% 50%, #14b8a6 0%, transparent 60%)" }} />
+            <div className="w-11 h-11 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 z-10">
+              <Zap className="w-5 h-5 text-primary" />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white/90 uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  Live
-                </span>
-                <span className="text-sm font-semibold text-white truncate">{activeEvent.name}</span>
-              </div>
-              <p className="text-xs text-white/70">
+            <div className="z-10 flex-1 min-w-0">
+              <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full w-fit mb-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                LIVE
+              </span>
+              <p className="text-white font-semibold text-sm truncate">{activeEvent.name}</p>
+              <p className="text-slate-400 text-xs mt-1">
                 {stats?.inQueue ?? 0} queued · {candidates?.filter(c => c.stage === "screen").length ?? 0} screens · {activeEvent.recruiterCount} recruiters
               </p>
             </div>
-            <ChevronRight className="h-4 w-4 text-white/50 shrink-0" />
+            <button className="z-10 w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors shrink-0">
+              <ChevronRight className="w-4 h-4 text-white" />
+            </button>
           </div>
         )}
 
-        {/* Stat Cards */}
-        <div className="flex-1 grid grid-cols-4 gap-3">
+        <div className="flex-1 grid grid-cols-4 gap-4">
           {[
-            {
-              label: "QUEUE / WAIT",
-              value: stats?.inQueue ?? 0,
-              sub: "4m avg",
-              icon: Clock,
-            },
-            {
-              label: "RECRUITERS",
-              value: `${activeEvent?.recruiterCount ?? 5}`,
-              sub2: "online",
-              sub: "72% util.",
-              icon: Users,
-            },
-            {
-              label: "INTERVIEWS",
-              value: stats?.inInterview ?? 0,
-              sub2: "today",
-              sub: `${(stats?.inInterview ?? 0) + 16} 7-day`,
-              icon: Calendar,
-            },
-            {
-              label: "PROJECTED HIRES",
-              value: stats?.projectedHires ?? 0,
-              sub: `/ ${stats?.roles?.reduce((acc, r) => acc + (r.targetHires ?? 0), 0) ?? 21} target`,
-              icon: Target,
-              extra: true,
-            },
+            { label: "QUEUE / WAIT", value: `${stats?.inQueue ?? 8}`, sub: "in queue", sub2: "4m avg", icon: Clock },
+            { label: "RECRUITERS", value: `${activeEvent?.recruiterCount ?? 5}`, sub: "online", sub2: "72% util.", icon: Users },
+            { label: "INTERVIEWS", value: `${stats?.inInterview ?? 22}`, sub: "/day", sub2: "6 today", icon: Calendar },
+            { label: "PROJ. HIRES", value: `${stats?.projectedHires ?? 7}`, sub: `/ ${stats?.roles?.reduce((a, r) => a + (r.targetHires ?? 0), 0) ?? 21}`, sub2: "50% rate", icon: Target, badge: true },
           ].map((card) => (
-            <div key={card.label} className="bg-card border border-border rounded-xl px-4 py-3.5 flex flex-col justify-between shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{card.label}</p>
-                <card.icon className="w-4 h-4 text-muted-foreground" />
+            <div key={card.label} className="bg-card border border-border rounded-2xl px-5 py-4 flex flex-col justify-between shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{card.label}</p>
+                <card.icon className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-foreground tabular-nums">{card.value}</span>
-                {card.sub2 && <span className="text-xs text-muted-foreground">{card.sub2}</span>}
+                <span className="text-3xl font-bold text-foreground tabular-nums">{card.value}</span>
+                <span className="text-sm text-muted-foreground">{card.sub}</span>
               </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-muted-foreground">{card.sub}</span>
-                {card.extra && (
-                  <span className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-muted-foreground">{card.sub2}</span>
+                {card.badge && (
+                  <span className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
                     Low conf.
                   </span>
                 )}
@@ -187,10 +155,10 @@ export default function RecruiterDashboard() {
         </div>
       </div>
 
-      {/* Roles Progress Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div className="flex items-center gap-2">
+      {/* ── Row 2: Roles Progress Table ── */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-7 py-5 border-b border-border">
+          <div className="flex items-center gap-3">
             <BarChart3 className="w-4 h-4 text-muted-foreground" />
             <div>
               <h2 className="font-semibold text-foreground">Roles Progress</h2>
@@ -203,12 +171,11 @@ export default function RecruiterDashboard() {
             <option>All Roles</option>
           </select>
         </div>
-
         <table className="w-full">
           <thead>
-            <tr className="border-b border-border">
+            <tr className="border-b border-border bg-muted/20">
               {["Role", "HC", "Offers Needed", "Sent", "Accepted", "Pipeline Coverage", "Status", "Projection"].map(h => (
-                <th key={h} className="text-left text-[10px] font-semibold text-muted-foreground px-6 py-3 uppercase tracking-wider">
+                <th key={h} scope="col" className="text-left text-[10px] font-semibold text-muted-foreground px-7 py-3.5 uppercase tracking-wider">
                   {h}
                 </th>
               ))}
@@ -216,22 +183,22 @@ export default function RecruiterDashboard() {
           </thead>
           <tbody>
             {stats?.roles?.map((role) => (
-              <tr key={role.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
-                <td className="px-6 py-3.5">
+              <tr key={role.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <td className="px-7 py-4">
                   <p className="text-sm font-medium text-foreground">{role.title}</p>
-                  <p className="text-xs text-muted-foreground">{role.department}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{role.department}</p>
                 </td>
-                <td className="px-6 py-3.5 text-sm text-foreground tabular-nums">{role.targetHires}</td>
-                <td className="px-6 py-3.5 text-sm text-foreground tabular-nums">{role.offersNeeded}</td>
-                <td className="px-6 py-3.5 text-sm text-foreground tabular-nums">{role.offersSent}</td>
-                <td className="px-6 py-3.5 text-sm text-foreground tabular-nums">{role.offersAccepted}</td>
-                <td className="px-6 py-3.5 w-40">
+                <td className="px-7 py-4 text-sm text-foreground tabular-nums">{role.targetHires}</td>
+                <td className="px-7 py-4 text-sm text-foreground tabular-nums">{role.offersNeeded}</td>
+                <td className="px-7 py-4 text-sm text-foreground tabular-nums">{role.offersSent}</td>
+                <td className="px-7 py-4 text-sm text-foreground tabular-nums">{role.offersAccepted}</td>
+                <td className="px-7 py-4 w-44">
                   <CoverageBar sent={role.offersSent ?? 0} needed={role.offersNeeded ?? 1} />
                 </td>
-                <td className="px-6 py-3.5">
+                <td className="px-7 py-4">
                   <StatusBadge status={role.status} />
                 </td>
-                <td className="px-6 py-3.5">
+                <td className="px-7 py-4">
                   <Sparkline status={role.status} />
                 </td>
               </tr>
@@ -240,80 +207,212 @@ export default function RecruiterDashboard() {
         </table>
       </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-2 gap-4">
-
+      {/* ── Row 3: Stage Movement + Conversion Funnel ── */}
+      <div className="grid grid-cols-2 gap-5">
         {/* Stage Movement */}
-        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" />
-              <h2 className="font-semibold text-foreground">Stage Movement</h2>
+              <Activity className="w-4 h-4 text-primary" />
+              <p className="text-sm font-semibold text-foreground">Stage Movement</p>
+              <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">last 24h</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">last 24h</span>
-              <svg viewBox="0 0 40 16" className="w-10 h-4">
-                <polyline points="0,12 8,8 16,10 24,4 32,6 40,2" fill="none" stroke="#2d6a4f" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+            <div className="w-24 h-8">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={sparkData}>
+                  <Line type="monotone" dataKey="v" stroke="#14b8a6" strokeWidth={1.5} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {stageMovement.map(({ label, value, icon: Icon, color }) => (
-              <div key={label} className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                  <Icon className={`w-5 h-5 ${color}`} />
-                </div>
-                <div>
-                  <p className={`text-xl font-bold tabular-nums ${color}`}>{value}</p>
-                  <p className="text-xs text-muted-foreground">{label}</p>
-                </div>
+            {[
+              { label: "Verified", value: "+12", color: "text-emerald-600", bg: "bg-emerald-50 border border-emerald-100" },
+              { label: "Screens Done", value: "+9", color: "text-amber-600", bg: "bg-amber-50 border border-amber-100" },
+              { label: "Interviews Sched.", value: "+6", color: "text-purple-600", bg: "bg-purple-50 border border-purple-100" },
+              { label: "Offers Sent", value: "+2", color: "text-blue-600", bg: "bg-blue-50 border border-blue-100" },
+            ].map((item, i) => (
+              <div key={i} className={`${item.bg} rounded-xl p-4`}>
+                <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
+                <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Conversion Funnel */}
-        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              <h2 className="font-semibold text-foreground">Conversion Funnel</h2>
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-5">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">Conversion Funnel</p>
+          </div>
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={funnelData} barSize={38} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+                <XAxis dataKey="stage" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={28} />
+                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+                <Bar dataKey="count" radius={[5, 5, 0, 0]}>
+                  {funnelData.map((_, i) => (
+                    <Cell key={i} fill="#14b8a6" opacity={1 - i * 0.15} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex justify-around mt-1">
+            {funnelDrops.map((drop, i) => (
+              <span key={i} className="text-[10px] font-semibold text-red-500 w-[20%] text-center">{drop}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Row 4: Recruiter Productivity ── */}
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-6">
+          <Users className="w-4 h-4 text-primary" />
+          <p className="text-sm font-semibold text-foreground">Recruiter Productivity</p>
+        </div>
+        <div className="grid grid-cols-4 gap-0 divide-x divide-border">
+          {[
+            { label: "Convs / Recruiter / Hr", value: "4.2", delta: "+0.8", positive: true },
+            { label: "High-Signal Conversion", value: "62%", delta: "+5pp", positive: true },
+            { label: "Follow-up SLA (24h)", value: "88%", delta: "-3pp", positive: false },
+            { label: "ATS Sync Completion", value: "94%", delta: "+2pp", positive: true },
+          ].map((metric, i) => (
+            <div key={i} className={`${i > 0 ? "pl-8" : ""} ${i < 3 ? "pr-8" : ""}`}>
+              <p className="text-xs text-muted-foreground mb-2">{metric.label}</p>
+              <div className="flex items-end gap-2.5">
+                <p className="text-3xl font-bold text-foreground">{metric.value}</p>
+                <div className="mb-1">
+                  <Delta value={metric.delta} positive={metric.positive} />
+                </div>
+              </div>
             </div>
-            <select className="text-xs bg-secondary border border-border rounded-lg px-2 py-1 text-foreground">
-              <option>All Roles</option>
-            </select>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Row 5: Pipeline Health + Real-time Operations ── */}
+      <div className="grid grid-cols-2 gap-5">
+        {/* Pipeline Health */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-5">
+            <Activity className="w-4 h-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">Pipeline Health</p>
           </div>
 
-          {/* Bar chart */}
-          <div className="flex gap-3 h-[140px]">
+          <div className="grid grid-cols-3 gap-3 mb-5">
             {[
-              { label: "Registered", count: stageCounts.registered },
-              { label: "Screened", count: stageCounts.screened, drop: stageCounts.registered > 0 ? `-${Math.round(((stageCounts.registered - stageCounts.screened) / stageCounts.registered) * 100)}%` : undefined },
-              { label: "Interviewed", count: stageCounts.interviewed, drop: stageCounts.screened > 0 ? `-${Math.round(((stageCounts.screened - stageCounts.interviewed) / stageCounts.screened) * 100)}%` : undefined },
-              { label: "Offer", count: stageCounts.offer, drop: stageCounts.interviewed > 0 ? `-${Math.round(((stageCounts.interviewed - stageCounts.offer) / stageCounts.interviewed) * 100)}%` : undefined },
-              { label: "Accepted", count: stageCounts.accepted, drop: stageCounts.offer > 0 ? `-${Math.round(((stageCounts.offer - stageCounts.accepted) / stageCounts.offer) * 100)}%` : undefined },
-            ].map(({ label, count, drop }) => {
-              const pct = Math.max(8, Math.round((count / maxStage) * 100));
-              return (
-                <div key={label} className="flex-1 flex flex-col items-center">
-                  <span className="text-xs font-bold text-foreground tabular-nums mb-1">{count}</span>
-                  <div className="w-full flex flex-col justify-end flex-1">
-                    <div
-                      className="w-full bg-primary rounded-t transition-all duration-500"
-                      style={{ height: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground text-center leading-tight mt-1">{label}</span>
-                  <span className={`text-[10px] tabular-nums h-4 ${drop ? "text-red-500" : "invisible"}`}>
-                    {drop ?? "-"}
-                  </span>
+              { value: "5", label: "Interview-Ready" },
+              { value: "6", label: "Sched. (7d)" },
+              { value: "25%", label: "Screen→Int. drop" },
+            ].map((s, i) => (
+              <div key={i} className="bg-muted/40 border border-border/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4 mb-5">
+            {[
+              { label: "Screen → Interview", pct: 25 },
+              { label: "Interview → Offer", pct: 38 },
+            ].map((bar, i) => (
+              <div key={i}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs text-muted-foreground">{bar.label}</p>
+                  <p className="text-xs font-semibold text-foreground">{bar.pct}%</p>
                 </div>
-              );
-            })}
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${bar.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              Median Time in Stage
+            </p>
+            <div className="space-y-2.5">
+              {[
+                { stage: "Screen", days: "1.2d", pct: 30 },
+                { stage: "Interview", days: "2.8d", pct: 56 },
+                { stage: "Offer", days: "3.1d", pct: 62 },
+              ].map((s, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <p className="text-xs text-muted-foreground w-16 shrink-0">{s.stage}</p>
+                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: `${s.pct}%` }} />
+                  </div>
+                  <p className="text-xs font-semibold text-foreground w-8 text-right">{s.days}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
+        {/* Real-time Operations */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col">
+          <div className="flex items-center gap-2 mb-5">
+            <Activity className="w-4 h-4 text-primary animate-pulse" />
+            <p className="text-sm font-semibold text-foreground">Real-time Operations</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {[
+              { label: "Recruiter Now", queue: 3, wait: "2m", util: 85, utilColor: "bg-emerald-500" },
+              { label: "Quick Screen", queue: 6, wait: "7m", util: 92, utilColor: "bg-amber-500" },
+              { label: "Redirect", queue: 2, wait: "1m", util: 40, utilColor: "bg-primary" },
+            ].map((col, i) => (
+              <div key={i} className="bg-muted/40 border border-border/50 rounded-xl p-4">
+                <p className="text-[10px] font-semibold text-muted-foreground mb-3">{col.label}</p>
+                <p className="text-[10px] text-muted-foreground">Queue</p>
+                <p className="text-xl font-bold text-foreground">{col.queue}</p>
+                <p className="text-[10px] text-muted-foreground mt-2">Avg Wait</p>
+                <p className="text-sm font-semibold text-foreground">{col.wait}</p>
+                <UtilBar pct={col.util} color={col.utilColor} />
+                <p className="text-[10px] text-muted-foreground mt-1">{col.util}% util.</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-muted/40 border border-border/50 rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Recruiter Capacity</p>
+                <p className="text-sm font-semibold text-foreground">
+                  5 × 5/hr = <span className="text-primary font-bold">25 convos/hr</span>
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="w-4 h-4 text-primary" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <p className="text-xs font-medium text-amber-800">Quick Screen backing up (6 in queue)</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap">
+                <UserPlus className="w-3 h-3" />
+                Add recruiter
+              </button>
+              <button className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 bg-amber-100 text-amber-800 border border-amber-200 rounded-lg hover:bg-amber-200 transition-colors whitespace-nowrap">
+                <Shuffle className="w-3 h-3" />
+                Auto-route
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
     </div>
   );
 }

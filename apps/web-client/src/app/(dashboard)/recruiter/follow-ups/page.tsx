@@ -3,6 +3,8 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Star, FileText, Calendar, CheckCircle, Clock, Mail } from "lucide-react";
+import { FitScoreBar } from "@/components/recruiter/FitScoreBar";
+import { getInitials } from "@/lib/recruiter-utils";
 
 // ─── Follow-up status helpers ────────────────────────────
 type FollowUpStatus = "drafted" | "sent" | "scheduled" | "pending";
@@ -24,17 +26,6 @@ function FollowUpBadge({ status }: { status: FollowUpStatus }) {
   );
 }
 
-// ─── Fit Score Bar ───────────────────────────────────────
-function FitBar({ score }: { score: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-16 h-2 bg-border rounded-full overflow-hidden">
-        <div className="h-full rounded-full bg-primary" style={{ width: `${score}%` }} />
-      </div>
-      <span className="text-sm font-bold text-foreground tabular-nums">{score}</span>
-    </div>
-  );
-}
 
 // ─── Main Page ───────────────────────────────────────────
 export default function FollowUpsPage() {
@@ -101,7 +92,7 @@ export default function FollowUpsPage() {
               <thead>
                 <tr className="border-b border-border">
                   {["", "Candidate", "Fit", "Status", "Follow-up", "Action"].map((h, i) => (
-                    <th key={i} className="text-left text-[10px] font-semibold text-muted-foreground px-3 py-3 uppercase tracking-wider first:pl-4 last:pr-4">
+                    <th key={i} scope="col" className="text-left text-[10px] font-semibold text-muted-foreground px-3 py-3 uppercase tracking-wider first:pl-4 last:pr-4">
                       {h}
                     </th>
                   ))}
@@ -127,7 +118,7 @@ export default function FollowUpsPage() {
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                               <span className="text-xs font-semibold text-primary">
-                                {c.name.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                                {getInitials(c.name)}
                               </span>
                             </div>
                           )}
@@ -138,7 +129,7 @@ export default function FollowUpsPage() {
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        <FitBar score={c.fitScore ?? 0} />
+                        <FitScoreBar score={c.fitScore ?? 0} />
                       </td>
                       <td className="px-3 py-3">
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
