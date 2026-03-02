@@ -30,3 +30,48 @@ Workflow capture can take minutes, so the API should return a `batchJobId` immed
 - `captureRaw`
 - `screenResult`
 - `error`
+
+
+```curl
+curl -X POST http://localhost:3000/api/aihire/social-screen/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "useBedrock": false,
+    "candidates": [
+      {
+        "candidateId": "cand_001",
+        "name": "Nguyen Phan Nguyen",
+        "roleTitle": "Software Engineer New Grad",
+        "resumeText": "Built React apps and AI systems...",
+        "linkedin": "https://www.linkedin.com/in/nguyenpn1/",
+        "github": "https://github.com/ngstephen1",
+        "webQueries": [
+          "Nguyen Phan Nguyen Virginia Tech",
+          "Nguyen Phan Nguyen Software Engineer"
+        ]
+      },
+      {
+        "candidateId": "cand_002",
+        "name": "Lam Anh Truong",
+        "roleTitle": "Software Engineer",
+        "resumeText": "Full-stack developer with cloud experience...",
+        "linkedin": "https://www.linkedin.com/in/lamanhtruong",
+        "github": "https://github.com/lamanhtruong",
+        "webQueries": [
+          "Lam Anh Truong software engineer",
+          "lamanhtruong.com"
+        ]
+      }
+    ]
+  }'
+```
+
+```bash
+Example frontend polling flow
+	1.	POST /api/aihire/social-screen/batch
+	2.	get batchJobId
+	3.	poll every 2–5 seconds:
+	•	GET /api/aihire/social-screen/batch/:batchJobId
+	4.	when status is completed or failed, call:
+	•	GET /api/aihire/social-screen/batch/:batchJobId/results
+```

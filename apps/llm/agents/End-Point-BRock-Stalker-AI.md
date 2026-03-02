@@ -1,333 +1,436 @@
 # AI Endpoint Handoff Notes
 
 ## Status
-The **Social Screen API endpoint is working** end-to-end in local development and has been validated with a real Bedrock call.
+The **Social Screen Batch API is partially working in local development**.
 
-Confirmed behavior:
-- REST route responds successfully
-- App wrapper calls agent service correctly
-- Agent returns structured recruiter-ready JSON
-- Bedrock enrichment is active
-- Parser succeeds (`parseOk: true`)
-- No fallback used
-- No degraded mode
+### 1) Batch creation endpoint works
+The following endpoint is working:
 
----
+- `POST /api/aihire/social-screen/batch`
 
-## Working Endpoint
+It is good to:
+- accept a JSON payload with candidates
+- create a batch job
+- return a real `batchJobId`
+- start the batch runner in the background
+f
+A successful response looks like this:
 
-### REST
-`POST /api/aihire/social-screen`
-
-### Health / shape check
-`GET /api/aihire/social-screen`
-
-Returns:
-- route info
-- method
-- required fields
-- optional fields
-
----
-
-## Current File Flow
-
-### REST route
-`apps/web-client/src/app/api/aihire/social-screen/route.ts`
-
-Responsibilities:
-- exposes GET + POST
-- accepts JSON request body
-- calls app wrapper
-- returns JSON success/error response
-
----
-
-### App wrapper
-`apps/web-client/src/server/aihire/social-screen.ts`
-
-Responsibilities:
-- validates required fields
-- normalizes request body
-- builds safe `linkedin`, `github`, `web` payloads
-- calls `runSocialScreenService(...)`
-- returns stable app-layer response
-
----
-
-### Service wrapper
-`apps/llm/agents/src/services/socialScreenService.ts`
-
-Responsibilities:
-- stable entrypoint for social screening
-- runs deterministic local baseline first
-- optionally enriches with Bedrock reasoning
-- parses Bedrock JSON
-- merges Bedrock patch into baseline result
-- returns provider / parse / metrics metadata
-
-Current behavior:
-- local deterministic social findings are preserved
-- Bedrock currently improves:
-  - summary
-  - fitScore / socialScore patch behavior
-  - risk
-  - strengths / concerns / flags style patch fields
-- final merged result is stable and UI-safe
-
----
-
-### Deterministic agent
-`apps/llm/agents/src/agents/socialScreen.ts`
-
-Responsibilities:
-- builds baseline social intelligence report
-- uses provided LinkedIn / GitHub / Web inputs
-- generates:
-  - findings
-  - counts
-  - recommendation
-  - signals
-  - evidence
-  - flags
-  - recommended actions
-
-This is the current main source of the detailed `findings[]` list.
-
----
-
-### Prompt builder
-`apps/llm/agents/src/prompts/socialScreen.ts`
-
-Responsibilities:
-- builds Bedrock prompt bundle
-- includes:
-  - candidate info
-  - role info
-  - school
-  - resume
-  - linkedin
-  - github
-  - web
-- defines strict JSON schema hint for model output
-
-Important:
-- this now passes real social inputs into Bedrock prompt
-- Bedrock no longer assumes LinkedIn/GitHub are missing when they are provided
-
----
-
-### Parser
-`apps/llm/agents/src/parsers/socialScreenParser.ts`
-
-Responsibilities:
-- parses fenced JSON or raw JSON
-- normalizes findings
-- derives counts
-- derives risk
-- exposes:
-  - socialScore
-  - findings
-  - recommendation
-  - summary
-  - legacy aliases like `fitScore`, `risk`, `flags`
-
-Current status:
-- parser works
-- real Bedrock response parsed successfully
-
----
-
-## Confirmed Bedrock Model
-
-Current model used:
-- `amazon.nova-lite-v1:0`
-
-Current provider:
-- `bedrock-converse`
-
-Example confirmed metadata:
-- `parseOk: true`
-- `degraded: false`
-- `usedFallback: false`
-
----
-
-## Example Successful API Result
-
-Latest successful run produced:
-- `socialScore: 100`
-- `verifiedCount: 8`
-- `warningCount: 0`
-- `criticalCount: 0`
-- `infoCount: 4`
-- `totalFindings: 12`
-- `risk: "low"`
-- `screenScore: 40`
-
-Recommendation:
-- proceed with high confidence
-
-Signals confirmed:
-- LinkedIn found
-- GitHub found
-- Google / web references found
-
-Recommended actions:
-- `Schedule Interview`
-- `Sync to ATS`
-- `Send Follow-up`
-
----
-
-## What Is Working Well
-
-- Nested social input payload is accepted correctly
-- LinkedIn / GitHub / Web no longer show false “missing” warnings when supplied
-- Real Bedrock call succeeds reliably
-- UI-ready JSON shape is stable
-- Route + wrapper + service + parser chain is functional
-
----
-
-## Important Current Design Note
-
-Right now, the **deterministic local agent is still the main source of `findings[]`**.
-
-Bedrock is mainly used as an **enrichment layer**, not the source of truth for the full report.
-
-This is intentional and currently safer because:
-- deterministic findings are stable
-- easier to debug
-- prevents LLM-only drift
-- keeps UI output consistent
-
----
-
-## Suggested Next Improvement
-
-### Best next backend improvement
-Merge selected Bedrock findings into the final `findings[]` array carefully.
-
-Goal:
-- keep deterministic findings as baseline
-- optionally append high-confidence Bedrock findings
-- avoid duplicates
-- avoid overwriting strong deterministic evidence
-
-Suggested merge rule:
-- preserve all local findings
-- append only new Bedrock findings with confidence >= threshold
-- normalize source/severity before merge
-- cap total findings to a clean UI limit (e.g. 12)
-
----
-
-## Recommended Next API Features
-
-1. Add Bedrock finding merge logic  
-2. Add tRPC procedure for social screen  
-3. Add frontend recruiter social report card  
-4. Add Nova Act collector for live data  
-5. Add optional screenshot / browser evidence pipeline  
-
----
-
-## Test Commands
-
-### Local agent script
-```bash
-npx tsx apps/llm/agents/scripts/run-social-screen-local.ts
+```json
+{
+  "ok": true,
+  "batchJobId": "ssb_1772426727353_wydcxm",
+  "status": "running",
+  "totalCandidates": 2,
+  "createdAt": "2026-03-02T04:45:27.353Z"
+}
 ```
 
-REST shape check
-```bash
-curl http://localhost:3000/api/aihire/social-screen
+That means:
+	•	route file is being picked up by Next.js
+	•	request parsing is correct
+	•	the batch store create function is being called
+	•	the job runner is being invoked
+
+### 2) Health check for the base batch route works
+
+The following endpoint is also working:
+	•	GET /api/aihire/social-screen/batch
+
+This returns a simple confirmation that the route is live.
+
+#### Expected response:
+```json
+{
+  "ok": true,
+  "message": "Social screen batch endpoint is live.",
+  "methods": ["GET", "POST"]
+}
 ```
 
-REST POST test
+This confirms:
+	•	the route is loaded
+	•	exports are valid
+	•	Next app router recognizes both GET and POST on the base path
 
+---
+
+3) Nested route files now exist
+
+These route files are now present and readable by the app:
+	•	apps/web-client/src/app/api/aihire/social-screen/batch/route.ts
+	•	apps/web-client/src/app/api/aihire/social-screen/batch/[batchJobId]/route.ts
+	•	apps/web-client/src/app/api/aihire/social-screen/batch/[batchJobId]/results/route.ts
+	•	apps/web-client/src/app/api/aihire/social-screen/batch/[batchJobId]/retry/route.ts
+
+This is important because earlier they were either:
+	•	missing
+	•	empty
+	•	not created due to zsh bracket expansion issues
+
+That file-creation issue has been fixed.
+
+---
+
+Current limitation
+
+In-memory store is causing batch lookup failures
+
+Batch jobs are currently stored in:
+	•	apps/web-client/src/lib/aihire/socialScreenBatchStore.ts
+
+This file uses an in-memory Map, which means batch jobs only live inside the current server process memory.
+
+So if the Next dev server:
+	•	recompiles
+	•	hot reloads
+	•	refreshes route modules
+	•	restarts
+	•	invalidates module state during development
+
+then the stored batch job can disappear.
+
+Because of that, these endpoints may return:
+	•	404 Batch job not found
+
+even if a batch job was successfully created just moments earlier.
+
+Affected endpoints:
+	•	GET /api/aihire/social-screen/batch/[batchJobId]
+	•	GET /api/aihire/social-screen/batch/[batchJobId]/results
+	•	POST /api/aihire/social-screen/batch/[batchJobId]/retry
+
+So the endpoint shape is correct, but persistence is not durable yet.
+
+⸻
+
+Root cause summary
+
+The main problem is not route wiring anymore.
+
+The current blocker is:
+	•	batch state is stored only in RAM
+	•	Next.js dev mode can re-evaluate modules
+	•	the Map gets reset
+	•	later polling requests cannot find the same batchJobId
+
+So the app behaves like this:
+	1.	create batch job successfully
+	2.	receive valid batch ID
+	3.	poll later
+	4.	get 404 Batch job not found
+
+That is expected with the current in-memory prototype store.
+
+⸻
+
+Commands run and expected output
+
+### 1) Verify the base batch route is live
 ```bash
-curl -X POST http://localhost:3000/api/aihire/social-screen \
+curl -i http://localhost:3000/api/aihire/social-screen/batch
+```
+
+Expect:
+```bash
+HTTP/1.1 200 OK
+content-type: application/json
+. . . . . 
+{"ok":true,"message":"Social screen batch endpoint is live.","methods":["GET","POST"]}
+```
+What this proves:
+	•	the route exists
+	•	GET is exported correctly
+	•	Next is loading the file successfully
+
+
+### 2) Create a new batch job
+
+Command:
+```bash
+curl -i -X POST http://localhost:3000/api/aihire/social-screen/batch \
   -H "Content-Type: application/json" \
   -d '{
-    "candidateId": "cand_np_001",
-    "name": "Nguyen Phan Nguyen",
-    "roleTitle": "AI Music Engineer",
-    "school": "Georgia Tech",
-    "resumeText": "Developed real-time AI music transcription engine with <100ms latency. Built React-based music visualization dashboard used by 10K+ users. 3 years of ML and web development experience with strong PyTorch and full-stack skills.",
-    "linkedin": {
-      "url": "https://www.linkedin.com/in/nguyenpn1/",
-      "headline": "AI Music Engineer",
-      "currentCompany": "Independent / Project-based",
-      "school": "Georgia Tech",
-      "skills": ["PyTorch", "React", "TypeScript", "Python", "Full-stack"],
-      "experiences": [
-        {
-          "title": "AI Music Engineer",
-          "company": "Independent",
-          "start": "2024",
-          "end": "Present",
-          "description": "Built AI music and real-time audio systems."
-        }
-      ]
-    },
-    "github": {
-      "url": "https://github.com/ngstephen1",
-      "username": "ngstephen1",
-      "displayName": "Nguyen Phan Nguyen",
-      "bio": "Software engineer building tools and ML products",
-      "followers": 89,
-      "following": 124,
-      "contributionsLastYear": 847,
-      "pinnedRepos": [
-        {
-          "name": "react-travel-ui",
-          "description": "Component library for travel apps",
-          "language": "TypeScript",
-          "stars": 67
-        },
-        {
-          "name": "ai-booking-engine",
-          "description": "ML-powered recommendation system",
-          "language": "Python",
-          "stars": 45
-        }
-      ],
-      "topLanguages": ["TypeScript", "Python", "JavaScript", "Go"]
-    },
-    "web": {
-      "queries": [
-        "Nguyen Phan Nguyen developer",
-        "Nguyen Phan Nguyen hackathon"
-      ],
-      "results": [
-        {
-          "title": "Conference talk found",
-          "snippet": "Built scalable apps and presented at a university tech event.",
-          "source": "google"
-        },
-        {
-          "title": "Hackathon winner",
-          "snippet": "Placed in a student hackathon with an AI project.",
-          "source": "google"
-        }
-      ]
-    }
+    "candidates": [
+      {
+        "candidateId": "cand_001",
+        "name": "Nguyen Phan Nguyen",
+        "roleTitle": "Software Engineer",
+        "school": "Virginia Tech",
+        "resumeText": "Built real-time systems and AI projects."
+      },
+      {
+        "candidateId": "cand_002",
+        "name": "Lam Anh Truong",
+        "roleTitle": "Software Engineer",
+        "school": "George Mason University",
+        "resumeText": "Full-stack developer with cloud and AI experience."
+      }
+    ]
   }'
 ```
 
-Summary
+Expect:
 
-The Social Screen API is ready for teammate integration/testing.
+```bash
+HTTP/1.1 202 Accepted
+content-type: application/json
+. . . . . . 
+{"ok":true,"batchJobId":"ssb_1772426727353_wydcxm","status":"running","totalCandidates":2,"createdAt":"2026-03-02T04:45:27.353Z"}
+```
 
-Safe assumptions for frontend/API integration:
-	•	endpoint exists
-	•	response shape is stable
-	•	Bedrock is connected
-	•	parser works
-	•	metrics are exposed
-	•	current report is reliable for demo/testing
+What this proves:
+	•	POST works
+	•	request body validation works
+	•	batch job creation works
+	•	the async runner is being started
+	•	a real batch ID is generated
 
-Main next engineering task:
-	•	merge Bedrock findings into final report without breaking deterministic stability
+
+### 3) Save the returned batch ID in shell
+
+From the example above, the real batch ID is:
+
+Expected result:
+	•	no terminal output
+	•	just sets a shell variable for reuse
+
+Important:
+	•	do not use placeholders like NEW_BATCH_JOB_ID
+	•	do not use paste_the_real_id_here
+	•	use the exact returned value from the POST response
+
+### 4) Check batch status
+```bash
+curl -i "http://localhost:3000/api/aihire/social-screen/batch/$BATCH_ID"
+```
+
+Expect:
+```bash
+HTTP/1.1 404 Not Found
+content-type: application/json
+. . . . . . 
+{"ok":false,"error":"Batch job not found"}
+```
+
+What this currently means:
+	•	the nested route is now recognized
+	•	the handler is running
+	•	but the in-memory store no longer contains that batch ID
+
+So this is not a route-not-found problem anymore.
+It is a state persistence problem.
+
+### 5) Check batch results
+
+```bash
+curl -i "http://localhost:3000/api/aihire/social-screen/batch/$BATCH_ID/results"
+```
+
+Stephen output Now!?
+```bash
+HTTP/1.1 404 Not Found
+content-type: application/json
+. . . . . 
+{"ok":false,"error":"Batch job not found"}
+```
+
+What this means:
+	•	results route is mounted
+	•	GET handler is valid
+	•	but the batch lookup fails because the job is no longer in memory
+
+### 6) Retry an existing batch
+```bash
+curl -i -X POST "http://localhost:3000/api/aihire/social-screen/batch/$BATCH_ID/retry"
+```
+
+Current Stephen output:
+```json
+HTTP/1.1 404 Not Found
+content-type: application/json
+. . . . . 
+
+{"ok":false,"error":"Batch job not found"}
+```
+
+What this means:
+	•	retry route is mounted
+	•	POST handler is valid
+	•	but the original batch is missing from the in-memory Map
+
+### 7) Confirm the store exports exist
+
+Command:
+```bash
+grep -n "export function createSocialScreenBatchJob" "apps/web-client/src/lib/aihire/socialScreenBatchStore.ts"
+```
+
+Expected output: 47:export function createSocialScreenBatchJob(
+
+What this proves:
+	•	earlier “no exports” problem is fixed
+	•	the store file is no longer empty
+	•	the base route can import the expected function
+
+### 8) Inspect the store contents manually
+
+Expected output:
+	•	TypeScript source code showing:
+	•	batchStore = new Map<string, SocialScreenBatchJob>()
+	•	createSocialScreenBatchJob(...)
+	•	getSocialScreenBatchJob(...)
+	•	updateSocialScreenBatchJob(...)
+	•	resetSocialScreenBatchJob(...)
+
+What this proves:
+	•	storage is currently memory-only
+	•	there is no DB / Redis / file persistence yet
+
+
+### 9) Inspect nested route handlers
+
+Expected output:
+	•	TypeScript code for each route
+	•	imports from @/lib/aihire/socialScreenBatchStore
+	•	handlers using getSocialScreenBatchJob(...)
+
+What this proves:
+	•	the files are no longer blank
+	•	route handlers are present
+	•	404s are coming from app logic, not missing files
+
+⸻
+
+What was broken earlier and is now fixed
+
+Fixed: missing or blank route files
+
+Previously:
+	•	some route files printed nothing with sed
+	•	they were either empty or not properly created
+
+Now:
+	•	they contain working TypeScript handlers
+
+⸻
+
+Fixed: incorrect import names
+
+Previously:
+	•	nested routes tried importing getBatchJob
+	•	but the store exports getSocialScreenBatchJob
+
+Now:
+	•	imports were corrected to the actual exported function names
+
+⸻
+
+Fixed: base route compilation issue
+
+Previously:
+	•	Next reported createSocialScreenBatchJob did not exist
+	•	because the target file had no exports at that time
+
+Now:
+	•	the export exists
+	•	the base route responds correctly
+
+⸻
+
+Fixed: zsh path creation issue with [batchJobId]
+
+Previously:
+	•	mkdir and touch failed because zsh treated square brackets as glob patterns
+
+Now:
+	•	quoting the paths solved it
+
+Correct pattern:
+```bash
+mkdir -p "apps/web-client/src/app/api/aihire/social-screen/batch/[batchJobId]/retry"
+mkdir -p "apps/web-client/src/app/api/aihire/social-screen/batch/[batchJobId]/results"
+```
+
+
+What is still not production-ready
+
+1) No durable persistence
+
+Current store is only a local in-memory Map.
+
+That means:
+	•	jobs do not survive reloads
+	•	teammates cannot reliably poll old jobs
+	•	frontend polling is fragile
+
+⸻
+
+2) No shared state across processes
+
+If the app runs:
+	•	in another process
+	•	in another server instance
+	•	in serverless environments
+	•	after a restart
+
+the in-memory Map will be empty.
+
+So current behavior is not suitable for:
+	•	deployment
+	•	shared QA
+	•	stable frontend polling
+	•	team handoff beyond local prototype
+
+⸻
+
+3) Retry depends on the original in-memory job
+
+The retry endpoint needs the old batch to still exist in the Map.
+If it is gone, retry cannot work.
+
+So retry is structurally implemented, but not reliable yet.
+
+⸻
+
+Recommended next fix
+
+Replace the in-memory Map with durable storage.
+
+Best options:
+	•	Supabase table
+	•	Postgres
+	•	Redis / Upstash
+	•	another server-side persistent store
+
+After that:
+	•	batchJobId will remain valid after reloads
+	•	status polling will work consistently
+	•	results polling will work
+	•	retry will work reliably
+	•	teammates can test the same job from their own requests
+
+⸻
+
+Recommended next implementation target
+
+Minimum production-safe upgrade
+
+Create a social_screen_batch_jobs table with fields like:
+	•	batch_job_id
+	•	status
+	•	created_at
+	•	updated_at
+	•	total_candidates
+	•	completed_candidates
+	•	failed_candidates
+	•	payload_json
+	•	results_json
+
+Then update these functions to read/write from the DB instead of a Map:
+	•	createSocialScreenBatchJob
+	•	getSocialScreenBatchJob
+	•	updateSocialScreenBatchJob
+	•	resetSocialScreenBatchJob
+
+That will preserve the exact same API contract while making state durable.
