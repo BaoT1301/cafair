@@ -22,6 +22,10 @@
   </em></p>
 </div>
 
+<div align="center">
+  <h3><a href="https://amazon-nova.devpost.com">amazon-nova.devpost.com</a></h3>
+</div>
+
 ---
 
 <p align="center">
