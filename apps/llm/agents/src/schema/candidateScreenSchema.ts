@@ -1,16 +1,18 @@
-// Path: apps/llm/agents/src/schemas/candidateScreenSchema.ts
+// Path: apps/llm/agents/src/schema/candidateScreenSchema.ts
 //
 // Shared schema + validation helpers for recruiter-side candidate screening.
-// This is useful when you want a stronger, production-style validation layer
-// after Bedrock / Nova responses.
+// Strong validation layer for Bedrock / Nova structured output.
 //
-// If zod is installed in your repo, this file uses it.
-// If not, a lightweight manual validator is also provided.
-//
-// Install (recommended):
+// Install:
 //   npm install zod
 
 import { z } from "zod";
+
+export const CandidateScreenProviderEnum = z.enum([
+  "stub",
+  "bedrock-converse",
+  "bedrock-invoke",
+]);
 
 export const CandidateScreenRecommendationEnum = z.enum([
   "INTERVIEW",
@@ -32,9 +34,11 @@ export type CandidateScreenSchemaType = z.infer<typeof CandidateScreenSchema>;
 export const CandidateScreenSchemaWithMeta = z.object({
   candidateId: z.string().min(1),
   modelId: z.string().min(1).optional(),
-  provider: z.enum(["stub", "bedrock-converse", "bedrock-invoke"]).optional(),
+  provider: CandidateScreenProviderEnum.optional(),
   degraded: z.boolean().optional(),
   usedFallback: z.boolean().optional(),
+  parseOk: z.boolean().optional(),
+  validationOk: z.boolean().optional(),
   result: CandidateScreenSchema,
 });
 
@@ -42,15 +46,24 @@ export type CandidateScreenSchemaWithMetaType = z.infer<
   typeof CandidateScreenSchemaWithMeta
 >;
 
+function formatZodErrors(error: z.ZodError): string[] {
+  return error.issues.map((issue) => {
+    const path = issue.path.length ? issue.path.join(".") : "root";
+    return `${path}: ${issue.message}`;
+  });
+}
+
 export function validateCandidateScreen(
   input: unknown
-): {
-  ok: true;
-  data: CandidateScreenSchemaType;
-} | {
-  ok: false;
-  errors: string[];
-} {
+):
+  | {
+      ok: true;
+      data: CandidateScreenSchemaType;
+    }
+  | {
+      ok: false;
+      errors: string[];
+    } {
   const parsed = CandidateScreenSchema.safeParse(input);
 
   if (parsed.success) {
@@ -62,22 +75,21 @@ export function validateCandidateScreen(
 
   return {
     ok: false,
-    errors: parsed.error.issues.map((issue) => {
-      const path = issue.path.length ? issue.path.join(".") : "root";
-      return `${path}: ${issue.message}`;
-    }),
+    errors: formatZodErrors(parsed.error),
   };
 }
 
 export function validateCandidateScreenWithMeta(
   input: unknown
-): {
-  ok: true;
-  data: CandidateScreenSchemaWithMetaType;
-} | {
-  ok: false;
-  errors: string[];
-} {
+):
+  | {
+      ok: true;
+      data: CandidateScreenSchemaWithMetaType;
+    }
+  | {
+      ok: false;
+      errors: string[];
+    } {
   const parsed = CandidateScreenSchemaWithMeta.safeParse(input);
 
   if (parsed.success) {
@@ -89,52 +101,63 @@ export function validateCandidateScreenWithMeta(
 
   return {
     ok: false,
-    errors: parsed.error.issues.map((issue) => {
-      const path = issue.path.length ? issue.path.join(".") : "root";
-      return `${path}: ${issue.message}`;
-    }),
+    errors: formatZodErrors(parsed.error),
   };
 }
 
-// Optional manual normalization helper
-// Useful if model output is close-but-not-perfect and you want a safe fallback path.
-export function normalizeCandidateScreenLoose(input: any): CandidateScreenSchemaType {
-  const rawScore =
-    typeof input?.score === "number" ? input.score : Number(input?.score);
+function toCleanStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
 
-  const score = Number.isFinite(rawScore)
-    ? Math.max(0, Math.min(100, Math.round(rawScore)))
-    : 75;
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+}
 
-  const strengths = Array.isArray(input?.strengths)
-    ? input.strengths
-        .map((v: unknown) => (typeof v === "string" ? v.trim() : ""))
-        .filter(Boolean)
-    : [];
+function toRecommendation(
+  value: unknown
+): CandidateScreenSchemaType["recommendation"] {
+  const raw =
+    typeof value === "string" ? value.trim().toUpperCase() : "";
 
-  const concerns = Array.isArray(input?.concerns)
-    ? input.concerns
-        .map((v: unknown) => (typeof v === "string" ? v.trim() : ""))
-        .filter(Boolean)
-    : [];
+  if (
+    raw === "INTERVIEW" ||
+    raw === "SCREEN" ||
+    raw === "HOLD" ||
+    raw === "REJECT"
+  ) {
+    return raw;
+  }
+
+  return "SCREEN";
+}
+
+function toScore(value: unknown): number {
+  const n = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(n)) return 75;
+
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+// Safe normalization helper for near-valid model output.
+export function normalizeCandidateScreenLoose(
+  input: unknown
+): CandidateScreenSchemaType {
+  const obj = (input && typeof input === "object" ? input : {}) as Record<
+    string,
+    unknown
+  >;
+
+  const score = toScore(obj.score);
+  const strengths = toCleanStringArray(obj.strengths);
+  const concerns = toCleanStringArray(obj.concerns);
 
   const summary =
-    typeof input?.summary === "string" && input.summary.trim()
-      ? input.summary.trim()
+    typeof obj.summary === "string" && obj.summary.trim()
+      ? obj.summary.trim()
       : "Candidate screening completed.";
 
-  const recommendationRaw =
-    typeof input?.recommendation === "string"
-      ? input.recommendation.trim().toUpperCase()
-      : "";
-
-  const recommendation: CandidateScreenSchemaType["recommendation"] =
-    recommendationRaw === "INTERVIEW" ||
-    recommendationRaw === "SCREEN" ||
-    recommendationRaw === "HOLD" ||
-    recommendationRaw === "REJECT"
-      ? recommendationRaw
-      : "SCREEN";
+  const recommendation = toRecommendation(obj.recommendation);
 
   return {
     score,
