@@ -1,6 +1,6 @@
 <div align="center">
   <picture>
-    <img src="./assets/ai-hire-ai-banner.svg" alt="AI Hire AI banner" width="900" />
+    <img src="./ai-hire-ai-banner.svg" alt="AI Hire AI banner" width="900" />
   </picture>
 </div>
 
