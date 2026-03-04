@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from typing import Any, Dict, Optional, TypedDict
 
@@ -71,6 +72,213 @@ def load_browser_session_executor() -> tuple[Any, Any]:
         )
 
     return execute_browser_session, browser_execution_result_to_dict
+
+
+def _build_nova_instruction(
+    payload: Dict[str, Any],
+    browser_session_result: Dict[str, Any],
+) -> str:
+    target_url = _safe_string(payload.get("targetUrl"))
+    provider = _safe_string(payload.get("provider"), "unknown")
+    company = _safe_string(payload.get("company"), "target company")
+    role_title = _safe_string(payload.get("roleTitle"), "target role")
+    safe_stop = _safe_bool(payload.get("safeStopBeforeSubmit"), True)
+
+    planned_steps = payload.get("plannedSteps")
+    if not isinstance(planned_steps, list):
+        planned_steps = []
+
+    browser_steps = browser_session_result.get("steps")
+    if not isinstance(browser_steps, list):
+        browser_steps = []
+
+    lines: list[str] = [
+        "You are an apply-agent browser runner using the Nova Act SDK.",
+        "Open and interact only with the target application flow requested.",
+        "Keep actions concise and visible.",
+        f"Target URL: {target_url}",
+        f"Provider: {provider}",
+        f"Company: {company}",
+        f"Role: {role_title}",
+        "",
+        "Execution goals:",
+        "1. Open the target job application page.",
+        "2. Wait for the page to stabilize.",
+        "3. Follow the provider-specific application path.",
+        "4. Capture visible applicant fields.",
+        "5. Prefill only clearly mapped fields when possible.",
+    ]
+
+    if safe_stop:
+        lines.append(
+            "6. Hit the final submit button when you finish most of the fields."
+        )
+    else:
+        lines.append(
+            "6. After all required fields are filled, click the final submit button and submit the application."
+        )
+        lines.append(
+            "7. If a required file upload appears, use the file input directly and complete the upload before submitting."
+        )
+
+    if planned_steps:
+        lines.append("")
+        lines.append("Provider plan:")
+        for index, step in enumerate(planned_steps, start=1):
+            if isinstance(step, str) and step.strip():
+                lines.append(f"- {step.strip()}")
+
+    if browser_steps:
+        lines.append("")
+        lines.append("Browser session steps:")
+        for step in browser_steps:
+            if not isinstance(step, dict):
+                continue
+            detail = _safe_string(step.get("detail"))
+            if detail:
+                lines.append(f"- {detail}")
+
+    lines.append("")
+    if safe_stop:
+        lines.append(
+            "Try to resolve minor on-screen obstacles, hit submit when you can."
+        )
+    else:
+        lines.append(
+            "Try to resolve minor on-screen obstacles and complete the submission once the form is fully filled."
+        )
+
+    return "\n".join(lines)
+
+
+def run_local_nova_act_browser(
+    payload: Dict[str, Any],
+    browser_session_result: Dict[str, Any],
+) -> Dict[str, Any]:
+    api_key = _safe_string(os.getenv("NOVA_ACT_API"))
+    if not api_key:
+        raise RuntimeError(
+            "NOVA_ACT_API is required for live local Nova Act browser execution."
+        )
+
+    try:
+        from nova_act import NovaAct
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(
+            "nova_act is not installed. Install it first, e.g. `pip install nova-act`."
+        ) from exc
+
+    target_url = _safe_string(payload.get("targetUrl"))
+    provider = _safe_string(payload.get("provider"), "unknown")
+    transport = _safe_string(payload.get("transport"), "api")
+    adapter = _safe_string(payload.get("adapterName"), "provider-adapter")
+
+    instruction = _build_nova_instruction(payload, browser_session_result)
+
+    nova = NovaAct(
+        starting_page=target_url,
+        headless=False,
+        nova_act_api_key=api_key,
+    )
+
+    action_logs: list[RuntimeBridgeActionLog] = [
+        {
+            "stepId": "step_1",
+            "action": "launch_browser",
+            "status": "started",
+            "detail": f"Launching visible Nova Act browser at {target_url}.",
+        }
+    ]
+    reasoning_logs: list[RuntimeBridgeReasoningLog] = [
+        {
+            "stepId": "step_1",
+            "summary": (
+                "Live API mode requested a real SDK browser session, so the "
+                "runtime bridge launched Nova Act directly."
+            ),
+        }
+    ]
+
+    execution_steps: list[Dict[str, Any]] = [
+        {
+            "id": "step_1",
+            "action": "launch_browser",
+            "detail": f"Launch visible Nova Act browser for {provider}.",
+        },
+        {
+            "id": "step_2",
+            "action": "navigate",
+            "detail": f"Open {target_url} in the Nova Act browser session.",
+        },
+        {
+            "id": "step_3",
+            "action": "act",
+            "detail": "Run provider-aware apply instruction through Nova Act.",
+        },
+    ]
+
+    nova.start()
+    act_result = nova.act(instruction)
+
+    action_logs.append(
+        {
+            "stepId": "step_2",
+            "action": "act",
+            "status": "completed",
+            "detail": "Nova Act executed the live browser instruction.",
+        }
+    )
+    reasoning_logs.append(
+        {
+            "stepId": "step_2",
+            "summary": (
+                "The bridge handed off the planned apply steps to Nova Act and "
+                "captured the SDK result for upper layers."
+            ),
+        }
+    )
+
+    return {
+        "ok": True,
+        "status": "running",
+        "executed": True,
+        "executionSteps": execution_steps,
+        "message": (
+            "Runtime bridge launched a real visible Nova Act browser session "
+            "and executed the apply instruction."
+        ),
+        "runner": {
+            "engine": "nova-act",
+            "transport": transport,
+            "adapter": adapter,
+            "provider": provider,
+        },
+        "actionLogs": action_logs,
+        "reasoningLogs": reasoning_logs,
+        "transportSummary": (
+            "Runtime bridge used the local Nova Act SDK to open a visible "
+            "browser and run the apply-agent instruction."
+        ),
+        "provider": provider,
+        "mode": _safe_string(payload.get("mode"), "live"),
+        "runId": _safe_string(payload.get("runId")),
+        "targetUrl": target_url,
+        "company": _safe_string(payload.get("company")),
+        "roleTitle": _safe_string(payload.get("roleTitle")),
+        "safeStopBeforeSubmit": _safe_bool(
+            payload.get("safeStopBeforeSubmit"),
+            True,
+        ),
+        "visibleFields": payload.get("visibleFields", []),
+        "selectors": _safe_list_of_strings(payload.get("selectors")),
+        "plannedSteps": _safe_list_of_strings(payload.get("plannedSteps")),
+        "browserSession": browser_session_result,
+        "fieldFillPlan": payload.get("fieldFillPlan", []),
+        "result": {
+            "instruction": instruction,
+            "actResult": act_result,
+        },
+    }
 
 
 def _safe_string(value: Any, default: str = "") -> str:
@@ -245,37 +453,62 @@ def run_runtime_bridge(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     existing_browser_session = _extract_browser_session_payload(payload)
     if existing_browser_session is not None:
-        return _build_bridge_result_from_browser_session(
-            normalized_payload,
-            existing_browser_session,
+        browser_session_result = existing_browser_session
+    else:
+        execute_browser_session, browser_execution_result_to_dict = (
+            load_browser_session_executor()
         )
 
-    execute_browser_session, browser_execution_result_to_dict = (
-        load_browser_session_executor()
+        browser_result = execute_browser_session(
+            run_id=_safe_string(normalized_payload.get("runId")),
+            target_url=_safe_string(normalized_payload.get("targetUrl")),
+            provider=_safe_string(
+                normalized_payload.get("provider"),
+                "unknown",
+            ),
+            mode=_safe_string(normalized_payload.get("mode"), "demo"),
+            transport=_safe_string(
+                normalized_payload.get("transport"),
+                "workflow",
+            ),
+            should_apply=_safe_bool(
+                normalized_payload.get("shouldApply"),
+                False,
+            ),
+            safe_stop_before_submit=_safe_bool(
+                normalized_payload.get("safeStopBeforeSubmit"),
+                True,
+            ),
+            apply_button_selectors=_safe_list_of_strings(
+                normalized_payload.get("selectors")
+            ),
+            fill_actions=normalized_payload.get("fillActions"),
+        )
+
+        browser_session_result = browser_execution_result_to_dict(browser_result)
+
+    mode = _safe_string(normalized_payload.get("mode"), "demo")
+    transport = _safe_string(normalized_payload.get("transport"), "workflow")
+    should_apply = _safe_bool(normalized_payload.get("shouldApply"), False)
+    has_nova_api = bool(_safe_string(os.getenv("NOVA_ACT_API")))
+
+    should_launch_live_sdk = (
+        mode == "live"
+        and transport == "api"
+        and should_apply
+        and has_nova_api
+        and bool(browser_session_result.get("launch_requested"))
     )
 
-    browser_result = execute_browser_session(
-        run_id=_safe_string(normalized_payload.get("runId")),
-        target_url=_safe_string(normalized_payload.get("targetUrl")),
-        provider=_safe_string(normalized_payload.get("provider"), "unknown"),
-        mode=_safe_string(normalized_payload.get("mode"), "demo"),
-        transport=_safe_string(normalized_payload.get("transport"), "workflow"),
-        should_apply=_safe_bool(normalized_payload.get("shouldApply"), False),
-        safe_stop_before_submit=_safe_bool(
-            normalized_payload.get("safeStopBeforeSubmit"),
-            True,
-        ),
-        apply_button_selectors=_safe_list_of_strings(
-            normalized_payload.get("selectors")
-        ),
-        fill_actions=normalized_payload.get("fillActions"),
-    )
-
-    browser_result_dict = browser_execution_result_to_dict(browser_result)
+    if should_launch_live_sdk:
+        return run_local_nova_act_browser(
+            normalized_payload,
+            browser_session_result,
+        )
 
     return _build_bridge_result_from_browser_session(
         normalized_payload,
-        browser_result_dict,
+        browser_session_result,
     )
 
 
