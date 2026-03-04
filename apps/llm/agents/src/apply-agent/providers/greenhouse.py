@@ -1,5 +1,3 @@
-# Path: apps/llm/agents/src/apply-agent/providers/greenhouse.py
-
 from __future__ import annotations
 
 from typing import Any, List, Optional
@@ -56,6 +54,9 @@ class GreenhouseProviderAdapter(BaseProviderAdapter):
             "Find the Greenhouse Apply button.",
             "Open the application form.",
             "Capture visible applicant fields.",
+            "Greenhouse often shows both file upload and optional manual-entry paths for resumes.",
+            "If an 'Enter manually' / 'Resume link' / 'Portfolio' text field appears, paste the resume link there.",
+            "Do not rely on Finder/OS file upload if a manual text entry field is available.",
             "Return plan only without launching live browser automation.",
         ]
 
@@ -83,6 +84,9 @@ class GreenhouseProviderAdapter(BaseProviderAdapter):
             "Simulate clicking the Greenhouse Apply button.",
             "Simulate opening the application form.",
             "Simulate detecting visible applicant fields.",
+            "Greenhouse often shows both file upload and optional manual-entry paths for resumes.",
+            "If an 'Enter manually' / 'Resume link' text field appears, simulate pasting the resume link there.",
+            "Prefer manual resume text entry over Finder/OS file upload when both are present.",
             "Simulate prefilling saved candidate data.",
         ]
 
@@ -121,6 +125,9 @@ class GreenhouseProviderAdapter(BaseProviderAdapter):
             "Find the Greenhouse Apply button.",
             "Open the application form.",
             "Capture visible applicant fields.",
+            "Greenhouse often shows both file upload and optional manual-entry paths for resumes.",
+            "If an 'Enter manually' / 'Resume link' / 'Portfolio' text field appears, paste the resume link there.",
+            "Do not rely on Finder/OS file upload if a manual text entry field is available.",
             "Launch live browser automation.",
             "Prefill saved candidate data.",
         ]

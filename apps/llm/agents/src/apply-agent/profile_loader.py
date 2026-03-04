@@ -22,6 +22,7 @@ class ApplicantProfile:
     school: str
     degree: str
     graduation_date: str
+    resume_url: str
     resume_path: str
     cover_letter_path: str
     default_cover_letter_text: str
@@ -105,10 +106,10 @@ def _load_json_string(raw_json: str) -> Dict[str, Any]:
 
 def _env_profile_dict() -> Dict[str, Any]:
     return {
-        "first_name": os.getenv("APPLY_AGENT_FIRST_NAME", ""),
-        "last_name": os.getenv("APPLY_AGENT_LAST_NAME", ""),
-        "email": os.getenv("APPLY_AGENT_EMAIL", ""),
-        "phone": os.getenv("APPLY_AGENT_PHONE", ""),
+        "first_name": os.getenv("APPLY_AGENT_FIRST_NAME", "Lam Anh"),
+        "last_name": os.getenv("APPLY_AGENT_LAST_NAME", "Truong"),
+        "email": os.getenv("APPLY_AGENT_EMAIL", "npnallstar@gmail.com"),
+        "phone": os.getenv("APPLY_AGENT_PHONE", "5514049519"),
         "location": os.getenv("APPLY_AGENT_LOCATION", ""),
         "linkedin_url": os.getenv("APPLY_AGENT_LINKEDIN_URL", ""),
         "github_url": os.getenv("APPLY_AGENT_GITHUB_URL", ""),
@@ -121,11 +122,22 @@ def _env_profile_dict() -> Dict[str, Any]:
         "school": os.getenv("APPLY_AGENT_SCHOOL", ""),
         "degree": os.getenv("APPLY_AGENT_DEGREE", ""),
         "graduation_date": os.getenv("APPLY_AGENT_GRADUATION_DATE", ""),
+        "resume_url": os.getenv(
+            "APPLY_AGENT_RESUME_URL",
+            "https://drive.google.com/file/d/1wKb7hlbshHesim7XOc5pAx5dTjCptCdy/view?usp=sharing",
+        ),
         "resume_path": os.getenv("APPLY_AGENT_RESUME_PATH", ""),
         "cover_letter_path": os.getenv("APPLY_AGENT_COVER_LETTER_PATH", ""),
         "default_cover_letter_text": os.getenv(
             "APPLY_AGENT_DEFAULT_COVER_LETTER_TEXT",
-            "",
+            """Hi there!
+I am writing because I am genuinely obsessed with the idea of rebuilding business processes as "AI-native" rather than just slapping AI on top of old workflows. When I saw that is exactly what the Enterprise AI team at Flagship Pioneering is doing, I knew I had to reach out.
+I love building things that solve real problems. Recently, I built a tool using DeepSeek and a RAG pipeline to turn natural language into SQL queries so staff could get real-time reports without needing to know how to code. I’ve also architected event-driven systems on the cloud that boosted efficiency by 80%. Whether it’s writing Python scripts, deploying on AWS, or using tools like Claude and Gemini to automate a manual mess, I am happiest when I’m making a process faster and smarter.
+I am currently finishing my Master’s in Computer Science at George Mason University. While I have a strong technical background, I’m most excited about the "builder" aspect of this role—figuring out which tool fits the job and making sure it actually works reliably in the real world.
+I am ready to be in Cambridge full-time this June to help the team invent new ways of working. I’d love to show you how my experience in AI and automation can help Flagship Pioneering continue to transform human health.
+Best,
+Lam Anh Truong
+""",
         ),
     }
 
@@ -159,6 +171,12 @@ def normalize_applicant_profile(raw: Dict[str, Any]) -> ApplicantProfile:
     if not isinstance(files, dict):
         files = {}
 
+    def _looks_like_url(v: Any) -> bool:
+        if not isinstance(v, str):
+            return False
+        s = v.strip().lower()
+        return s.startswith("http://") or s.startswith("https://")
+
     resume_candidate = (
         raw.get("resume_path")
         or files.get("resume")
@@ -172,6 +190,15 @@ def normalize_applicant_profile(raw: Dict[str, Any]) -> ApplicantProfile:
         or files.get("cover_letter")
         or files.get("cover_letter_path")
         or raw.get("cover_letter")
+        or ""
+    )
+
+    resume_url_candidate = (
+        raw.get("resume_url")
+        or links.get("resume")
+        or files.get("resume_url")
+        or raw.get("resume_link")
+        or (raw.get("resume") if _looks_like_url(raw.get("resume")) else "")
         or ""
     )
 
@@ -204,6 +231,7 @@ def normalize_applicant_profile(raw: Dict[str, Any]) -> ApplicantProfile:
         graduation_date=_clean_string(
             raw.get("graduation_date") or education.get("graduation_date") or ""
         ),
+        resume_url=_clean_string(resume_url_candidate),
         resume_path=_existing_path_or_empty(resume_candidate),
         cover_letter_path=_existing_path_or_empty(cover_letter_candidate),
         default_cover_letter_text=_clean_string(

@@ -84,6 +84,32 @@ def _build_nova_instruction(
     role_title = _safe_string(payload.get("roleTitle"), "target role")
     safe_stop = _safe_bool(payload.get("safeStopBeforeSubmit"), True)
 
+    email = "npnallstar@gmail.com"
+    manual_resume_link = (
+        "https://drive.google.com/file/d/1wKb7hlbshHesim7XOc5pAx5dTjCptCdy/view?usp=sharing"
+    )
+    cover_letter_text = (
+        "Hi there!\n"
+        "I am writing because I am genuinely obsessed with the idea of rebuilding business processes as "
+        "\"AI-native\" rather than just slapping AI on top of old workflows. When I saw that is exactly "
+        "what the Enterprise AI team at Flagship Pioneering is doing, I knew I had to reach out.\n"
+        "I love building things that solve real problems. Recently, I built a tool using DeepSeek and "
+        "a RAG pipeline to turn natural language into SQL queries so staff could get real-time reports "
+        "without needing to know how to code. I’ve also architected event-driven systems on the cloud "
+        "that boosted efficiency by 80%. Whether it’s writing Python scripts, deploying on AWS, or using "
+        "tools like Claude and Gemini to automate a manual mess, I am happiest when I’m making a process "
+        "faster and smarter.\n"
+        "I am currently finishing my Master’s in Computer Science at George Mason University. While I "
+        "have a strong technical background, I’m most excited about the \"builder\" aspect of this "
+        "role—figuring out which tool fits the job and making sure it actually works reliably in the "
+        "real world.\n"
+        "I am ready to be in Cambridge full-time this June to help the team invent new ways of working. "
+        "I’d love to show you how my experience in AI and automation can help Flagship Pioneering "
+        "continue to transform human health.\n"
+        "Best,\n"
+        "Lam Anh Truong"
+    )
+
     planned_steps = payload.get("plannedSteps")
     if not isinstance(planned_steps, list):
         planned_steps = []
@@ -100,13 +126,21 @@ def _build_nova_instruction(
         f"Provider: {provider}",
         f"Company: {company}",
         f"Role: {role_title}",
+        f"Use this email exactly: {email}",
+        (
+            "Use this manual resume link exactly for any manual resume, "
+            "enter manually, resume link, portfolio, or website field: "
+            f"{manual_resume_link}"
+        ),
+        "Use the provided cover letter text exactly when a cover letter text area appears.",
+        "Prefer a manual text field over the OS file picker if both appear for resume submission.",
         "",
         "Execution goals:",
         "1. Open the target job application page.",
         "2. Wait for the page to stabilize.",
         "3. Follow the provider-specific application path.",
         "4. Capture visible applicant fields.",
-        "5. Prefill only clearly mapped fields when possible.",
+        "5. Prefill clearly mapped fields using the provided candidate values.",
     ]
 
     if safe_stop:
@@ -121,10 +155,29 @@ def _build_nova_instruction(
             "7. If a required file upload appears, use the file input directly and complete the upload before submitting."
         )
 
+    lines.extend(
+        [
+            "",
+            "Candidate-specific fill rules:",
+            f"- Email fields: always type {email}",
+            (
+                "- If a manual resume text field appears (for example Enter manually, "
+                "Resume link, Portfolio, Website, or Link), type this exact URL: "
+                f"{manual_resume_link}"
+            ),
+            (
+                "- If both a manual text field and a file upload control appear for "
+                "resume, prefer the manual text field first and avoid the OS file picker."
+            ),
+            "- If a cover letter textarea appears, paste this exact cover letter text:",
+            cover_letter_text,
+        ]
+    )
+
     if planned_steps:
         lines.append("")
         lines.append("Provider plan:")
-        for index, step in enumerate(planned_steps, start=1):
+        for step in planned_steps:
             if isinstance(step, str) and step.strip():
                 lines.append(f"- {step.strip()}")
 
@@ -141,15 +194,14 @@ def _build_nova_instruction(
     lines.append("")
     if safe_stop:
         lines.append(
-            "Try to resolve minor on-screen obstacles, hit submit when you can."
+            "Try to resolve minor on-screen obstacles, but prefer typing into manual text fields instead of triggering the OS file picker, and stop only when the requested safe-stop behavior applies."
         )
     else:
         lines.append(
-            "Try to resolve minor on-screen obstacles and complete the submission once the form is fully filled."
+            "Try to resolve minor on-screen obstacles, prefer typing into manual text fields instead of triggering the OS file picker, and complete the submission once the form is fully filled."
         )
 
     return "\n".join(lines)
-
 
 def run_local_nova_act_browser(
     payload: Dict[str, Any],

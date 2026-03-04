@@ -15,6 +15,29 @@ class AshbyProviderAdapter(BaseProviderAdapter):
         fields.extend(
             [
                 VisibleField(
+                    name="resume_link",
+                    label="Resume Link / Enter manually",
+                    field_type="text",
+                    required=False,
+                    selector=(
+                        "input[name*='resumeLink'], input[id*='resumeLink'], "
+                        "input[name*='resume_link'], input[id*='resume_link'], "
+                        "input[placeholder*='Resume' i], input[aria-label*='Resume' i], "
+                        "input[name*='link'], input[id*='link'], input"
+                    ),
+                ),
+                VisibleField(
+                    name="portfolio_link",
+                    label="Portfolio / Website / Link",
+                    field_type="text",
+                    required=False,
+                    selector=(
+                        "input[name*='portfolio'], input[id*='portfolio'], "
+                        "input[name*='website'], input[id*='website'], "
+                        "input[placeholder*='portfolio' i], input[placeholder*='website' i], input"
+                    ),
+                ),
+                VisibleField(
                     name="phone",
                     label="Phone",
                     field_type="tel",
@@ -107,8 +130,10 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 step_id="step_3",
                 action="inspect_resume_autofill",
                 detail=(
-                    "Plan to upload the resume first because Ashby commonly "
-                    "uses resume upload to autofill candidate details."
+                    "First, look for manual resume/portfolio URL fields (e.g., "
+                    "'Resume Link', 'Enter manually', 'Website', 'Portfolio'). "
+                    "Prefer pasting a resume URL into a text field when available. "
+                    "Only use file upload if no manual URL/text field exists."
                 ),
             ),
             ExecutionStep(
@@ -175,8 +200,9 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 step_id="step_3",
                 action="simulate_resume_upload",
                 detail=(
-                    "Simulate uploading the resume first to trigger Ashby "
-                    "autofill for core applicant details."
+                    "Simulate checking for a manual resume/portfolio URL field first. "
+                    "If present, simulate pasting the resume link. "
+                    "Only simulate file upload if no manual URL/text field exists."
                 ),
             ),
             ExecutionStep(
@@ -266,8 +292,9 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 step_id="step_4",
                 action="upload_resume",
                 detail=(
-                    "Upload the resume first so Ashby can autofill applicant "
-                    "details when available."
+                    "Prefer manual resume/portfolio URL fields when present: "
+                    "paste the resume link into 'Resume Link'/'Enter manually' style inputs. "
+                    "Only use OS file upload if there is no manual URL/text field."
                 ),
             ),
             ExecutionStep(

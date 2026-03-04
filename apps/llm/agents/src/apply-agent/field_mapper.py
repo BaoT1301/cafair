@@ -1,5 +1,3 @@
-# path: cafair/apps/llm/agents/src/apply-agent/field_mapper.py
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -131,6 +129,7 @@ def _match_profile_attribute(field_name: str, label: str) -> Optional[str]:
                 "website",
                 "personal_website",
                 "homepage",
+                "link",
             ),
             "portfolio_url",
         ),
@@ -179,8 +178,21 @@ def _match_profile_attribute(field_name: str, label: str) -> Optional[str]:
         ),
         (
             (
+                "enter_manually",
+                "manual_resume",
+                "resume_link",
+                "resume_url",
+                "resume_manual",
+                "resume_manual_url",
+            ),
+            "resume_url",
+        ),
+        (
+            (
                 "resume",
                 "resume_file",
+                "resume_cv",
+                "resume_cv_file",
                 "cv",
                 "cv_file",
             ),
@@ -190,6 +202,12 @@ def _match_profile_attribute(field_name: str, label: str) -> Optional[str]:
             (
                 "cover_letter",
                 "coverletter",
+                "cover_letter_text",
+            ),
+            "cover_letter_text",
+        ),
+        (
+            (
                 "cover_letter_file",
             ),
             "cover_letter_path",
@@ -274,7 +292,50 @@ def map_visible_fields_to_profile(
         selector = _normalize_text(field.get("selector"))
         required = bool(field.get("required", False))
 
-        matched_attr = _match_profile_attribute(field_name, label)
+        field_name_key = _normalize_key(field_name)
+        label_key = _normalize_key(label)
+        combined_key = f"{field_name_key} {label_key}".strip()
+
+        if _contains_any(
+            combined_key,
+            (
+                "enter_manually",
+                "manual_resume",
+                "resume_link",
+                "resume_url",
+                "resume_manual",
+                "resume_manual_url",
+            ),
+        ):
+            matched_attr = "resume_url"
+        elif _contains_any(
+            combined_key,
+            (
+                "cover_letter",
+                "coverletter",
+            ),
+        ) and _normalize_key(field_type) not in {"file", "upload"}:
+            matched_attr = "cover_letter_text"
+        elif _contains_any(
+            combined_key,
+            (
+                "portfolio",
+                "portfolio_url",
+                "website",
+                "personal_website",
+                "homepage",
+                "link",
+            ),
+        ) and _contains_any(
+            combined_key,
+            (
+                "resume",
+                "cv",
+            ),
+        ):
+            matched_attr = "resume_url"
+        else:
+            matched_attr = _match_profile_attribute(field_name, label)
 
         if matched_attr is None:
             mapped.append(
@@ -355,14 +416,18 @@ def build_provider_payload(
     if provider_key == "greenhouse":
         payload["supports_resume_autofill"] = True
         payload["prefers_resume_upload_first"] = True
+        payload["supports_manual_resume_url"] = True
     elif provider_key == "ashby":
         payload["supports_resume_autofill"] = True
         payload["prefers_resume_upload_first"] = True
+        payload["supports_manual_resume_url"] = True
     elif provider_key == "workday":
         payload["supports_resume_autofill"] = True
         payload["prefers_resume_upload_first"] = False
+        payload["supports_manual_resume_url"] = True
     else:
         payload["supports_resume_autofill"] = False
         payload["prefers_resume_upload_first"] = False
+        payload["supports_manual_resume_url"] = False
 
     return payload
