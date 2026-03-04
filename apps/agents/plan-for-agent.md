@@ -37,6 +37,7 @@
 
 - [ ] Implement MCP (Model Context Protocol) Server ideas
 
+- [ ] Use Nova Act Agent to automate our own web app ./ last priority
 
 ---
 backup notes:

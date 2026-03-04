@@ -15,8 +15,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@starter/db": "*",
-    "@starter/ui": "*",
+    "@aws-sdk/client-bedrock-runtime": "^3.1001.0",
     "@clerk/nextjs": "^6.38.0",
     "@hono/clerk-auth": "^3.1.0",
     "@hono/trpc-server": "^0.4.2",
