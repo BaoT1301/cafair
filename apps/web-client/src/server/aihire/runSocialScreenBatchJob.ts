@@ -18,8 +18,17 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function scoreCandidate(candidate: SocialScreenBatchCandidate): RecruiterReadyResult {
-  const text = `${candidate.name} ${candidate.roleTitle ?? ""} ${candidate.school ?? ""} ${candidate.resumeText ?? ""}`.toLowerCase();
+function scoreCandidate(
+  candidate: SocialScreenBatchCandidate,
+): RecruiterReadyResult {
+  const text = [
+    candidate.name,
+    candidate.roleTitle ?? "",
+    candidate.school ?? "",
+    candidate.resumeText ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
 
   let fitScore = 55;
   const flags: string[] = [];
@@ -45,13 +54,16 @@ function scoreCandidate(candidate: SocialScreenBatchCandidate): RecruiterReadyRe
   fitScore = Math.max(0, Math.min(100, Math.round(fitScore)));
 
   let risk: "low" | "medium" | "high" = "low";
-  if (fitScore < 50) risk = "high";
-  else if (fitScore < 70) risk = "medium";
+  if (fitScore < 50) {
+    risk = "high";
+  } else if (fitScore < 70) {
+    risk = "medium";
+  }
 
   const summary =
-    `${candidate.name} appears to be a ${candidate.roleTitle || "candidate"}`
-    + `${candidate.school ? ` from ${candidate.school}` : ""}. `
-    + `Initial batch screen fit score is ${fitScore}/100 with ${risk} risk.`;
+    `${candidate.name} appears to be a ${candidate.roleTitle || "candidate"}` +
+    `${candidate.school ? ` from ${candidate.school}` : ""}. ` +
+    `Initial batch screen fit score is ${fitScore}/100 with ${risk} risk.`;
 
   return {
     fitScore,
@@ -65,17 +77,21 @@ export async function runSocialScreenBatchJob(
   batchJobId: string,
 ): Promise<void> {
   const job = getSocialScreenBatchJob(batchJobId);
+
   if (!job) {
     throw new Error(`Batch job not found: ${batchJobId}`);
   }
 
   setSocialScreenBatchJobStatus(batchJobId, "running");
 
+  let hadFailures = false;
+
   for (const candidate of job.candidates) {
     try {
       updateSocialScreenBatchCandidateResult(batchJobId, candidate.candidateId, {
         status: "running",
         ok: false,
+        error: undefined,
       });
 
       await sleep(150);
@@ -89,6 +105,8 @@ export async function runSocialScreenBatchJob(
         error: undefined,
       });
     } catch (error) {
+      hadFailures = true;
+
       updateSocialScreenBatchCandidateResult(batchJobId, candidate.candidateId, {
         status: "failed",
         ok: false,
@@ -97,5 +115,8 @@ export async function runSocialScreenBatchJob(
     }
   }
 
-  setSocialScreenBatchJobStatus(batchJobId, "completed");
+  setSocialScreenBatchJobStatus(
+    batchJobId,
+    hadFailures ? "failed" : "completed",
+  );
 }

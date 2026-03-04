@@ -5,15 +5,15 @@ import {
 } from "@/lib/aihire/socialScreenBatchStore";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     batchJobId: string;
-  };
+  }>;
 };
 
 export async function GET(_req: Request, context: RouteContext) {
   try {
-    const { batchJobId } = context.params;
-    const job = getSocialScreenBatchJob(batchJobId);
+    const { batchJobId } = await context.params;
+    const job = await getSocialScreenBatchJob(batchJobId);
 
     if (!job) {
       return NextResponse.json(

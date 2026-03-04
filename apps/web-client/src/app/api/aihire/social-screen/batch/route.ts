@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         typeof candidate.resumeText === "string" ? candidate.resumeText : "",
     }));
 
-    const batchJob = createSocialScreenBatchJob(normalizedCandidates);
+    const batchJob = await createSocialScreenBatchJob(normalizedCandidates);
 
     void runSocialScreenBatchJob(batchJob.batchJobId).catch((error) => {
       console.error("Failed to run social screen batch job:", error);

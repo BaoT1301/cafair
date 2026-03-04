@@ -1,5 +1,13 @@
 // Path: apps/web-client/src/lib/aihire/socialScreenBatchStore.ts
 
+export type SocialScreenBatchStatus =
+  | "queued"
+  | "running"
+  | "completed"
+  | "failed";
+
+export type SocialScreenRisk = "low" | "medium" | "high";
+
 export type SocialScreenBatchCandidate = {
   candidateId: string;
   name: string;
@@ -8,23 +16,25 @@ export type SocialScreenBatchCandidate = {
   resumeText?: string;
 };
 
+export type SocialScreenBatchCandidateResultData = {
+  fitScore: number;
+  risk: SocialScreenRisk;
+  summary: string;
+  flags: string[];
+};
+
 export type SocialScreenBatchCandidateResult = {
   candidateId: string;
   name: string;
   ok: boolean;
-  status: "queued" | "running" | "completed" | "failed";
-  result?: {
-    fitScore: number;
-    risk: "low" | "medium" | "high";
-    summary: string;
-    flags: string[];
-  };
+  status: SocialScreenBatchStatus;
+  result?: SocialScreenBatchCandidateResultData;
   error?: string;
 };
 
 export type SocialScreenBatchJob = {
   batchJobId: string;
-  status: "queued" | "running" | "completed" | "failed";
+  status: SocialScreenBatchStatus;
   totalCandidates: number;
   completedCandidates: number;
   failedCandidates: number;
@@ -57,6 +67,27 @@ function makeBatchJobId(): string {
   return `ssb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function makeInitialCandidateResult(
+  candidate: SocialScreenBatchCandidate,
+): SocialScreenBatchCandidateResult {
+  return {
+    candidateId: candidate.candidateId,
+    name: candidate.name,
+    ok: false,
+    status: "queued",
+  };
+}
+
+function recalculateBatchCounts(job: SocialScreenBatchJob): void {
+  job.completedCandidates = job.results.filter(
+    (result) => result.status === "completed",
+  ).length;
+
+  job.failedCandidates = job.results.filter(
+    (result) => result.status === "failed",
+  ).length;
+}
+
 export function createSocialScreenBatchJob(
   candidates: SocialScreenBatchCandidate[],
 ): SocialScreenBatchJob {
@@ -71,13 +102,8 @@ export function createSocialScreenBatchJob(
     failedCandidates: 0,
     createdAt: timestamp,
     updatedAt: timestamp,
-    candidates,
-    results: candidates.map((candidate) => ({
-      candidateId: candidate.candidateId,
-      name: candidate.name,
-      ok: false,
-      status: "queued",
-    })),
+    candidates: [...candidates],
+    results: candidates.map(makeInitialCandidateResult),
   };
 
   batchStore.set(batchJobId, job);
@@ -95,17 +121,21 @@ export function updateSocialScreenBatchJob(
   updater: (job: SocialScreenBatchJob) => void,
 ): SocialScreenBatchJob | null {
   const job = batchStore.get(batchJobId);
-  if (!job) return null;
+
+  if (!job) {
+    return null;
+  }
 
   updater(job);
   job.updatedAt = nowIso();
+
   batchStore.set(batchJobId, job);
   return job;
 }
 
 export function setSocialScreenBatchJobStatus(
   batchJobId: string,
-  status: SocialScreenBatchJob["status"],
+  status: SocialScreenBatchStatus,
 ): SocialScreenBatchJob | null {
   return updateSocialScreenBatchJob(batchJobId, (job) => {
     job.status = status;
@@ -118,21 +148,20 @@ export function updateSocialScreenBatchCandidateResult(
   next: Partial<SocialScreenBatchCandidateResult>,
 ): SocialScreenBatchJob | null {
   return updateSocialScreenBatchJob(batchJobId, (job) => {
-    const index = job.results.findIndex((r) => r.candidateId === candidateId);
-    if (index === -1) return;
+    const index = job.results.findIndex(
+      (result) => result.candidateId === candidateId,
+    );
+
+    if (index === -1) {
+      return;
+    }
 
     job.results[index] = {
       ...job.results[index],
       ...next,
     };
 
-    job.completedCandidates = job.results.filter(
-      (r) => r.status === "completed",
-    ).length;
-
-    job.failedCandidates = job.results.filter(
-      (r) => r.status === "failed",
-    ).length;
+    recalculateBatchCounts(job);
   });
 }
 
@@ -143,11 +172,14 @@ export function resetSocialScreenBatchJob(
     job.status = "queued";
     job.completedCandidates = 0;
     job.failedCandidates = 0;
-    job.results = job.candidates.map((candidate) => ({
-      candidateId: candidate.candidateId,
-      name: candidate.name,
-      ok: false,
-      status: "queued",
-    }));
+    job.results = job.candidates.map(makeInitialCandidateResult);
   });
+}
+
+export function listSocialScreenBatchJobs(): SocialScreenBatchJob[] {
+  return Array.from(batchStore.values());
+}
+
+export function deleteSocialScreenBatchJob(batchJobId: string): boolean {
+  return batchStore.delete(batchJobId);
 }

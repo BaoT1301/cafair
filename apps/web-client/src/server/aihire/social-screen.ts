@@ -6,6 +6,58 @@
 
 import { runSocialScreenService } from "../../../../llm/agents/src/services/socialScreenService";
 
+export type SocialScreenServiceResult = Awaited<
+  ReturnType<typeof runSocialScreenService>
+>;
+
+export interface GetSocialScreenLinkedInExperience {
+  title?: string;
+  company?: string;
+  start?: string;
+  end?: string;
+  description?: string;
+}
+
+export interface GetSocialScreenLinkedInProfile {
+  url?: string;
+  headline?: string;
+  currentCompany?: string;
+  school?: string;
+  skills?: string[];
+  experiences?: GetSocialScreenLinkedInExperience[];
+}
+
+export interface GetSocialScreenGitHubPinnedRepo {
+  name?: string;
+  description?: string;
+  language?: string;
+  stars?: number;
+}
+
+export interface GetSocialScreenGitHubProfile {
+  url?: string;
+  username?: string;
+  displayName?: string;
+  bio?: string;
+  followers?: number;
+  following?: number;
+  contributionsLastYear?: number;
+  pinnedRepos?: GetSocialScreenGitHubPinnedRepo[];
+  topLanguages?: string[];
+}
+
+export interface GetSocialScreenWebResult {
+  title?: string;
+  snippet?: string;
+  source?: string;
+  url?: string;
+}
+
+export interface GetSocialScreenWebProfile {
+  queries?: string[];
+  results?: GetSocialScreenWebResult[];
+}
+
 export interface GetSocialScreenInput {
   candidateId: string;
   name: string;
@@ -13,54 +65,18 @@ export interface GetSocialScreenInput {
   school?: string;
   resumeText?: string;
 
-  linkedin?: {
-    url?: string;
-    headline?: string;
-    currentCompany?: string;
-    school?: string;
-    skills?: string[];
-    experiences?: Array<{
-      title?: string;
-      company?: string;
-      start?: string;
-      end?: string;
-      description?: string;
-    }>;
-  };
+  linkedin?: GetSocialScreenLinkedInProfile;
 
-  github?: {
-    url?: string;
-    username?: string;
-    displayName?: string;
-    bio?: string;
-    followers?: number;
-    following?: number;
-    contributionsLastYear?: number;
-    pinnedRepos?: Array<{
-      name?: string;
-      description?: string;
-      language?: string;
-      stars?: number;
-    }>;
-    topLanguages?: string[];
-  };
+  github?: GetSocialScreenGitHubProfile;
 
-  web?: {
-    queries?: string[];
-    results?: Array<{
-      title?: string;
-      snippet?: string;
-      source?: string;
-      url?: string;
-    }>;
-  };
+  web?: GetSocialScreenWebProfile;
 
   useBedrock?: boolean;
 }
 
 export interface GetSocialScreenSuccess {
   ok: true;
-  result: Awaited<ReturnType<typeof runSocialScreenService>>;
+  result: SocialScreenServiceResult;
 }
 
 export interface GetSocialScreenFailure {

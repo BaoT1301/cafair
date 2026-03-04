@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   getSocialScreenBatchJob,
-  type SocialScreenBatchCandidateResult,
-} from "@/lib/aihire/socialScreenBatchStore";
+} from "@/lib/aihire/socialScreenBatchStore.db";
+import type { SocialScreenBatchCandidateResult } from "@/lib/aihire/socialScreenBatchTypes";
 
 type RouteContext = {
   params: Promise<{
@@ -14,7 +14,7 @@ export async function GET(_req: Request, context: RouteContext) {
   try {
     const { batchJobId } = await context.params;
 
-    const job = getSocialScreenBatchJob(batchJobId);
+    const job = await getSocialScreenBatchJob(batchJobId);
 
     if (!job) {
       return NextResponse.json(
