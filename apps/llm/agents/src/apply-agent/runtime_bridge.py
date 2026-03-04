@@ -7,8 +7,47 @@ from typing import Any, Dict, Optional, TypedDict
 from .nova_runner import run as run_nova_payload
 
 
+class RuntimeBridgeRunner(TypedDict, total=False):
+    engine: str
+    transport: str
+    adapter: str
+    provider: str
+
+
+class RuntimeBridgeActionLog(TypedDict, total=False):
+    stepId: str
+    action: str
+    status: str
+    detail: str
+
+
+class RuntimeBridgeReasoningLog(TypedDict, total=False):
+    stepId: str
+    summary: str
+
+
 class RuntimeBridgeSuccess(TypedDict, total=False):
     ok: bool
+    status: str
+    executed: bool
+    executionSteps: list[Dict[str, Any]]
+    message: str
+    runner: RuntimeBridgeRunner
+    actionLogs: list[RuntimeBridgeActionLog]
+    reasoningLogs: list[RuntimeBridgeReasoningLog]
+    transportSummary: str
+    provider: str
+    mode: str
+    runId: str
+    targetUrl: str
+    company: str
+    roleTitle: str
+    safeStopBeforeSubmit: bool
+    visibleFields: list[Dict[str, Any]]
+    selectors: list[str]
+    plannedSteps: list[str]
+    browserSession: Dict[str, Any]
+    fieldFillPlan: list[Dict[str, Any]]
     result: Dict[str, Any]
 
 
@@ -18,11 +57,14 @@ class RuntimeBridgeError(TypedDict, total=False):
     details: str
 
 
+RuntimeBridgeResponse = RuntimeBridgeSuccess | RuntimeBridgeError
+
+
 def parse_json_input(raw: str) -> Dict[str, Any]:
     payload = raw.strip()
 
     if not payload:
-      raise ValueError("No JSON payload received.")
+        raise ValueError("No JSON payload received.")
 
     try:
         parsed = json.loads(payload)
@@ -36,7 +78,8 @@ def parse_json_input(raw: str) -> Dict[str, Any]:
 
 
 def read_stdin_json() -> Dict[str, Any]:
-    return parse_json_input(sys.stdin.read())
+    raw = sys.stdin.read()
+    return parse_json_input(raw)
 
 
 def run_runtime_bridge(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -51,11 +94,78 @@ def run_runtime_bridge(payload: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
+def _copy_string_field(
+    source: Dict[str, Any],
+    target: RuntimeBridgeSuccess,
+    key: str,
+) -> None:
+    value = source.get(key)
+    if isinstance(value, str) and value.strip():
+        target[key] = value.strip()  # type: ignore[literal-required]
+
+
+def _copy_bool_field(
+    source: Dict[str, Any],
+    target: RuntimeBridgeSuccess,
+    key: str,
+) -> None:
+    value = source.get(key)
+    if isinstance(value, bool):
+        target[key] = value  # type: ignore[literal-required]
+
+
+def _copy_list_field(
+    source: Dict[str, Any],
+    target: RuntimeBridgeSuccess,
+    key: str,
+) -> None:
+    value = source.get(key)
+    if isinstance(value, list):
+        target[key] = value  # type: ignore[literal-required]
+
+
+def _copy_dict_field(
+    source: Dict[str, Any],
+    target: RuntimeBridgeSuccess,
+    key: str,
+) -> None:
+    value = source.get(key)
+    if isinstance(value, dict):
+        target[key] = value  # type: ignore[literal-required]
+
+
 def build_success_result(result: Dict[str, Any]) -> RuntimeBridgeSuccess:
-    return {
+    response: RuntimeBridgeSuccess = {
         "ok": True,
         "result": result,
     }
+
+    _copy_string_field(result, response, "status")
+    _copy_bool_field(result, response, "executed")
+    _copy_list_field(result, response, "executionSteps")
+    _copy_string_field(result, response, "message")
+    _copy_dict_field(result, response, "runner")
+    _copy_list_field(result, response, "actionLogs")
+    _copy_list_field(result, response, "reasoningLogs")
+    _copy_string_field(result, response, "transportSummary")
+
+    _copy_string_field(result, response, "provider")
+    _copy_string_field(result, response, "mode")
+    _copy_string_field(result, response, "runId")
+    _copy_string_field(result, response, "targetUrl")
+    _copy_string_field(result, response, "company")
+    _copy_string_field(result, response, "roleTitle")
+
+    _copy_bool_field(result, response, "safeStopBeforeSubmit")
+
+    _copy_list_field(result, response, "visibleFields")
+    _copy_list_field(result, response, "selectors")
+    _copy_list_field(result, response, "plannedSteps")
+    _copy_list_field(result, response, "fieldFillPlan")
+
+    _copy_dict_field(result, response, "browserSession")
+
+    return response
 
 
 def build_error_result(
@@ -73,8 +183,8 @@ def build_error_result(
     return response
 
 
-def print_json(data: Dict[str, Any]) -> None:
-    print(json.dumps(data))
+def print_json(data: RuntimeBridgeResponse) -> None:
+    print(json.dumps(data, ensure_ascii=False))
 
 
 def main() -> None:
@@ -92,7 +202,6 @@ def main() -> None:
 
     try:
         result = run_runtime_bridge(payload)
-        print_json(build_success_result(result))
     except Exception as exc:  # noqa: BLE001
         print_json(
             build_error_result(
@@ -101,6 +210,9 @@ def main() -> None:
             )
         )
         sys.exit(1)
+        return
+
+    print_json(build_success_result(result))
 
 
 if __name__ == "__main__":

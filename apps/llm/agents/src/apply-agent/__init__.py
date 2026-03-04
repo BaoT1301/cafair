@@ -1,7 +1,7 @@
-from .ashby import AshbyProviderAdapter
-from .base import BaseProviderAdapter, ProviderName
-from .greenhouse import GreenhouseProviderAdapter
-from .workday import WorkdayProviderAdapter
+from .providers.ashby import AshbyProviderAdapter
+from .providers.base import BaseProviderAdapter, ProviderName
+from .providers.greenhouse import GreenhouseProviderAdapter
+from .providers.workday import WorkdayProviderAdapter
 
 
 def get_provider_adapter(provider: ProviderName) -> BaseProviderAdapter:

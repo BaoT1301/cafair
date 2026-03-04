@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 from .form_filler import FillAction
 
@@ -11,6 +11,7 @@ BrowserMode = Literal["demo", "plan", "live"]
 
 
 BrowserStepAction = Literal[
+    "launch_browser",
     "open_page",
     "wait_for_page",
     "find_element",
@@ -27,7 +28,24 @@ BrowserStepAction = Literal[
 ]
 
 
-BrowserStepStatus = Literal["ready", "skipped", "blocked", "completed"]
+BrowserStepStatus = Literal[
+    "ready",
+    "skipped",
+    "blocked",
+    "completed",
+]
+
+
+class BrowserActionLog(TypedDict):
+    stepId: str
+    action: str
+    status: str
+    detail: str
+
+
+class BrowserReasoningLog(TypedDict):
+    stepId: str
+    summary: str
 
 
 @dataclass(frozen=True)
@@ -51,8 +69,17 @@ class BrowserExecutionResult:
     executed: bool
     safe_stop_before_submit: bool
     live_supported: bool
+    launch_requested: bool
+    runtime_bridge_required: bool
+    visible_browser_expected: bool
     provider: str
     target_url: str
+    current_url: str
+    browser_opened: bool
+    browser_session_id: Optional[str]
+    browser_engine: str
+    action_logs: List[BrowserActionLog]
+    reasoning_logs: List[BrowserReasoningLog]
     message: str
 
 
@@ -76,6 +103,34 @@ def _bool_value(value: Any) -> bool:
     return text in {"true", "1", "yes", "y", "checked"}
 
 
+def _make_action_log(
+    *,
+    step_id: str,
+    action: str,
+    status: str,
+    detail: str,
+) -> BrowserActionLog:
+    return {
+        "stepId": step_id,
+        "action": action,
+        "status": status,
+        "detail": detail,
+    }
+
+
+
+def _make_reasoning_log(
+    *,
+    step_id: str,
+    summary: str,
+) -> BrowserReasoningLog:
+    return {
+        "stepId": step_id,
+        "summary": summary,
+    }
+
+
+
 def _build_step(
     *,
     step_id: str,
@@ -97,6 +152,7 @@ def _build_step(
         field_name=field_name,
         required=required,
     )
+
 
 
 def _map_fill_action_to_browser_steps(
@@ -234,6 +290,7 @@ def _map_fill_action_to_browser_steps(
     return steps
 
 
+
 def build_browser_steps(
     *,
     run_id: str,
@@ -246,17 +303,34 @@ def build_browser_steps(
     apply_button_selectors: Optional[List[str]] = None,
     fill_actions: Optional[List[FillAction]] = None,
 ) -> List[BrowserStep]:
-    del run_id
-    del transport
-
     steps: List[BrowserStep] = []
+
+    if mode == "live":
+        launch_detail = (
+            "Launch API-driven Nova Act browser automation."
+            if transport == "api"
+            else "Launch workflow-driven Nova Act browser automation."
+        )
+        steps.append(
+            _build_step(
+                step_id="session_launch_browser",
+                action="launch_browser",
+                status="ready",
+                detail=launch_detail,
+                selector="body",
+                value=transport,
+            )
+        )
 
     steps.append(
         _build_step(
             step_id="session_open",
             action="open_page",
             status="ready",
-            detail=f"Open target application page for {provider}.",
+            detail=(
+                f"Open target application page for {provider} "
+                f"using {transport} transport."
+            ),
             selector=target_url,
             value=target_url,
         )
@@ -316,7 +390,6 @@ def build_browser_steps(
                     selector=primary_selector,
                 )
             )
-
             steps.append(
                 _build_step(
                     step_id="apply_wait_after_click",
@@ -340,7 +413,6 @@ def build_browser_steps(
         return steps
 
     fill_actions = fill_actions or []
-
     for index, fill_action in enumerate(fill_actions, start=1):
         steps.extend(_map_fill_action_to_browser_steps(fill_action, index))
 
@@ -371,6 +443,7 @@ def build_browser_steps(
     return steps
 
 
+
 def browser_steps_to_dicts(steps: List[BrowserStep]) -> List[Dict[str, Any]]:
     return [
         {
@@ -385,6 +458,7 @@ def browser_steps_to_dicts(steps: List[BrowserStep]) -> List[Dict[str, Any]]:
         }
         for step in steps
     ]
+
 
 
 def summarize_browser_steps(steps: List[BrowserStep]) -> Dict[str, Any]:
@@ -402,7 +476,52 @@ def summarize_browser_steps(steps: List[BrowserStep]) -> Dict[str, Any]:
         "blocked_count": blocked_count,
         "completed_count": completed_count,
         "can_continue": can_continue,
+        "has_safe_stop": any(step.action == "safe_stop" for step in steps),
+        "launches_browser": any(
+            step.action == "launch_browser" for step in steps
+        ),
     }
+
+
+
+def _build_action_logs(steps: List[BrowserStep]) -> List[BrowserActionLog]:
+    logs: List[BrowserActionLog] = []
+    for step in steps:
+        if step.status == "completed":
+            log_status = "completed"
+        elif step.status == "blocked":
+            log_status = "blocked"
+        elif step.status == "skipped":
+            log_status = "skipped"
+        else:
+            log_status = "planned"
+
+        logs.append(
+            _make_action_log(
+                step_id=step.step_id,
+                action=step.action,
+                status=log_status,
+                detail=step.detail,
+            )
+        )
+    return logs
+
+
+
+def _build_reasoning_logs(steps: List[BrowserStep]) -> List[BrowserReasoningLog]:
+    logs: List[BrowserReasoningLog] = []
+    for step in steps:
+        logs.append(
+            _make_reasoning_log(
+                step_id=step.step_id,
+                summary=(
+                    f"Browser step '{step.action}' exists because the apply flow "
+                    f"needs: {step.detail}"
+                ),
+            )
+        )
+    return logs
+
 
 
 def build_browser_session_plan(
@@ -429,13 +548,26 @@ def build_browser_session_plan(
         fill_actions=fill_actions,
     )
 
+    summary = summarize_browser_steps(steps)
+
     return {
         "steps": browser_steps_to_dicts(steps),
-        "summary": summarize_browser_steps(steps),
+        "summary": summary,
         "transport": transport,
         "mode": mode,
         "safe_stop_before_submit": safe_stop_before_submit,
+        "launch_requested": bool(
+            mode == "live"
+            and should_apply
+            and summary.get("launches_browser", False)
+        ),
+        "runtime_bridge_required": bool(mode == "live" and should_apply),
+        "visible_browser_expected": bool(mode == "live" and should_apply),
+        "starting_url": target_url,
+        "current_url": target_url if mode == "live" else "",
+        "browser_opened": False,
     }
+
 
 
 def execute_browser_session(
@@ -462,35 +594,79 @@ def execute_browser_session(
         fill_actions=fill_actions,
     )
 
+    summary = summarize_browser_steps(steps)
+    launch_requested = bool(
+        mode == "live"
+        and should_apply
+        and summary.get("launches_browser", False)
+    )
+    runtime_bridge_required = bool(mode == "live" and should_apply)
+    visible_browser_expected = bool(mode == "live" and should_apply)
+
     if mode == "plan":
-        message = "Browser session built in plan mode only. No live browser was started."
-        executed = False
-        live_supported = False
-    elif mode == "demo":
-        message = "Browser session built in demo mode. Steps are ready but not executed live."
-        executed = False
-        live_supported = False
-    else:
         message = (
-            "Browser session prepared for live execution. "
-            "This layer now returns executable browser steps, but actual Nova Act "
-            "browser control must still be wired in the runtime bridge."
+            "Browser session built in plan mode only. "
+            "No live browser was started."
         )
-        executed = True
+        executed = False
         live_supported = False
+        browser_opened = False
+        current_url = ""
+        browser_session_id = None
+    elif mode == "demo":
+        message = (
+            "Browser session built in demo mode. "
+            "Steps are ready but not executed live."
+        )
+        executed = False
+        live_supported = False
+        browser_opened = False
+        current_url = ""
+        browser_session_id = None
+    else:
+        if transport == "api":
+            message = (
+                "Browser session is ready for live execution. "
+                "This layer now marks the session as launch-requested and "
+                "expects the runtime bridge to open a visible browser window."
+            )
+        else:
+            message = (
+                "Browser session is ready for live execution. "
+                "This layer now marks the session as launch-requested and "
+                "expects the workflow bridge to execute the visible browser flow."
+            )
+        executed = False
+        live_supported = True
+        browser_opened = launch_requested
+        current_url = target_url if launch_requested else ""
+        browser_session_id = f"browser_{run_id}" if launch_requested else None
+
+    action_logs = _build_action_logs(steps)
+    reasoning_logs = _build_reasoning_logs(steps)
 
     return BrowserExecutionResult(
         steps=steps,
-        summary=summarize_browser_steps(steps),
+        summary=summary,
         transport=transport,
         mode=mode,
         executed=executed,
         safe_stop_before_submit=safe_stop_before_submit,
         live_supported=live_supported,
+        launch_requested=launch_requested,
+        runtime_bridge_required=runtime_bridge_required,
+        visible_browser_expected=visible_browser_expected,
         provider=provider,
         target_url=target_url,
+        current_url=current_url,
+        browser_opened=browser_opened,
+        browser_session_id=browser_session_id,
+        browser_engine="nova-act",
+        action_logs=action_logs,
+        reasoning_logs=reasoning_logs,
         message=message,
     )
+
 
 
 def browser_execution_result_to_dict(
@@ -504,7 +680,16 @@ def browser_execution_result_to_dict(
         "executed": result.executed,
         "safe_stop_before_submit": result.safe_stop_before_submit,
         "live_supported": result.live_supported,
+        "launch_requested": result.launch_requested,
+        "runtime_bridge_required": result.runtime_bridge_required,
+        "visible_browser_expected": result.visible_browser_expected,
         "provider": result.provider,
         "target_url": result.target_url,
+        "current_url": result.current_url,
+        "browser_opened": result.browser_opened,
+        "browser_session_id": result.browser_session_id,
+        "browser_engine": result.browser_engine,
+        "action_logs": result.action_logs,
+        "reasoning_logs": result.reasoning_logs,
         "message": result.message,
     }
