@@ -58,13 +58,153 @@ class RuntimeBridgeError(TypedDict, total=False):
 RuntimeBridgeResponse = RuntimeBridgeSuccess | RuntimeBridgeError
 
 
-def load_nova_runner() -> Any:
+def load_browser_session_executor() -> tuple[Any, Any]:
     try:
-        from .nova_runner import run as run_nova_payload
+        from .browser_session import (
+            browser_execution_result_to_dict,
+            execute_browser_session,
+        )
     except ImportError:
-        from nova_runner import run as run_nova_payload  # type: ignore
+        from browser_session import (  # type: ignore
+            browser_execution_result_to_dict,
+            execute_browser_session,
+        )
 
-    return run_nova_payload
+    return execute_browser_session, browser_execution_result_to_dict
+
+
+def _safe_string(value: Any, default: str = "") -> str:
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value.strip()
+    return str(value).strip()
+
+
+def _safe_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes", "y", "on"}:
+            return True
+        if lowered in {"false", "0", "no", "n", "off"}:
+            return False
+
+    if isinstance(value, (int, float)):
+        return bool(value)
+
+    return default
+
+
+def _safe_list_of_strings(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+
+    output: list[str] = []
+    for item in value:
+        if isinstance(item, str):
+            text = item.strip()
+            if text:
+                output.append(text)
+
+    return output
+
+
+def _extract_browser_session_payload(
+    payload: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    browser_session = payload.get("browserSession")
+    if isinstance(browser_session, dict):
+        return browser_session
+
+    nested_payload = payload.get("payload")
+    if isinstance(nested_payload, dict):
+        nested_browser_session = nested_payload.get("browserSession")
+        if isinstance(nested_browser_session, dict):
+            return nested_browser_session
+
+    return None
+
+
+def _build_bridge_result_from_browser_session(
+    payload: Dict[str, Any],
+    browser_session_result: Dict[str, Any],
+) -> Dict[str, Any]:
+    summary = browser_session_result.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+
+    browser_opened = bool(browser_session_result.get("browser_opened", False))
+    steps = browser_session_result.get("steps")
+    if not isinstance(steps, list):
+        steps = []
+
+    action_logs = browser_session_result.get("action_logs")
+    if not isinstance(action_logs, list):
+        action_logs = []
+
+    reasoning_logs = browser_session_result.get("reasoning_logs")
+    if not isinstance(reasoning_logs, list):
+        reasoning_logs = []
+
+    if browser_opened:
+        status = "running"
+        executed = True
+        message = (
+            "Runtime bridge launched a real browser session through the "
+            "browser_session layer."
+        )
+    else:
+        status = "planned"
+        executed = False
+        message = (
+            "Runtime bridge prepared browser execution steps, but no live "
+            "browser window was opened yet."
+        )
+
+    provider = _safe_string(payload.get("provider"), "unknown")
+    transport = _safe_string(payload.get("transport"), "workflow")
+    adapter = _safe_string(payload.get("adapterName"), "provider-adapter")
+
+    return {
+        "ok": True,
+        "status": status,
+        "executed": executed,
+        "executionSteps": steps,
+        "message": message,
+        "runner": {
+            "engine": _safe_string(
+                browser_session_result.get("browser_engine"),
+                "nova-act",
+            ),
+            "transport": transport,
+            "adapter": adapter,
+            "provider": provider,
+        },
+        "actionLogs": action_logs,
+        "reasoningLogs": reasoning_logs,
+        "transportSummary": (
+            "Runtime bridge delegated execution to browser_session and "
+            f"prepared {len(steps)} browser steps."
+        ),
+        "provider": provider,
+        "mode": _safe_string(payload.get("mode"), "demo"),
+        "runId": _safe_string(payload.get("runId")),
+        "targetUrl": _safe_string(payload.get("targetUrl")),
+        "company": _safe_string(payload.get("company")),
+        "roleTitle": _safe_string(payload.get("roleTitle")),
+        "safeStopBeforeSubmit": _safe_bool(
+            payload.get("safeStopBeforeSubmit"),
+            True,
+        ),
+        "visibleFields": payload.get("visibleFields", []),
+        "selectors": _safe_list_of_strings(payload.get("selectors")),
+        "plannedSteps": _safe_list_of_strings(payload.get("plannedSteps")),
+        "browserSession": browser_session_result,
+        "fieldFillPlan": payload.get("fieldFillPlan", []),
+    }
 
 
 def normalize_bridge_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -102,16 +242,41 @@ def read_stdin_json() -> Dict[str, Any]:
 
 def run_runtime_bridge(payload: Dict[str, Any]) -> Dict[str, Any]:
     normalized_payload = normalize_bridge_payload(payload)
-    run_nova_payload = load_nova_runner()
 
-    result = run_nova_payload(normalized_payload)
-
-    if not isinstance(result, dict):
-        raise ValueError(
-            "Python Nova runner returned a non-dictionary response."
+    existing_browser_session = _extract_browser_session_payload(payload)
+    if existing_browser_session is not None:
+        return _build_bridge_result_from_browser_session(
+            normalized_payload,
+            existing_browser_session,
         )
 
-    return result
+    execute_browser_session, browser_execution_result_to_dict = (
+        load_browser_session_executor()
+    )
+
+    browser_result = execute_browser_session(
+        run_id=_safe_string(normalized_payload.get("runId")),
+        target_url=_safe_string(normalized_payload.get("targetUrl")),
+        provider=_safe_string(normalized_payload.get("provider"), "unknown"),
+        mode=_safe_string(normalized_payload.get("mode"), "demo"),
+        transport=_safe_string(normalized_payload.get("transport"), "workflow"),
+        should_apply=_safe_bool(normalized_payload.get("shouldApply"), False),
+        safe_stop_before_submit=_safe_bool(
+            normalized_payload.get("safeStopBeforeSubmit"),
+            True,
+        ),
+        apply_button_selectors=_safe_list_of_strings(
+            normalized_payload.get("selectors")
+        ),
+        fill_actions=normalized_payload.get("fillActions"),
+    )
+
+    browser_result_dict = browser_execution_result_to_dict(browser_result)
+
+    return _build_bridge_result_from_browser_session(
+        normalized_payload,
+        browser_result_dict,
+    )
 
 
 def _copy_string_field(
@@ -184,6 +349,7 @@ def build_success_result(result: Dict[str, Any]) -> RuntimeBridgeSuccess:
     _copy_list_field(result, response, "fieldFillPlan")
 
     _copy_dict_field(result, response, "browserSession")
+    _copy_dict_field(result, response, "result")
 
     return response
 
