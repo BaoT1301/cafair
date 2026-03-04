@@ -106,6 +106,36 @@ def _resolve_action_type(field: FieldMappingResult) -> FillActionType:
     return "type_text"
 
 
+def _is_manual_resume_text_field(field: FieldMappingResult) -> bool:
+    field_type = _normalize_key(field.field_type)
+    field_name = _normalize_key(field.field_name)
+    label = _normalize_key(field.label)
+    combined = f"{field_name} {label}".strip()
+
+    if field_type in {"file", "upload"}:
+        return False
+
+    manual_resume_terms = (
+        "enter_manually",
+        "resume_link",
+        "resume_url",
+        "manual_resume",
+        "portfolio",
+        "website",
+        "profile_link",
+        "link",
+    )
+
+    return any(term in combined for term in manual_resume_terms)
+
+
+def _resolve_ready_action_type(field: FieldMappingResult) -> FillActionType:
+    if _is_manual_resume_text_field(field):
+        return "type_text"
+
+    return _resolve_action_type(field)
+
+
 def _build_skip_action(
     *,
     step_id: str,
@@ -171,7 +201,7 @@ def _build_blocked_action(
 
 
 def _plan_single_field(step_id: str, field: FieldMappingResult) -> FillAction:
-    action_type = _resolve_action_type(field)
+    action_type = _resolve_ready_action_type(field)
 
     if not field.should_fill:
         if field.required:
@@ -213,7 +243,7 @@ def _plan_single_field(step_id: str, field: FieldMappingResult) -> FillAction:
             field=field,
             action=action_type,
             value=file_path,
-            reason="Upload mapped file from applicant profile.",
+            reason="Upload mapped file from applicant profile for a real file input.",
         )
 
     if action_type == "set_checkbox":
@@ -275,7 +305,11 @@ def _plan_single_field(step_id: str, field: FieldMappingResult) -> FillAction:
         field=field,
         action=action_type,
         value=text_value,
-        reason="Fill field using mapped applicant profile value.",
+        reason=(
+            "Fill manual resume/link field using plain text input."
+            if _is_manual_resume_text_field(field)
+            else "Fill field using mapped applicant profile value."
+        ),
     )
 
 

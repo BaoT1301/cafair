@@ -456,6 +456,22 @@ def _augment_response(
     response["fieldMapping"] = field_mapping_result
     response["formFill"] = form_fill_result
 
+    # Convenience top-level fields for downstream callers.
+    # These mirror the enriched values produced by profile_loader -> field_mapper -> form_filler.
+    profile_dict = profile_result.get("profile")
+    response["applicantProfile"] = profile_dict if isinstance(profile_dict, dict) else {}
+
+    mapped_fields = field_mapping_result.get("mappedFields")
+    response["mappedFields"] = mapped_fields if isinstance(mapped_fields, list) else []
+
+    fill_actions = form_fill_result.get("fillActions")
+    response["fillActions"] = fill_actions if isinstance(fill_actions, list) else []
+
+    profile_summary = profile_result.get("summary")
+    response["profileSummary"] = (
+        profile_summary if isinstance(profile_summary, dict) else {}
+    )
+
     response["targetUrl"] = normalized["targetUrl"]
     response["company"] = normalized["company"]
     response["roleTitle"] = normalized["roleTitle"]
