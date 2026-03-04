@@ -37,6 +37,13 @@ class WorkdayProviderAdapter(BaseProviderAdapter):
                     selector="input",
                 ),
                 VisibleField(
+                    name="address_line_2",
+                    label="Address Line 2",
+                    field_type="text",
+                    required=False,
+                    selector="input",
+                ),
+                VisibleField(
                     name="city",
                     label="City",
                     field_type="text",
@@ -58,11 +65,32 @@ class WorkdayProviderAdapter(BaseProviderAdapter):
                     selector="input",
                 ),
                 VisibleField(
+                    name="country",
+                    label="Country",
+                    field_type="text",
+                    required=False,
+                    selector="select",
+                ),
+                VisibleField(
                     name="linkedin",
                     label="LinkedIn",
                     field_type="text",
                     required=False,
                     selector="input",
+                ),
+                VisibleField(
+                    name="work_authorization",
+                    label="Work Authorization",
+                    field_type="text",
+                    required=False,
+                    selector="select",
+                ),
+                VisibleField(
+                    name="sponsorship_required",
+                    label="Requires Sponsorship",
+                    field_type="checkbox",
+                    required=False,
+                    selector="input[type='checkbox']",
                 ),
             ]
         )
@@ -92,14 +120,25 @@ class WorkdayProviderAdapter(BaseProviderAdapter):
         ]
 
         if not context.should_apply:
-            steps.append(
-                ExecutionStep(
-                    step_id="step_3",
-                    action="skip",
-                    detail=(
-                        "Stop because the job did not meet the apply threshold."
+            steps.extend(
+                [
+                    ExecutionStep(
+                        step_id="step_3",
+                        action="skip",
+                        detail=(
+                            "Stop because the job did not meet the apply "
+                            "threshold."
+                        ),
                     ),
-                )
+                    ExecutionStep(
+                        step_id="step_4",
+                        action="return_skip_result",
+                        detail=(
+                            "Return a skip recommendation without launching "
+                            "browser automation."
+                        ),
+                    ),
+                ]
             )
             return steps
 
@@ -111,19 +150,37 @@ class WorkdayProviderAdapter(BaseProviderAdapter):
                         action="inspect_apply_entry",
                         detail=(
                             "Locate the Workday Apply / Apply Manually entry "
-                            "point and detect guest-apply vs sign-in flow."
+                            "point and identify guest-apply vs sign-in flow."
                         ),
                     ),
                     ExecutionStep(
                         step_id="step_4",
-                        action="inspect_multi_step_form",
+                        action="inspect_resume_import",
                         detail=(
-                            "Plan the likely multi-step Workday flow, including "
-                            "account, profile, experience, and review screens."
+                            "Check whether Workday offers resume upload or "
+                            "resume parsing early in the flow."
                         ),
                     ),
                     ExecutionStep(
                         step_id="step_5",
+                        action="inspect_multi_step_form",
+                        detail=(
+                            "Plan the likely multi-step Workday flow across "
+                            "account, profile, experience, disclosures, and "
+                            "review screens."
+                        ),
+                    ),
+                    ExecutionStep(
+                        step_id="step_6",
+                        action="inspect_required_questions",
+                        detail=(
+                            "Identify likely required questions such as work "
+                            "authorization, sponsorship, address, and resume "
+                            "requirements."
+                        ),
+                    ),
+                    ExecutionStep(
+                        step_id="step_7",
                         action="plan_only",
                         detail=(
                             "Return execution plan only. "
@@ -146,12 +203,20 @@ class WorkdayProviderAdapter(BaseProviderAdapter):
                         step_id="step_4",
                         action="simulate_guest_apply_check",
                         detail=(
-                            "Simulate checking whether guest apply is available "
-                            "or whether sign-in is required."
+                            "Simulate checking whether guest apply is "
+                            "available or whether sign-in is required."
                         ),
                     ),
                     ExecutionStep(
                         step_id="step_5",
+                        action="simulate_resume_upload",
+                        detail=(
+                            "Simulate uploading the resume to trigger any "
+                            "Workday autofill or parsing flow."
+                        ),
+                    ),
+                    ExecutionStep(
+                        step_id="step_6",
                         action="simulate_multi_step_navigation",
                         detail=(
                             "Simulate stepping through the multi-page Workday "
@@ -159,15 +224,16 @@ class WorkdayProviderAdapter(BaseProviderAdapter):
                         ),
                     ),
                     ExecutionStep(
-                        step_id="step_6",
+                        step_id="step_7",
                         action="simulate_fill",
                         detail=(
                             "Simulate prefilling candidate profile, resume, "
-                            "contact, and basic application fields."
+                            "contact, disclosures, and basic application "
+                            "fields."
                         ),
                     ),
                     ExecutionStep(
-                        step_id="step_7",
+                        step_id="step_8",
                         action="safe_stop",
                         detail="Stop before final submit in safe mode.",
                     ),
@@ -214,14 +280,30 @@ class WorkdayProviderAdapter(BaseProviderAdapter):
                 ),
                 ExecutionStep(
                     step_id="step_7",
-                    action="prefill_profile",
+                    action="review_resume_parse",
                     detail=(
-                        "Prefill visible Workday fields across profile, "
-                        "experience, and contact sections."
+                        "Review any parsed Workday profile data before "
+                        "continuing to the next step."
                     ),
                 ),
                 ExecutionStep(
                     step_id="step_8",
+                    action="prefill_profile",
+                    detail=(
+                        "Prefill visible Workday fields across profile, "
+                        "experience, contact, and disclosures sections."
+                    ),
+                ),
+                ExecutionStep(
+                    step_id="step_9",
+                    action="review_answers",
+                    detail=(
+                        "Review required answers such as authorization, "
+                        "sponsorship, and location details before final review."
+                    ),
+                ),
+                ExecutionStep(
+                    step_id="step_10",
                     action="safe_stop",
                     detail="Stop before final submit in safe mode.",
                 ),
