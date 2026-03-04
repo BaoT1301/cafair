@@ -33,7 +33,7 @@
 
 - [x] Use SerpAPI for Job posting search fallback...AI stalker search/Chatbot Search/.....
 
-- [ ] Text Embedding model AWS
+- [ ] Text Embedding model AWS, resume parse, resume--> job fit list--> mass auto apply agent
 
 - [ ] Implement MCP (Model Context Protocol) Server ideas
 

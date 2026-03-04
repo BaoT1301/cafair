@@ -273,6 +273,7 @@ The route returns:
 	•	Nova-Auto-Action.md — Nova / automation notes
 	•	ai-stalker.md — social / stalking feature notes
 	•	plan-for-agent.md — planning / roadmap notes
+	•.  cafair/apps/llm/agents/APPLY-AGENT-STATUS.md - automated application for candidate
 
 These are project notes and integration references alongside the source code.
 
@@ -313,26 +314,40 @@ Next steps
 (.venv) macbook@Stephens-McDonalds-air agents % tree
 .
 ├── ai-stalker.md
+├── APPLY-AGENT-STATUS.md
 ├── AWS-DOC.md
 ├── End-Point-BRock-Recruiter-Screen.md
 ├── End-Point-BRock-Stalker-AI.md
+├── End-Point-Social-Screen-Batch.md
 ├── Nova-Auto-Action.md
 ├── plan-for-agent.md
 ├── README.md
 ├── requirements.txt
 ├── scripts
+│   ├── __pycache__
+│   │   └── social_capture_batch_helper.cpython-311.pyc
 │   ├── agents
 │   │   └── scripts
+│   ├── apply-agent
+│   │   ├── run-local.ts
+│   │   └── run-nova.py
+│   ├── candidates.json
+│   ├── poll-existing-workflow-run.py
 │   ├── run-app-bedrock-wrapper-local.ts
 │   ├── run-bedrock-local.ts
 │   ├── run-local.ts
 │   ├── run-microscreen-local.ts
 │   ├── run-packet-local.ts
+│   ├── run-social-capture-batch.py
 │   ├── run-social-capture-local.ts
 │   ├── run-social-capture-nova.py
+│   ├── run-social-screen-batch.ts
 │   ├── run-social-screen-local.ts
 │   ├── run-social-screen-public-page.py
-│   └── run-verify-local.ts
+│   ├── run-verify-local.ts
+│   ├── social_capture_batch_helper.py
+│   ├── social-capture-batch-output.json
+│   └── social-screen-batch.md
 └── src
     ├── adapters
     │   ├── bedrock.ts
@@ -347,6 +362,31 @@ Next steps
     │   ├── socialScreen.ts
     │   ├── triage.ts
     │   └── verify.ts
+    ├── apply-agent
+    │   ├── __init__.py
+    │   ├── __pycache__
+    │   │   ├── __init__.cpython-311.pyc
+    │   │   ├── browser_session.cpython-311.pyc
+    │   │   ├── nova_runner.cpython-311.pyc
+    │   │   ├── runtime_bridge.cpython-311.pyc
+    │   │   └── transport_executor.cpython-311.pyc
+    │   ├── APPLY-AGENT-STATUS.md
+    │   ├── browser_session.py
+    │   ├── contracts.ts
+    │   ├── execution_report.py
+    │   ├── field_mapper.py
+    │   ├── form_filler.py
+    │   ├── models.py
+    │   ├── nova_runner.py
+    │   ├── profile_loader.py
+    │   ├── providers
+    │   │   ├── ashby.py
+    │   │   ├── base.py
+    │   │   ├── greenhouse.py
+    │   │   └── workday.py
+    │   ├── runtime_bridge.py
+    │   ├── transport_executor.py
+    │   └── types.ts
     ├── contracts
     │   └── socialScreen.ts
     ├── index.ts
@@ -365,5 +405,5 @@ Next steps
     │   └── socialScreenService.ts
     └── types.ts
 
-12 directories, 41 files
+17 directories, 75 files
 ```

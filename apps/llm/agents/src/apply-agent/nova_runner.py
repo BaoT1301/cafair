@@ -181,6 +181,10 @@ def _augment_response(
     normalized: NormalizedPayload,
     provider_result: Dict[str, Any],
     transport_result: Dict[str, Any],
+    browser_session_result: Dict[str, Any],
+    profile_result: Dict[str, Any],
+    field_mapping_result: Dict[str, Any],
+    form_fill_result: Dict[str, Any],
 ) -> Dict[str, Any]:
     if "status" in transport_result:
         response["status"] = transport_result["status"]
@@ -197,11 +201,17 @@ def _augment_response(
     if "runner" in transport_result:
         response["runner"] = transport_result["runner"]
 
+    response["browserSession"] = browser_session_result
+    response["profile"] = profile_result
+    response["fieldMapping"] = field_mapping_result
+    response["formFill"] = form_fill_result
+
     response["targetUrl"] = normalized["targetUrl"]
     response["company"] = normalized["company"]
     response["roleTitle"] = normalized["roleTitle"]
     response["selectors"] = provider_result["selectors"]
     response["plannedSteps"] = provider_result["plannedSteps"]
+    response["visibleFields"] = provider_result["visibleFields"]
 
     return response
 
@@ -301,6 +311,10 @@ def run(payload: Dict[str, Any]) -> Dict[str, Any]:
         normalized=normalized,
         provider_result=provider_result,
         transport_result=transport_result,
+        browser_session_result=browser_session_result,
+        profile_result=profile_result,
+        field_mapping_result=field_mapping_result,
+        form_fill_result=form_fill_result,
     )
 
 
@@ -321,6 +335,9 @@ def _read_stdin_payload() -> Dict[str, Any]:
     return parsed
 
 
+def _print_json(data: Dict[str, Any]) -> None:
+    print(json.dumps(data, ensure_ascii=False))
+
 def _print_error_and_exit(error: str, details: str = "") -> None:
     result: ErrorResult = {
         "ok": False,
@@ -330,7 +347,7 @@ def _print_error_and_exit(error: str, details: str = "") -> None:
     if details:
         result["details"] = details
 
-    print(json.dumps(result))
+    _print_json(result)
     sys.exit(1)
 
 
@@ -346,7 +363,7 @@ def main() -> None:
 
     try:
         result = run(payload)
-        print(json.dumps(result))
+        _print_json(result)
     except Exception as exc:  # noqa: BLE001
         _print_error_and_exit(
             "Unhandled error in Python Nova runner.",

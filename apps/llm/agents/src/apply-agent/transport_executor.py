@@ -7,7 +7,13 @@ from .providers.base import ProviderAdapter
 
 Mode = Literal["plan", "demo", "live"]
 Transport = Literal["workflow", "api"]
-ExecutionStatus = Literal["planned", "queued", "running", "completed", "failed"]
+ExecutionStatus = Literal[
+    "planned",
+    "queued",
+    "running",
+    "completed",
+    "failed",
+]
 
 
 class ExecutionStep(TypedDict):
@@ -23,12 +29,52 @@ class RunnerMetadata(TypedDict):
     provider: str
 
 
+class ActionLog(TypedDict):
+    stepId: str
+    action: str
+    status: str
+    detail: str
+
+
+class ReasoningLog(TypedDict):
+    stepId: str
+    summary: str
+
+
 class TransportExecutionResult(TypedDict):
     status: ExecutionStatus
     executed: bool
     executionSteps: List[ExecutionStep]
     message: str
     runner: RunnerMetadata
+    actionLogs: List[ActionLog]
+    reasoningLogs: List[ReasoningLog]
+    transportSummary: str
+
+
+class RuntimeBridgeStep(TypedDict, total=False):
+    id: str
+    action: str
+    detail: str
+
+
+class RuntimeBridgeRunner(TypedDict, total=False):
+    engine: str
+    transport: str
+    adapter: str
+    provider: str
+
+
+class RuntimeBridgeResult(TypedDict, total=False):
+    ok: bool
+    status: ExecutionStatus
+    executed: bool
+    executionSteps: List[RuntimeBridgeStep]
+    message: str
+    runner: RuntimeBridgeRunner
+    actionLogs: List[ActionLog]
+    reasoningLogs: List[ReasoningLog]
+    transportSummary: str
 
 
 class TransportExecutionInput(TypedDict):
@@ -46,21 +92,6 @@ class TransportExecutionInput(TypedDict):
     browserSessionSummary: Optional[str]
     filledFieldCount: Optional[int]
     detectedFieldCount: Optional[int]
-
-
-class RuntimeBridgeStep(TypedDict, total=False):
-    id: str
-    action: str
-    detail: str
-
-
-class RuntimeBridgeResult(TypedDict, total=False):
-    ok: bool
-    status: ExecutionStatus
-    executed: bool
-    executionSteps: List[RuntimeBridgeStep]
-    message: str
-    runner: RunnerMetadata
 
 
 NOVA_ENGINE_NAME = "nova-act"
@@ -111,7 +142,9 @@ def _get_transport_label(transport: Transport) -> str:
     return WORKFLOW_TRANSPORT_LABEL
 
 
-def _build_runner_metadata(normalized: TransportExecutionInput) -> RunnerMetadata:
+def _build_runner_metadata(
+    normalized: TransportExecutionInput,
+) -> RunnerMetadata:
     return {
         "engine": NOVA_ENGINE_NAME,
         "transport": _get_transport_label(normalized["transport"]),
@@ -120,17 +153,41 @@ def _build_runner_metadata(normalized: TransportExecutionInput) -> RunnerMetadat
     }
 
 
-def _get_provider_context_label(normalized: TransportExecutionInput) -> str:
-    provider = normalized["provider"]
-    adapter_name = _get_adapter_name(normalized["adapter"])
-    return f"{provider} via {adapter_name}"
-
-
-def _make_step(step_number: int, action: str, detail: str) -> ExecutionStep:
+def _make_step(
+    step_number: int,
+    action: str,
+    detail: str,
+) -> ExecutionStep:
     return {
         "id": f"step_{step_number}",
         "action": action,
         "detail": detail,
+    }
+
+
+def _make_action_log(
+    *,
+    step_id: str,
+    action: str,
+    status: str,
+    detail: str,
+) -> ActionLog:
+    return {
+        "stepId": step_id,
+        "action": action,
+        "status": status,
+        "detail": detail,
+    }
+
+
+def _make_reasoning_log(
+    *,
+    step_id: str,
+    summary: str,
+) -> ReasoningLog:
+    return {
+        "stepId": step_id,
+        "summary": summary,
     }
 
 
@@ -162,11 +219,16 @@ def _normalize_input(payload: Dict[str, Any]) -> TransportExecutionInput:
         "mode": _as_mode(payload.get("mode")),
         "transport": _as_transport(payload.get("transport")),
         "shouldApply": bool(payload.get("shouldApply", False)),
-        "safeStopBeforeSubmit": bool(payload.get("safeStopBeforeSubmit", True)),
+        "safeStopBeforeSubmit": bool(
+            payload.get("safeStopBeforeSubmit", True)
+        ),
         "company": _normalize_optional_text(payload.get("company")),
         "roleTitle": _normalize_optional_text(payload.get("roleTitle")),
         "adapter": adapter,
-        "runtimeBridgeResult": cast(Optional[RuntimeBridgeResult], runtime_bridge_result),
+        "runtimeBridgeResult": cast(
+            Optional[RuntimeBridgeResult],
+            runtime_bridge_result,
+        ),
         "browserSessionSummary": _normalize_optional_text(
             payload.get("browserSessionSummary")
         ),
@@ -175,15 +237,18 @@ def _normalize_input(payload: Dict[str, Any]) -> TransportExecutionInput:
     }
 
 
-def _build_base_steps(normalized: TransportExecutionInput) -> List[ExecutionStep]:
-    provider_label = _get_provider_context_label(normalized)
+def _build_base_steps(
+    normalized: TransportExecutionInput,
+) -> List[ExecutionStep]:
+    provider = normalized["provider"]
+    adapter_name = _get_adapter_name(normalized["adapter"])
     target_url = normalized["targetUrl"]
 
     return [
         _make_step(
             1,
             "initialize",
-            f"Initialize Python Nova runner for {provider_label}.",
+            f"Initialize Python Nova runner for {provider} via {adapter_name}.",
         ),
         _make_step(
             2,
@@ -193,7 +258,9 @@ def _build_base_steps(normalized: TransportExecutionInput) -> List[ExecutionStep
     ]
 
 
-def _build_skip_steps(normalized: TransportExecutionInput) -> List[ExecutionStep]:
+def _build_skip_steps(
+    normalized: TransportExecutionInput,
+) -> List[ExecutionStep]:
     steps = _build_base_steps(normalized)
     steps.extend(
         [
@@ -212,7 +279,9 @@ def _build_skip_steps(normalized: TransportExecutionInput) -> List[ExecutionStep
     return steps
 
 
-def _build_plan_steps(normalized: TransportExecutionInput) -> List[ExecutionStep]:
+def _build_plan_steps(
+    normalized: TransportExecutionInput,
+) -> List[ExecutionStep]:
     adapter_name = _get_adapter_name(normalized["adapter"])
     steps = _build_base_steps(normalized)
     steps.extend(
@@ -235,7 +304,9 @@ def _build_plan_steps(normalized: TransportExecutionInput) -> List[ExecutionStep
     return steps
 
 
-def _build_demo_steps(normalized: TransportExecutionInput) -> List[ExecutionStep]:
+def _build_demo_steps(
+    normalized: TransportExecutionInput,
+) -> List[ExecutionStep]:
     safe_stop = normalized["safeStopBeforeSubmit"]
     adapter_name = _get_adapter_name(normalized["adapter"])
     steps = _build_base_steps(normalized)
@@ -278,7 +349,9 @@ def _build_demo_steps(normalized: TransportExecutionInput) -> List[ExecutionStep
     return steps
 
 
-def _build_live_steps(normalized: TransportExecutionInput) -> List[ExecutionStep]:
+def _build_live_fallback_steps(
+    normalized: TransportExecutionInput,
+) -> List[ExecutionStep]:
     transport = normalized["transport"]
     safe_stop = normalized["safeStopBeforeSubmit"]
     provider = normalized["provider"]
@@ -348,7 +421,6 @@ def _coerce_bridge_step(
     }
 
 
-
 def _coerce_bridge_steps(raw_steps: Any) -> List[ExecutionStep]:
     if not isinstance(raw_steps, list):
         return []
@@ -357,56 +429,137 @@ def _coerce_bridge_steps(raw_steps: Any) -> List[ExecutionStep]:
     for index, raw_step in enumerate(raw_steps, start=1):
         if not isinstance(raw_step, dict):
             continue
-        steps.append(_coerce_bridge_step(cast(RuntimeBridgeStep, raw_step), index))
+        steps.append(
+            _coerce_bridge_step(cast(RuntimeBridgeStep, raw_step), index)
+        )
 
     return steps
 
 
+def _coerce_action_logs(raw_logs: Any) -> List[ActionLog]:
+    if not isinstance(raw_logs, list):
+        return []
 
-def _build_live_steps_from_runtime_bridge(
+    logs: List[ActionLog] = []
+    for raw_log in raw_logs:
+        if not isinstance(raw_log, dict):
+            continue
+
+        step_id = _normalize_text(
+            raw_log.get("stepId") or raw_log.get("step_id")
+        )
+        action = _normalize_text(raw_log.get("action"))
+        status = _normalize_text(raw_log.get("status")) or "recorded"
+        detail = _normalize_text(raw_log.get("detail"))
+
+        if not step_id:
+            step_id = f"step_{len(logs) + 1}"
+        if not action:
+            action = "runtime"
+        if not detail:
+            detail = "Runtime action log entry."
+
+        logs.append(
+            _make_action_log(
+                step_id=step_id,
+                action=action,
+                status=status,
+                detail=detail,
+            )
+        )
+
+    return logs
+
+
+def _coerce_reasoning_logs(raw_logs: Any) -> List[ReasoningLog]:
+    if not isinstance(raw_logs, list):
+        return []
+
+    logs: List[ReasoningLog] = []
+    for raw_log in raw_logs:
+        if not isinstance(raw_log, dict):
+            continue
+
+        step_id = _normalize_text(
+            raw_log.get("stepId") or raw_log.get("step_id")
+        )
+        summary = _normalize_text(raw_log.get("summary"))
+
+        if not summary:
+            continue
+        if not step_id:
+            step_id = f"step_{len(logs) + 1}"
+
+        logs.append(
+            _make_reasoning_log(
+                step_id=step_id,
+                summary=summary,
+            )
+        )
+
+    return logs
+
+
+def _build_action_logs_from_steps(
+    execution_steps: List[ExecutionStep],
+    *,
+    executed: bool,
+) -> List[ActionLog]:
+    if not execution_steps:
+        return []
+
+    terminal_status = "executed" if executed else "planned"
+    return [
+        _make_action_log(
+            step_id=step["id"],
+            action=step["action"],
+            status=terminal_status,
+            detail=step["detail"],
+        )
+        for step in execution_steps
+    ]
+
+
+def _build_reasoning_logs_from_steps(
+    execution_steps: List[ExecutionStep],
+) -> List[ReasoningLog]:
+    if not execution_steps:
+        return []
+
+    logs: List[ReasoningLog] = []
+    for step in execution_steps:
+        summary = (
+            f"{step['action']} was included because the apply-agent flow "
+            f"requires: {step['detail']}"
+        )
+        logs.append(
+            _make_reasoning_log(
+                step_id=step["id"],
+                summary=summary,
+            )
+        )
+
+    return logs
+
+
+def _build_transport_summary(
     normalized: TransportExecutionInput,
-) -> Optional[List[ExecutionStep]]:
-    runtime_bridge_result = normalized.get("runtimeBridgeResult")
-    if not runtime_bridge_result:
-        return None
+    *,
+    status: ExecutionStatus,
+    executed: bool,
+    execution_steps: List[ExecutionStep],
+) -> str:
+    provider = normalized["provider"]
+    transport = _get_transport_label(normalized["transport"])
+    mode = normalized["mode"]
+    step_count = len(execution_steps)
+    execution_label = "executed" if executed else "prepared"
 
-    bridge_steps = _coerce_bridge_steps(runtime_bridge_result.get("executionSteps"))
-    if bridge_steps:
-        return bridge_steps
-
-    fallback_steps = _build_live_steps(normalized)
-
-    browser_session_summary = normalized.get("browserSessionSummary")
-    if browser_session_summary:
-        fallback_steps.append(
-            _make_step(
-                len(fallback_steps) + 1,
-                "browser_session",
-                browser_session_summary,
-            )
-        )
-
-    detected_field_count = normalized.get("detectedFieldCount")
-    if isinstance(detected_field_count, int):
-        fallback_steps.append(
-            _make_step(
-                len(fallback_steps) + 1,
-                "field_detection",
-                f"Detected {detected_field_count} application fields.",
-            )
-        )
-
-    filled_field_count = normalized.get("filledFieldCount")
-    if isinstance(filled_field_count, int):
-        fallback_steps.append(
-            _make_step(
-                len(fallback_steps) + 1,
-                "field_fill",
-                f"Prepared {filled_field_count} field fill actions.",
-            )
-        )
-
-    return fallback_steps
+    return (
+        f"Transport executor {execution_label} a {mode} run for {provider} "
+        f"using {transport} transport with {step_count} steps "
+        f"and final status {status}."
+    )
 
 
 def _build_message(normalized: TransportExecutionInput) -> str:
@@ -458,9 +611,6 @@ def _build_live_message(
             f"{browser_session_summary}"
         )
 
-    if execution_steps:
-        return _build_message(normalized)
-
     return _build_message(normalized)
 
 
@@ -471,76 +621,33 @@ def _build_result(
     execution_steps: List[ExecutionStep],
     normalized: TransportExecutionInput,
 ) -> TransportExecutionResult:
+    action_logs = _build_action_logs_from_steps(
+        execution_steps,
+        executed=executed,
+    )
+    reasoning_logs = _build_reasoning_logs_from_steps(execution_steps)
+    transport_summary = _build_transport_summary(
+        normalized,
+        status=status,
+        executed=executed,
+        execution_steps=execution_steps,
+    )
+
     return {
         "status": status,
         "executed": executed,
         "executionSteps": execution_steps,
         "message": _build_message(normalized),
         "runner": _build_runner_metadata(normalized),
+        "actionLogs": action_logs,
+        "reasoningLogs": reasoning_logs,
+        "transportSummary": transport_summary,
     }
 
 
-def _execute_plan_mode(normalized: TransportExecutionInput) -> TransportExecutionResult:
-    return _build_result(
-        status="planned",
-        executed=False,
-        execution_steps=_build_plan_steps(normalized),
-        normalized=normalized,
-    )
-
-
-def _execute_demo_mode(normalized: TransportExecutionInput) -> TransportExecutionResult:
-    return _build_result(
-        status="queued",
-        executed=False,
-        execution_steps=_build_demo_steps(normalized),
-        normalized=normalized,
-    )
-
-
-def _execute_live_mode(normalized: TransportExecutionInput) -> TransportExecutionResult:
-    runtime_bridge_result = normalized.get("runtimeBridgeResult")
-    execution_steps = _build_live_steps_from_runtime_bridge(normalized)
-    if execution_steps is None:
-        execution_steps = _build_live_steps(normalized)
-
-    status: ExecutionStatus = "running"
-    executed = True
-    runner = _build_runner_metadata(normalized)
-
-    if runtime_bridge_result:
-        bridge_status = runtime_bridge_result.get("status")
-        if bridge_status in {"planned", "queued", "running", "completed", "failed"}:
-            status = bridge_status
-
-        bridge_executed = runtime_bridge_result.get("executed")
-        if isinstance(bridge_executed, bool):
-            executed = bridge_executed
-
-        bridge_runner = runtime_bridge_result.get("runner")
-        if isinstance(bridge_runner, dict):
-            merged_runner: RunnerMetadata = {
-                "engine": _normalize_text(bridge_runner.get("engine"))
-                or runner["engine"],
-                "transport": _normalize_text(bridge_runner.get("transport"))
-                or runner["transport"],
-                "adapter": _normalize_text(bridge_runner.get("adapter"))
-                or runner["adapter"],
-                "provider": _normalize_text(bridge_runner.get("provider"))
-                or runner["provider"],
-            }
-            runner = merged_runner
-
-    return {
-        "status": status,
-        "executed": executed,
-        "executionSteps": execution_steps,
-        "message": _build_live_message(normalized, execution_steps),
-        "runner": runner,
-    }
-
-
-def _execute_skip(normalized: TransportExecutionInput) -> TransportExecutionResult:
+def _execute_skip(
+    normalized: TransportExecutionInput,
+) -> TransportExecutionResult:
     return _build_result(
         status="completed",
         executed=False,
@@ -549,16 +656,196 @@ def _execute_skip(normalized: TransportExecutionInput) -> TransportExecutionResu
     )
 
 
+def _execute_plan_mode(
+    normalized: TransportExecutionInput,
+) -> TransportExecutionResult:
+    return _build_result(
+        status="planned",
+        executed=False,
+        execution_steps=_build_plan_steps(normalized),
+        normalized=normalized,
+    )
+
+
+def _execute_demo_mode(
+    normalized: TransportExecutionInput,
+) -> TransportExecutionResult:
+    return _build_result(
+        status="queued",
+        executed=False,
+        execution_steps=_build_demo_steps(normalized),
+        normalized=normalized,
+    )
+
+
+def _merge_runner_metadata(
+    base_runner: RunnerMetadata,
+    bridge_runner: Any,
+) -> RunnerMetadata:
+    if not isinstance(bridge_runner, dict):
+        return base_runner
+
+    return {
+        "engine": _normalize_text(bridge_runner.get("engine"))
+        or base_runner["engine"],
+        "transport": _normalize_text(bridge_runner.get("transport"))
+        or base_runner["transport"],
+        "adapter": _normalize_text(bridge_runner.get("adapter"))
+        or base_runner["adapter"],
+        "provider": _normalize_text(bridge_runner.get("provider"))
+        or base_runner["provider"],
+    }
+
+
+def _build_live_steps_from_runtime_bridge(
+    normalized: TransportExecutionInput,
+) -> Optional[List[ExecutionStep]]:
+    runtime_bridge_result = normalized.get("runtimeBridgeResult")
+    if not runtime_bridge_result:
+        return None
+
+    bridge_steps = _coerce_bridge_steps(
+        runtime_bridge_result.get("executionSteps")
+    )
+    if bridge_steps:
+        return bridge_steps
+
+    fallback_steps = _build_live_fallback_steps(normalized)
+
+    browser_session_summary = normalized.get("browserSessionSummary")
+    if browser_session_summary:
+        fallback_steps.append(
+            _make_step(
+                len(fallback_steps) + 1,
+                "browser_session",
+                browser_session_summary,
+            )
+        )
+
+    detected_field_count = normalized.get("detectedFieldCount")
+    if isinstance(detected_field_count, int):
+        fallback_steps.append(
+            _make_step(
+                len(fallback_steps) + 1,
+                "field_detection",
+                f"Detected {detected_field_count} application fields.",
+            )
+        )
+
+    filled_field_count = normalized.get("filledFieldCount")
+    if isinstance(filled_field_count, int):
+        fallback_steps.append(
+            _make_step(
+                len(fallback_steps) + 1,
+                "field_fill",
+                f"Prepared {filled_field_count} field fill actions.",
+            )
+        )
+
+    return fallback_steps
+
+
+def _execute_live_mode(
+    normalized: TransportExecutionInput,
+) -> TransportExecutionResult:
+    runtime_bridge_result = normalized.get("runtimeBridgeResult")
+    execution_steps = _build_live_steps_from_runtime_bridge(normalized)
+    if execution_steps is None:
+        execution_steps = _build_live_fallback_steps(normalized)
+
+    status: ExecutionStatus = "running"
+    executed = True
+    runner = _build_runner_metadata(normalized)
+    action_logs = _build_action_logs_from_steps(
+        execution_steps,
+        executed=True,
+    )
+    reasoning_logs = _build_reasoning_logs_from_steps(execution_steps)
+    transport_summary = _build_transport_summary(
+        normalized,
+        status=status,
+        executed=executed,
+        execution_steps=execution_steps,
+    )
+
+    if runtime_bridge_result:
+        bridge_status = runtime_bridge_result.get("status")
+        if bridge_status in {
+            "planned",
+            "queued",
+            "running",
+            "completed",
+            "failed",
+        }:
+            status = bridge_status
+
+        bridge_executed = runtime_bridge_result.get("executed")
+        if isinstance(bridge_executed, bool):
+            executed = bridge_executed
+
+        runner = _merge_runner_metadata(
+            runner,
+            runtime_bridge_result.get("runner"),
+        )
+
+        bridge_action_logs = _coerce_action_logs(
+            runtime_bridge_result.get("actionLogs")
+        )
+        if bridge_action_logs:
+            action_logs = bridge_action_logs
+        else:
+            action_logs = _build_action_logs_from_steps(
+                execution_steps,
+                executed=executed,
+            )
+
+        bridge_reasoning_logs = _coerce_reasoning_logs(
+            runtime_bridge_result.get("reasoningLogs")
+        )
+        if bridge_reasoning_logs:
+            reasoning_logs = bridge_reasoning_logs
+        else:
+            reasoning_logs = _build_reasoning_logs_from_steps(execution_steps)
+
+        bridge_transport_summary = _normalize_text(
+            runtime_bridge_result.get("transportSummary")
+        )
+        if bridge_transport_summary:
+            transport_summary = bridge_transport_summary
+
+    if not _normalize_text(transport_summary):
+        transport_summary = _build_transport_summary(
+            normalized,
+            status=status,
+            executed=executed,
+            execution_steps=execution_steps,
+        )
+
+    return {
+        "status": status,
+        "executed": executed,
+        "executionSteps": execution_steps,
+        "message": _build_live_message(normalized, execution_steps),
+        "runner": runner,
+        "actionLogs": action_logs,
+        "reasoningLogs": reasoning_logs,
+        "transportSummary": transport_summary,
+    }
+
+
 def execute_transport(payload: Dict[str, Any]) -> TransportExecutionResult:
     """
     Central transport executor for the apply-agent Python runtime.
 
-    This module is the single decision point for transport behavior.
-    Right now it builds structured execution output for plan / demo / live
-    and keeps the Nova Act-facing metadata in one place.
+    This keeps the richer structured output:
+    - executionSteps
+    - runner metadata
+    - actionLogs
+    - reasoningLogs
+    - transportSummary
 
-    This now supports an optional runtime bridge payload for live execution, and this is the safest
-    place to replace simulated live-mode steps with a real transport call.
+    It is still transport-aware, but now it also cleanly merges a real
+    runtime-bridge result when the lower browser/runtime layers provide one.
     """
     normalized = _normalize_input(payload)
 
@@ -593,10 +880,6 @@ def execute_transport_with_adapter(
     filled_field_count: Optional[int] = None,
     detected_field_count: Optional[int] = None,
 ) -> TransportExecutionResult:
-    """
-    Convenience wrapper so nova_runner.py can call this with explicit args
-    instead of building a dict itself.
-    """
     return execute_transport(
         {
             "runId": run_id,
