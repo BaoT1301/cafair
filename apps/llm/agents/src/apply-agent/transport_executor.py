@@ -596,7 +596,6 @@ def _build_message(normalized: TransportExecutionInput) -> str:
 
 def _build_live_message(
     normalized: TransportExecutionInput,
-    execution_steps: List[ExecutionStep],
 ) -> str:
     runtime_bridge_result = normalized.get("runtimeBridgeResult")
     if runtime_bridge_result:
@@ -750,12 +749,14 @@ def _execute_live_mode(
 ) -> TransportExecutionResult:
     runtime_bridge_result = normalized.get("runtimeBridgeResult")
     execution_steps = _build_live_steps_from_runtime_bridge(normalized)
+
     if execution_steps is None:
         execution_steps = _build_live_fallback_steps(normalized)
 
     status: ExecutionStatus = "running"
     executed = True
     runner = _build_runner_metadata(normalized)
+
     action_logs = _build_action_logs_from_steps(
         execution_steps,
         executed=True,
@@ -825,7 +826,7 @@ def _execute_live_mode(
         "status": status,
         "executed": executed,
         "executionSteps": execution_steps,
-        "message": _build_live_message(normalized, execution_steps),
+        "message": _build_live_message(normalized),
         "runner": runner,
         "actionLogs": action_logs,
         "reasoningLogs": reasoning_logs,
@@ -844,8 +845,8 @@ def execute_transport(payload: Dict[str, Any]) -> TransportExecutionResult:
     - reasoningLogs
     - transportSummary
 
-    It is still transport-aware, but now it also cleanly merges a real
-    runtime-bridge result when the lower browser/runtime layers provide one.
+    It is transport-aware and also merges a runtime-bridge result when
+    lower browser/runtime layers provide real execution data.
     """
     normalized = _normalize_input(payload)
 
