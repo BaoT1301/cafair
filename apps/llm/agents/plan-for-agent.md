@@ -2,10 +2,10 @@
   LinkedIn, GitHub, Google summary + risk flags. Endpoint ready will be in  agents/End-Point-BRock-Stalker-AI.md
 
 - [ ] Resume tailor endpoint  
-  Candidate uploads resume + target role, returns tailored bullets.
+  Candidate uploads resume + target role, returns tailored bullets. (planning on at which behavior of the agent in the application process)
 
-- [ ] Candidate plan endpoint  
-  Step-by-step action plan for applying, referrals, follow-up.
+- [x] Candidate plan endpoint  
+  Step-by-step action plan for applying, referrals, follow-up. (Stephen- 40% apply agent on Greenhouse, Ashby... WorkDay later bc of security layer)
 
 - [ ] Recruiter follow-up generator  
   Drafts next-step email after screening.
@@ -22,7 +22,7 @@
 - [ ] Combine Bedrock + Nova Act  
   Improve speed, automation, and decision accuracy by pairing reasoning with actions.
   
-- [ ] Investigate OpenClaw integration possibility
+- [ ] Investigate OpenClaw integration possibility (Tue exploring)
 
 - [ ] Reinforcement learning pipeline + reward function  
   Adapt scoring and recommendations based on recruiter feedback signals such as positive and negative outcomes.
@@ -31,7 +31,7 @@
 
 - [ ] Chatbot for Candidate side
 
-- [ ] Use SerpAPI for AI stalker search/Chatbot Search/.....
+- [x] Use SerpAPI for Job posting search fallback...AI stalker search/Chatbot Search/.....
 
 - [ ] Text Embedding model AWS
 
@@ -41,6 +41,8 @@
 
 ---
 backup notes:
+*remember to update readme.md for agents big folder after any huge transform*
+
 ---
 Nova Act endpoints are not verified
 
