@@ -2,44 +2,22 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import Any, Dict, List, Literal, Optional, TypedDict
+from typing import Any, Dict, Literal, Optional, TypedDict
 
-from .providers.base import ProviderAdapter
-from .providers.base import get_provider_adapter
-from .transport_executor import execute_transport_with_adapter
+from .browser_session import build_browser_session
+from .execution_report import (
+    build_execution_report,
+    build_python_response_from_report,
+)
+from .field_mapper import map_profile_to_fields
+from .form_filler import build_form_fill_actions
+from .profile_loader import load_profile_for_provider
+from .providers.base import ProviderAdapter, get_provider_adapter
 
 
 Provider = Literal["greenhouse", "workday", "ashby", "unknown"]
 Mode = Literal["plan", "demo", "live"]
 Transport = Literal["workflow", "api"]
-
-
-class VisibleField(TypedDict):
-    name: str
-    label: str
-    type: str
-    required: bool
-    selector: str
-
-
-class ExecutionStep(TypedDict):
-    id: str
-    action: str
-    detail: str
-
-
-class RunnerMeta(TypedDict):
-    engine: str
-    transport: str
-    adapter: str
-    provider: str
-
-
-class PlanResult(TypedDict):
-    provider: Provider
-    safeStopBeforeSubmit: bool
-    selectors: List[str]
-    steps: List[str]
 
 
 class NormalizedPayload(TypedDict):
@@ -54,23 +32,10 @@ class NormalizedPayload(TypedDict):
     safeStopBeforeSubmit: bool
 
 
-class RunnerResult(TypedDict):
+class ErrorResult(TypedDict, total=False):
     ok: bool
-    runId: str
-    provider: Provider
-    mode: Mode
-    status: str
-    executed: bool
-    safeStopBeforeSubmit: bool
-    visibleFields: List[VisibleField]
-    executionSteps: List[ExecutionStep]
-    message: str
-    runner: RunnerMeta
-    targetUrl: str
-    company: Optional[str]
-    roleTitle: Optional[str]
-    selectors: List[str]
-    plannedSteps: List[str]
+    error: str
+    details: str
 
 
 def _as_str(value: Any, default: str = "") -> str:
@@ -143,7 +108,7 @@ def _detect_provider_from_url(target_url: str) -> Provider:
 
 
 def _normalize_payload(payload: Dict[str, Any]) -> NormalizedPayload:
-    run_id = _as_str(payload.get("runId"), "")
+    run_id = _as_str(payload.get("runId"), "").strip()
     target_url = _as_str(payload.get("targetUrl"), "").strip()
     company = _as_str(payload.get("company"), "").strip() or None
     role_title = _as_str(payload.get("roleTitle"), "").strip() or None
@@ -171,11 +136,19 @@ def _normalize_payload(payload: Dict[str, Any]) -> NormalizedPayload:
     }
 
 
+def _validate_payload(normalized: NormalizedPayload) -> None:
+    if not normalized["runId"]:
+        raise ValueError("runId is required.")
+
+    if not normalized["targetUrl"]:
+        raise ValueError("targetUrl is required.")
+
+
 def _build_runner_meta(
     provider: Provider,
     transport: Transport,
     adapter: ProviderAdapter,
-) -> RunnerMeta:
+) -> Dict[str, Any]:
     return {
         "engine": "nova-act",
         "transport": transport,
@@ -184,30 +157,45 @@ def _build_runner_meta(
     }
 
 
-def _build_plan(
-    normalized: NormalizedPayload,
-    adapter: ProviderAdapter,
-) -> PlanResult:
-    return {
+def run(payload: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = _normalize_payload(payload)
+    _validate_payload(normalized)
+
+    adapter = get_provider_adapter(normalized["provider"])
+
+    provider_result = {
         "provider": normalized["provider"],
         "safeStopBeforeSubmit": normalized["safeStopBeforeSubmit"],
         "selectors": adapter.selectors(),
-        "steps": adapter.build_plan_steps(
+        "plannedSteps": adapter.build_plan_steps(
             company=normalized["company"],
             role_title=normalized["roleTitle"],
             should_apply=normalized["shouldApply"],
             safe_stop=normalized["safeStopBeforeSubmit"],
         ),
+        "visibleFields": adapter.visible_fields(),
     }
 
+    profile_result = load_profile_for_provider(
+        provider=normalized["provider"],
+        company=normalized["company"],
+        role_title=normalized["roleTitle"],
+    )
 
-def run(payload: Dict[str, Any]) -> RunnerResult:
-    normalized = _normalize_payload(payload)
-    adapter = get_provider_adapter(normalized["provider"])
+    field_mapping_result = map_profile_to_fields(
+        visible_fields=provider_result["visibleFields"],
+        profile_result=profile_result,
+        provider=normalized["provider"],
+    )
 
-    plan = _build_plan(normalized, adapter)
-    visible_fields = adapter.visible_fields()
-    transport_result = execute_transport_with_adapter(
+    form_fill_result = build_form_fill_actions(
+        mapped_fields=field_mapping_result["mappedFields"],
+        should_apply=normalized["shouldApply"],
+        safe_stop_before_submit=normalized["safeStopBeforeSubmit"],
+        mode=normalized["mode"],
+    )
+
+    browser_session_result = build_browser_session(
         run_id=normalized["runId"],
         target_url=normalized["targetUrl"],
         provider=normalized["provider"],
@@ -215,78 +203,89 @@ def run(payload: Dict[str, Any]) -> RunnerResult:
         transport=normalized["transport"],
         should_apply=normalized["shouldApply"],
         safe_stop_before_submit=normalized["safeStopBeforeSubmit"],
+        selectors=provider_result["selectors"],
+        planned_steps=provider_result["plannedSteps"],
+        fill_actions=form_fill_result["fillActions"],
         company=normalized["company"],
         role_title=normalized["roleTitle"],
-        adapter=adapter,
+        adapter_name=adapter.adapter_name,
     )
-    runner = _build_runner_meta(
+
+    runner_meta = _build_runner_meta(
         provider=normalized["provider"],
         transport=normalized["transport"],
         adapter=adapter,
     )
 
-    return {
-        "ok": True,
-        "runId": normalized["runId"],
-        "provider": normalized["provider"],
-        "mode": normalized["mode"],
-        "status": transport_result["status"],
-        "executed": transport_result["executed"],
-        "safeStopBeforeSubmit": normalized["safeStopBeforeSubmit"],
-        "visibleFields": visible_fields,
-        "executionSteps": transport_result["executionSteps"],
-        "message": transport_result["message"],
-        "runner": runner,
-        "targetUrl": normalized["targetUrl"],
-        "company": normalized["company"],
-        "roleTitle": normalized["roleTitle"],
-        "selectors": plan["selectors"],
-        "plannedSteps": plan["steps"],
-    }
+    report = build_execution_report(
+        run_id=normalized["runId"],
+        provider=normalized["provider"],
+        mode=normalized["mode"],
+        target_url=normalized["targetUrl"],
+        company=normalized["company"],
+        role_title=normalized["roleTitle"],
+        should_apply=normalized["shouldApply"],
+        safe_stop_before_submit=normalized["safeStopBeforeSubmit"],
+        transport=normalized["transport"],
+        runner_meta=runner_meta,
+        provider_result=provider_result,
+        profile_result=profile_result,
+        field_mapping_result=field_mapping_result,
+        form_fill_result=form_fill_result,
+        browser_session_result=browser_session_result,
+    )
+
+    return build_python_response_from_report(report)
 
 
-def main() -> None:
+def _read_stdin_payload() -> Dict[str, Any]:
     raw = sys.stdin.read().strip()
 
     if not raw:
-        print(
-            json.dumps(
-                {
-                    "ok": False,
-                    "error": "No JSON payload received by Python runner.",
-                }
-            )
-        )
-        sys.exit(1)
+        raise ValueError("No JSON payload received by Python runner.")
 
     try:
-        payload = json.loads(raw)
+        parsed = json.loads(raw)
     except json.JSONDecodeError as exc:
-        print(
-            json.dumps(
-                {
-                    "ok": False,
-                    "error": "Invalid JSON payload.",
-                    "details": str(exc),
-                }
-            )
+        raise ValueError(f"Invalid JSON payload: {exc}") from exc
+
+    if not isinstance(parsed, dict):
+        raise ValueError("Top-level JSON payload must be an object.")
+
+    return parsed
+
+
+def _print_error_and_exit(error: str, details: str = "") -> None:
+    result: ErrorResult = {
+        "ok": False,
+        "error": error,
+    }
+
+    if details:
+        result["details"] = details
+
+    print(json.dumps(result))
+    sys.exit(1)
+
+
+def main() -> None:
+    try:
+        payload = _read_stdin_payload()
+    except Exception as exc:  # noqa: BLE001
+        _print_error_and_exit(
+            "Failed to read Python runner payload.",
+            str(exc),
         )
-        sys.exit(1)
+        return
 
     try:
         result = run(payload)
         print(json.dumps(result))
     except Exception as exc:  # noqa: BLE001
-        print(
-            json.dumps(
-                {
-                    "ok": False,
-                    "error": "Unhandled error in Python Nova runner.",
-                    "details": str(exc),
-                }
-            )
+        _print_error_and_exit(
+            "Unhandled error in Python Nova runner.",
+            str(exc),
         )
-        sys.exit(1)
 
 
 if __name__ == "__main__":
