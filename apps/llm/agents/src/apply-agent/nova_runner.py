@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import Any, Dict, Literal, Optional, TypedDict
+from typing import Any, Dict, Literal, Optional, TypedDict, cast
 
 from .browser_session import build_browser_session
 from .execution_report import (
@@ -13,7 +13,7 @@ from .field_mapper import map_profile_to_fields
 from .form_filler import build_form_fill_actions
 from .profile_loader import load_profile_for_provider
 from .providers.base import ProviderAdapter, get_provider_adapter
-from .transport_executor import execute_transport_plan
+from .transport_executor import execute_transport_with_adapter
 
 
 Provider = Literal["greenhouse", "workday", "ashby", "unknown"]
@@ -42,7 +42,7 @@ class ErrorResult(TypedDict, total=False):
 def _as_str(value: Any, default: str = "") -> str:
     if value is None:
         return default
-    return str(value)
+    return str(value).strip()
 
 
 def _as_bool(value: Any, default: bool = False) -> bool:
@@ -51,9 +51,9 @@ def _as_bool(value: Any, default: bool = False) -> bool:
 
     if isinstance(value, str):
         lowered = value.strip().lower()
-        if lowered in {"true", "1", "yes", "y"}:
+        if lowered in {"true", "1", "yes", "y", "on"}:
             return True
-        if lowered in {"false", "0", "no", "n"}:
+        if lowered in {"false", "0", "no", "n", "off"}:
             return False
 
     if isinstance(value, (int, float)):
@@ -63,7 +63,7 @@ def _as_bool(value: Any, default: bool = False) -> bool:
 
 
 def _normalize_provider(value: Any) -> Provider:
-    provider = _as_str(value, "unknown").strip().lower()
+    provider = _as_str(value, "unknown").lower()
 
     if provider == "greenhouse":
         return "greenhouse"
@@ -76,7 +76,7 @@ def _normalize_provider(value: Any) -> Provider:
 
 
 def _normalize_mode(value: Any) -> Mode:
-    mode = _as_str(value, "demo").strip().lower()
+    mode = _as_str(value, "demo").lower()
 
     if mode == "plan":
         return "plan"
@@ -87,7 +87,7 @@ def _normalize_mode(value: Any) -> Mode:
 
 
 def _normalize_transport(value: Any) -> Transport:
-    transport = _as_str(value, "workflow").strip().lower()
+    transport = _as_str(value, "workflow").lower()
 
     if transport == "api":
         return "api"
@@ -109,10 +109,10 @@ def _detect_provider_from_url(target_url: str) -> Provider:
 
 
 def _normalize_payload(payload: Dict[str, Any]) -> NormalizedPayload:
-    run_id = _as_str(payload.get("runId"), "").strip()
-    target_url = _as_str(payload.get("targetUrl"), "").strip()
-    company = _as_str(payload.get("company"), "").strip() or None
-    role_title = _as_str(payload.get("roleTitle"), "").strip() or None
+    run_id = _as_str(payload.get("runId"))
+    target_url = _as_str(payload.get("targetUrl"))
+    company = _as_str(payload.get("company")) or None
+    role_title = _as_str(payload.get("roleTitle")) or None
 
     provider_from_payload = _normalize_provider(payload.get("provider"))
     provider = (
@@ -162,18 +162,38 @@ def _build_provider_result(
     normalized: NormalizedPayload,
     adapter: ProviderAdapter,
 ) -> Dict[str, Any]:
+    selectors = adapter.selectors()
+    planned_steps = adapter.build_plan_steps(
+        company=normalized["company"],
+        role_title=normalized["roleTitle"],
+        should_apply=normalized["shouldApply"],
+        safe_stop=normalized["safeStopBeforeSubmit"],
+    )
+    visible_fields = adapter.visible_fields()
+
     return {
         "provider": normalized["provider"],
         "safeStopBeforeSubmit": normalized["safeStopBeforeSubmit"],
-        "selectors": adapter.selectors(),
-        "plannedSteps": adapter.build_plan_steps(
-            company=normalized["company"],
-            role_title=normalized["roleTitle"],
-            should_apply=normalized["shouldApply"],
-            safe_stop=normalized["safeStopBeforeSubmit"],
-        ),
-        "visibleFields": adapter.visible_fields(),
+        "selectors": selectors,
+        "plannedSteps": planned_steps,
+        "visibleFields": visible_fields,
     }
+
+
+def _build_browser_session_summary(
+    browser_session_result: Dict[str, Any],
+) -> Optional[str]:
+    message = browser_session_result.get("message")
+    if isinstance(message, str) and message.strip():
+        return message.strip()
+
+    summary = browser_session_result.get("summary")
+    if isinstance(summary, dict):
+        total_steps = summary.get("total_steps")
+        if isinstance(total_steps, int):
+            return f"Browser session prepared with {total_steps} steps."
+
+    return None
 
 
 def _augment_response(
@@ -195,11 +215,20 @@ def _augment_response(
     if "executionSteps" in transport_result:
         response["executionSteps"] = transport_result["executionSteps"]
 
-    if transport_result.get("message"):
+    if "message" in transport_result and transport_result.get("message"):
         response["message"] = transport_result["message"]
 
     if "runner" in transport_result:
         response["runner"] = transport_result["runner"]
+
+    if "actionLogs" in transport_result:
+        response["actionLogs"] = transport_result["actionLogs"]
+
+    if "reasoningLogs" in transport_result:
+        response["reasoningLogs"] = transport_result["reasoningLogs"]
+
+    if "transportSummary" in transport_result:
+        response["transportSummary"] = transport_result["transportSummary"]
 
     response["browserSession"] = browser_session_result
     response["profile"] = profile_result
@@ -222,7 +251,10 @@ def run(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     adapter = get_provider_adapter(normalized["provider"])
 
-    provider_result = _build_provider_result(normalized, adapter)
+    provider_result = _build_provider_result(
+        normalized=normalized,
+        adapter=adapter,
+    )
 
     profile_result = load_profile_for_provider(
         provider=normalized["provider"],
@@ -259,24 +291,49 @@ def run(payload: Dict[str, Any]) -> Dict[str, Any]:
         adapter_name=adapter.adapter_name,
     )
 
-    transport_result = execute_transport_plan(
+    browser_session_summary = _build_browser_session_summary(
+        browser_session_result
+    )
+
+    fill_actions = form_fill_result.get("fillActions", [])
+    filled_field_count = 0
+    if isinstance(fill_actions, list):
+        filled_field_count = sum(
+            1
+            for action in fill_actions
+            if isinstance(action, dict)
+            and action.get("status") == "ready"
+        )
+
+    visible_fields = provider_result.get("visibleFields", [])
+    detected_field_count = len(visible_fields) if isinstance(
+        visible_fields,
+        list,
+    ) else 0
+
+    runtime_bridge_result = None
+    if normalized["mode"] == "live" and normalized["shouldApply"]:
+        if browser_session_result.get("runtime_bridge_required"):
+            runtime_bridge_result = cast(
+                Optional[Dict[str, Any]],
+                browser_session_result.get("runtimeBridgeResult"),
+            )
+
+    transport_result = execute_transport_with_adapter(
         run_id=normalized["runId"],
+        target_url=normalized["targetUrl"],
         provider=normalized["provider"],
-        transport=normalized["transport"],
         mode=normalized["mode"],
+        transport=normalized["transport"],
         should_apply=normalized["shouldApply"],
         safe_stop_before_submit=normalized["safeStopBeforeSubmit"],
-        target_url=normalized["targetUrl"],
         company=normalized["company"],
         role_title=normalized["roleTitle"],
-        adapter_name=adapter.adapter_name,
-        selectors=provider_result["selectors"],
-        planned_steps=provider_result["plannedSteps"],
-        fill_actions=form_fill_result["fillActions"],
-        browser_session_result=browser_session_result,
-        profile_result=profile_result,
-        field_mapping_result=field_mapping_result,
-        form_fill_result=form_fill_result,
+        adapter=adapter,
+        runtime_bridge_result=runtime_bridge_result,
+        browser_session_summary=browser_session_summary,
+        filled_field_count=filled_field_count,
+        detected_field_count=detected_field_count,
     )
 
     runner_meta = _build_runner_meta(
@@ -337,6 +394,7 @@ def _read_stdin_payload() -> Dict[str, Any]:
 
 def _print_json(data: Dict[str, Any]) -> None:
     print(json.dumps(data, ensure_ascii=False))
+
 
 def _print_error_and_exit(error: str, details: str = "") -> None:
     result: ErrorResult = {

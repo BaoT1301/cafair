@@ -4,8 +4,6 @@ import json
 import sys
 from typing import Any, Dict, Optional, TypedDict
 
-from .nova_runner import run as run_nova_payload
-
 
 class RuntimeBridgeRunner(TypedDict, total=False):
     engine: str
@@ -60,6 +58,26 @@ class RuntimeBridgeError(TypedDict, total=False):
 RuntimeBridgeResponse = RuntimeBridgeSuccess | RuntimeBridgeError
 
 
+def load_nova_runner() -> Any:
+    try:
+        from .nova_runner import run as run_nova_payload
+    except ImportError:
+        from nova_runner import run as run_nova_payload  # type: ignore
+
+    return run_nova_payload
+
+
+def normalize_bridge_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ValueError("Runtime bridge payload must be a dictionary.")
+
+    nested_payload = payload.get("payload")
+    if isinstance(nested_payload, dict):
+        return nested_payload
+
+    return payload
+
+
 def parse_json_input(raw: str) -> Dict[str, Any]:
     payload = raw.strip()
 
@@ -83,13 +101,15 @@ def read_stdin_json() -> Dict[str, Any]:
 
 
 def run_runtime_bridge(payload: Dict[str, Any]) -> Dict[str, Any]:
-    if not isinstance(payload, dict):
-        raise ValueError("Runtime bridge payload must be a dictionary.")
+    normalized_payload = normalize_bridge_payload(payload)
+    run_nova_payload = load_nova_runner()
 
-    result = run_nova_payload(payload)
+    result = run_nova_payload(normalized_payload)
 
     if not isinstance(result, dict):
-        raise ValueError("Python Nova runner returned a non-dictionary response.")
+        raise ValueError(
+            "Python Nova runner returned a non-dictionary response."
+        )
 
     return result
 
@@ -184,13 +204,14 @@ def build_error_result(
 
 
 def print_json(data: RuntimeBridgeResponse) -> None:
-    print(json.dumps(data, ensure_ascii=False))
+    print(json.dumps(data, ensure_ascii=False, indent=2))
 
 
 def main() -> None:
     try:
         payload = read_stdin_json()
     except Exception as exc:  # noqa: BLE001
+        print(f"[runtime_bridge] input error: {exc}", file=sys.stderr)
         print_json(
             build_error_result(
                 "Failed to read runtime bridge input.",
@@ -203,6 +224,7 @@ def main() -> None:
     try:
         result = run_runtime_bridge(payload)
     except Exception as exc:  # noqa: BLE001
+        print(f"[runtime_bridge] execution error: {exc}", file=sys.stderr)
         print_json(
             build_error_result(
                 "Runtime bridge execution failed.",
