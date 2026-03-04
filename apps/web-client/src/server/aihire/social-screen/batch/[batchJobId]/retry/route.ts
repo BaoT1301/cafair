@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
   getSocialScreenBatchJob,
   resetSocialScreenBatchJob,
-} from "@/lib/aihire/socialScreenBatchStore";
+} from "@/lib/aihire/socialScreenBatchStore.db";
 import { runSocialScreenBatchJob } from "@/lib/aihire/runSocialScreenBatchJob";
 
 type RouteContext = {
@@ -15,7 +15,7 @@ export async function POST(_req: Request, context: RouteContext) {
   try {
     const { batchJobId } = await context.params;
 
-    const existingJob = getSocialScreenBatchJob(batchJobId);
+    const existingJob = await getSocialScreenBatchJob(batchJobId);
 
     if (!existingJob) {
       return NextResponse.json(
@@ -28,7 +28,7 @@ export async function POST(_req: Request, context: RouteContext) {
       );
     }
 
-    const resetJob = resetSocialScreenBatchJob(batchJobId);
+    const resetJob = await resetSocialScreenBatchJob(batchJobId);
 
     if (!resetJob) {
       return NextResponse.json(

@@ -4,8 +4,8 @@ import {
   getSocialScreenBatchJob,
   setSocialScreenBatchJobStatus,
   updateSocialScreenBatchCandidateResult,
-  type SocialScreenBatchCandidate,
-} from "@aihire/socialScreenBatchStore";
+} from "@/lib/aihire/socialScreenBatchStore.db";
+import type { SocialScreenBatchCandidate } from "@/lib/aihire/socialScreenBatchTypes";
 
 type RecruiterReadyResult = {
   fitScore: number;
@@ -18,8 +18,11 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function scoreCandidate(candidate: SocialScreenBatchCandidate): RecruiterReadyResult {
-  const text = `${candidate.name} ${candidate.roleTitle ?? ""} ${candidate.school ?? ""} ${candidate.resumeText ?? ""}`.toLowerCase();
+function scoreCandidate(
+  candidate: SocialScreenBatchCandidate,
+): RecruiterReadyResult {
+  const text =
+    `${candidate.name} ${candidate.roleTitle ?? ""} ${candidate.school ?? ""} ${candidate.resumeText ?? ""}`.toLowerCase();
 
   let fitScore = 55;
   const flags: string[] = [];
@@ -29,6 +32,7 @@ function scoreCandidate(candidate: SocialScreenBatchCandidate): RecruiterReadyRe
   if (text.includes("cloud")) fitScore += 8;
   if (text.includes("ai")) fitScore += 8;
   if (text.includes("full-stack")) fitScore += 6;
+
   if (!candidate.resumeText?.trim()) {
     flags.push("Missing resume text");
     fitScore -= 15;
@@ -51,36 +55,51 @@ function scoreCandidate(candidate: SocialScreenBatchCandidate): RecruiterReadyRe
 export async function runSocialScreenBatchJob(
   batchJobId: string,
 ): Promise<void> {
-  const job = getSocialScreenBatchJob(batchJobId);
-  if (!job) throw new Error(`Batch job not found: ${batchJobId}`);
+  const job = await getSocialScreenBatchJob(batchJobId);
 
-  setSocialScreenBatchJobStatus(batchJobId, "running");
+  if (!job) {
+    throw new Error(`Batch job not found: ${batchJobId}`);
+  }
+
+  await setSocialScreenBatchJobStatus(batchJobId, "running");
 
   for (const candidate of job.candidates) {
     try {
-      updateSocialScreenBatchCandidateResult(batchJobId, candidate.candidateId, {
-        status: "running",
-        ok: false,
-      });
+      await updateSocialScreenBatchCandidateResult(
+        batchJobId,
+        candidate.candidateId,
+        {
+          status: "running",
+          ok: false,
+        },
+      );
 
       await sleep(150);
 
       const result = scoreCandidate(candidate);
 
-      updateSocialScreenBatchCandidateResult(batchJobId, candidate.candidateId, {
-        status: "completed",
-        ok: true,
-        result,
-        error: undefined,
-      });
+      await updateSocialScreenBatchCandidateResult(
+        batchJobId,
+        candidate.candidateId,
+        {
+          status: "completed",
+          ok: true,
+          result,
+          error: undefined,
+        },
+      );
     } catch (error) {
-      updateSocialScreenBatchCandidateResult(batchJobId, candidate.candidateId, {
-        status: "failed",
-        ok: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+      await updateSocialScreenBatchCandidateResult(
+        batchJobId,
+        candidate.candidateId,
+        {
+          status: "failed",
+          ok: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+      );
     }
   }
 
-  setSocialScreenBatchJobStatus(batchJobId, "completed");
+  await setSocialScreenBatchJobStatus(batchJobId, "completed");
 }

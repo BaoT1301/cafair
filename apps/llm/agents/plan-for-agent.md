@@ -36,3 +36,18 @@
 - [ ] Text Embedding model AWS
 
 - [ ] Implement MCP (Model Context Protocol) Server ideas
+
+
+---
+backup notes:
+---
+Nova Act endpoints are not verified
+
+At the time of this handoff: • there are no dedicated API route files explicitly for Nova Act • the verified system is the Social Screen Batch API • the batch runner currently uses mock heuristic logic, not a real Nova Act integration endpoint
+
+So teammates should not label Nova Act endpoints as completed unless separate Nova Act route/service work is added and tested.
+---
+
+Replace the mock scorer with the real AI scoring service
+
+The clean next milestone is: 1. Keep the batch DB flow exactly as-is 2. Keep the existing endpoints exactly as-is 3. Replace the mock scoring section inside: • apps/web-client/src/lib/aihire/runSocialScreenBatchJob.ts 4. Call the real recruiter/social-screen AI service instead

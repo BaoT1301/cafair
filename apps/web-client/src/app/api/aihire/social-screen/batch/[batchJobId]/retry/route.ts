@@ -6,15 +6,15 @@ import {
 import { runSocialScreenBatchJob } from "@/lib/aihire/runSocialScreenBatchJob";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     batchJobId: string;
-  };
+  }>;
 };
 
 export async function POST(_req: Request, context: RouteContext) {
   try {
-    const { batchJobId } = context.params;
-    const job = getSocialScreenBatchJob(batchJobId);
+    const { batchJobId } = await context.params;
+    const job = await getSocialScreenBatchJob(batchJobId);
 
     if (!job) {
       return NextResponse.json(
@@ -23,7 +23,7 @@ export async function POST(_req: Request, context: RouteContext) {
       );
     }
 
-    const resetJob = resetSocialScreenBatchJob(batchJobId);
+    const resetJob = await resetSocialScreenBatchJob(batchJobId);
 
     if (!resetJob) {
       return NextResponse.json(

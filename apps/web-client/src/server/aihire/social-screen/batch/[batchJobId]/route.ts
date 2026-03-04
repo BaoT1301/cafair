@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSocialScreenBatchJob } from "@/lib/aihire/socialScreenBatchStore";
+import { getSocialScreenBatchJob } from "@/lib/aihire/socialScreenBatchStore.db";
 
 type RouteContext = {
   params: Promise<{
@@ -11,7 +11,7 @@ export async function GET(_req: Request, context: RouteContext) {
   try {
     const { batchJobId } = await context.params;
 
-    const job = getSocialScreenBatchJob(batchJobId);
+    const job = await getSocialScreenBatchJob(batchJobId);
 
     if (!job) {
       return NextResponse.json(
