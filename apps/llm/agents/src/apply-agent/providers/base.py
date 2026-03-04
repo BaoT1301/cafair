@@ -1,12 +1,36 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Protocol, runtime_checkable, Type
 
 
 ProviderName = Literal["greenhouse", "ashby", "workday", "unknown"]
 RunnerMode = Literal["plan", "demo", "live"]
 RunnerStatus = Literal["planned", "queued", "running", "completed", "failed"]
+
+
+@runtime_checkable
+class ProviderAdapter(Protocol):
+    """Public adapter interface used by nova_runner / transport layers."""
+
+    provider_name: ProviderName
+    adapter_name: str
+
+    def selectors(self) -> List[str]:
+        ...
+
+    def visible_fields(self) -> List[Dict[str, Any]]:
+        ...
+
+    def build_plan_steps(
+        self,
+        *,
+        company: Optional[str],
+        role_title: Optional[str],
+        should_apply: bool,
+        safe_stop: bool,
+    ) -> List[str]:
+        ...
 
 
 @dataclass
@@ -34,7 +58,7 @@ class ProviderContext:
 class VisibleField:
     name: str
     label: str
-    field_type: str
+    type: str
     required: bool
     selector: str
     placeholder: Optional[str] = None
@@ -44,7 +68,7 @@ class VisibleField:
         data: Dict[str, Any] = {
             "name": self.name,
             "label": self.label,
-            "type": self.field_type,
+            "type": self.type,
             "required": self.required,
             "selector": self.selector,
         }
@@ -77,12 +101,68 @@ class BaseProviderAdapter:
     provider_name: ProviderName = "unknown"
     adapter_name: str = "base-form-adapter"
 
+    def selectors(self) -> List[str]:
+        """Selectors that represent the provider's apply entry + core form controls."""
+        return [
+            "form",
+            "button",
+            "input",
+            "textarea",
+            "input[type='file']",
+        ]
+
+    def visible_fields(self) -> List[Dict[str, Any]]:
+        """Return JSON-serializable visible field descriptors (no ProviderContext required)."""
+        context = ProviderContext(
+            run_id="",
+            provider=self.provider_name,
+            mode="plan",
+            target_url="",
+            should_apply=True,
+            safe_stop_before_submit=True,
+            selectors=self.selectors(),
+            planned_steps=[],
+            transport="workflow",
+        )
+        return [field.to_dict() for field in self.build_visible_fields(context)]
+
+    def build_plan_steps(
+        self,
+        *,
+        company: Optional[str],
+        role_title: Optional[str],
+        should_apply: bool,
+        safe_stop: bool,
+    ) -> List[str]:
+        """Return human-readable plan steps (strings) used by the TS/Python bridge."""
+        role = role_title or "target role"
+        comp = company or "target company"
+        steps: List[str] = [
+            f"Open the job page for {role} at {comp}.",
+            "Wait for the page to stabilize.",
+            "Verify the application page is reachable.",
+            "Capture visible applicant fields.",
+        ]
+
+        if not should_apply:
+            steps.append("Stop because this job did not meet the apply threshold.")
+            return steps
+
+        steps.append("Find the provider-specific Apply entry point.")
+        steps.append("Open the application form.")
+        steps.append("Prefill saved candidate data.")
+        if safe_stop:
+            steps.append("Stop before final submit unless safe stop is disabled.")
+        else:
+            steps.append("Safe stop disabled; final submit may be allowed.")
+        return steps
+
     def build_visible_fields(self, context: ProviderContext) -> List[VisibleField]:
         return [
             VisibleField(
                 name="first_name",
                 label="First Name",
-                field_type="text",
+                type="text",
                 required=True,
                 selector="input[name='first_name'], input",
                 placeholder="First name",
@@ -90,7 +170,7 @@ class BaseProviderAdapter:
             VisibleField(
                 name="last_name",
                 label="Last Name",
-                field_type="text",
+                type="text",
                 required=True,
                 selector="input[name='last_name'], input",
                 placeholder="Last name",
@@ -98,7 +178,7 @@ class BaseProviderAdapter:
             VisibleField(
                 name="email",
                 label="Email",
-                field_type="email",
+                type="email",
                 required=True,
                 selector="input[type='email']",
                 placeholder="name@example.com",
@@ -106,7 +186,7 @@ class BaseProviderAdapter:
             VisibleField(
                 name="resume",
                 label="Resume",
-                field_type="file",
+                type="file",
                 required=True,
                 selector="input[type='file']",
             ),
@@ -306,3 +386,54 @@ class BaseProviderAdapter:
             "selectors": list(context.selectors),
             "plannedSteps": list(context.planned_steps),
         }
+
+
+def _import_first_adapter(module_path: str, class_candidates: List[str]) -> Type[ProviderAdapter]:
+    module = __import__(module_path, fromlist=["*"])
+    for name in class_candidates:
+        cls = getattr(module, name, None)
+        if isinstance(cls, type):
+            return cls
+    raise ImportError(
+        f"Could not find an adapter class in {module_path}. Tried: {', '.join(class_candidates)}"
+    )
+
+
+def get_provider_adapter(provider: ProviderName) -> ProviderAdapter:
+    p = (provider or "unknown").strip().lower()
+
+    if p == "greenhouse":
+        AdapterCls = _import_first_adapter(
+            "apply-agent.providers.greenhouse",
+            ["GreenhouseAdapter", "GreenhouseProviderAdapter", "GreenhouseFormAdapter"],
+        )
+        return AdapterCls()  # type: ignore[call-arg]
+
+    if p == "ashby":
+        AdapterCls = _import_first_adapter(
+            "apply-agent.providers.ashby",
+            ["AshbyAdapter", "AshbyProviderAdapter", "AshbyFormAdapter"],
+        )
+        return AdapterCls()  # type: ignore[call-arg]
+
+    if p == "workday":
+        AdapterCls = _import_first_adapter(
+            "apply-agent.providers.workday",
+            ["WorkdayAdapter", "WorkdayProviderAdapter", "WorkdayFormAdapter"],
+        )
+        return AdapterCls()  # type: ignore[call-arg]
+
+    return BaseProviderAdapter()
+
+
+__all__ = [
+    "ProviderName",
+    "RunnerMode",
+    "RunnerStatus",
+    "ProviderAdapter",
+    "ProviderContext",
+    "VisibleField",
+    "ExecutionStep",
+    "BaseProviderAdapter",
+    "get_provider_adapter",
+]

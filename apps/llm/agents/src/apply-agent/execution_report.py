@@ -26,7 +26,7 @@ def _safe_str(value: Any) -> str:
 def _count_required_fields(fields: List[Dict[str, Any]]) -> int:
     total = 0
     for field in fields:
-      if isinstance(field, dict) and bool(field.get("required")):
+        if isinstance(field, dict) and bool(field.get("required")):
             total += 1
     return total
 
@@ -66,6 +66,35 @@ def _count_fill_actions(
             counts["blocked"] += 1
 
     return counts
+
+
+def _safe_optional_dict(value: Any) -> Optional[Dict[str, Any]]:
+    if isinstance(value, dict):
+        return value
+    return None
+
+
+
+def _safe_optional_list(value: Any) -> Optional[List[Any]]:
+    if isinstance(value, list):
+        return value
+    return None
+
+
+
+def _prefer_transport_value(
+    primary: Any,
+    fallback: Any,
+) -> Any:
+    if isinstance(primary, str):
+        if primary.strip():
+            return primary.strip()
+    elif primary is not None:
+        return primary
+
+    if isinstance(fallback, str):
+        return fallback.strip()
+    return fallback
 
 
 def _derive_overall_status(
@@ -160,6 +189,7 @@ def build_execution_report(
     field_mapping_result: Optional[Dict[str, Any]] = None,
     form_fill_result: Optional[Dict[str, Any]] = None,
     browser_session_result: Optional[Dict[str, Any]] = None,
+    transport_result: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     provider_result = _safe_dict(provider_result)
     profile_result = _safe_dict(profile_result)
@@ -167,6 +197,7 @@ def build_execution_report(
     form_fill_result = _safe_dict(form_fill_result)
     browser_session_result = _safe_dict(browser_session_result)
     runner_meta = _safe_dict(runner_meta)
+    transport_result = _safe_dict(transport_result)
 
     visible_fields = _safe_list(provider_result.get("visibleFields"))
     provider_selectors = _safe_list(provider_result.get("selectors"))
@@ -182,22 +213,38 @@ def build_execution_report(
     browser_steps = _safe_list(browser_session_result.get("steps"))
     browser_summary = _safe_dict(browser_session_result.get("summary"))
 
+    transport_execution_steps = _safe_optional_list(
+        transport_result.get("executionSteps")
+    )
+    transport_action_logs = _safe_optional_list(
+        transport_result.get("actionLogs")
+    )
+    transport_reasoning_logs = _safe_optional_list(
+        transport_result.get("reasoningLogs")
+    )
+    transport_runner = _safe_optional_dict(transport_result.get("runner"))
+
     required_field_count = _count_required_fields(visible_fields)
     required_mapped_count = _count_required_mapped(mapped_fields)
     fill_counts = _count_fill_actions(fill_actions)
 
-    overall_status = _derive_overall_status(
+    derived_status = _derive_overall_status(
         should_apply=should_apply,
         mode=mode,
         browser_summary=browser_summary,
         fill_counts=fill_counts,
     )
 
-    executed = (
-        should_apply
-        and mode == "live"
-        and overall_status == "running"
-    )
+    overall_status = _safe_str(transport_result.get("status")) or derived_status
+
+    if "executed" in transport_result:
+        executed = bool(transport_result.get("executed"))
+    else:
+        executed = (
+            should_apply
+            and mode == "live"
+            and overall_status == "running"
+        )
 
     human_summary = _build_human_summary(
         provider=provider,
@@ -210,7 +257,7 @@ def build_execution_report(
     )
 
     report = {
-        "ok": overall_status != "failed",
+        "ok": bool(transport_result.get("ok", overall_status != "failed")),
         "runId": run_id,
         "provider": provider,
         "mode": mode,
@@ -221,7 +268,7 @@ def build_execution_report(
         "targetUrl": target_url,
         "company": company,
         "roleTitle": role_title,
-        "runner": runner_meta,
+        "runner": transport_runner or runner_meta,
         "visibleFields": visible_fields,
         "selectors": provider_selectors,
         "plannedSteps": provider_planned_steps,
@@ -245,7 +292,22 @@ def build_execution_report(
             "steps": browser_steps,
             "summary": browser_summary,
         },
-        "message": human_summary,
+        "transportResult": {
+            "status": overall_status,
+            "executed": executed,
+            "executionSteps": transport_execution_steps,
+            "actionLogs": transport_action_logs,
+            "reasoningLogs": transport_reasoning_logs,
+            "runner": transport_runner,
+            "transportSummary": _safe_str(
+                transport_result.get("transportSummary")
+            ),
+            "message": _safe_str(transport_result.get("message")),
+        },
+        "message": _prefer_transport_value(
+            transport_result.get("message"),
+            human_summary,
+        ),
     }
 
     return report
@@ -256,40 +318,35 @@ def build_python_response_from_report(
 ) -> Dict[str, Any]:
     browser = _safe_dict(report.get("browser"))
     fill = _safe_dict(report.get("fill"))
+    transport_result = _safe_dict(report.get("transportResult"))
 
     browser_steps = _safe_list(browser.get("steps"))
     fill_actions = _safe_list(fill.get("fillActions"))
 
-    execution_steps: List[Dict[str, Any]] = []
-
-    for index, step in enumerate(browser_steps, start=1):
-        if not isinstance(step, dict):
-            continue
-
-        step_id = _safe_str(step.get("step_id")) or f"step_{index}"
-        action = _safe_str(step.get("action")) or "unknown"
-        detail = _safe_str(step.get("detail")) or "No detail provided."
-
-        execution_steps.append(
-            {
-                "id": step_id,
-                "action": action,
-                "detail": detail,
-            }
-        )
+    execution_steps: List[Dict[str, Any]] = _safe_list(
+        transport_result.get("executionSteps")
+    )
 
     response = {
         "ok": bool(report.get("ok", False)),
         "runId": _safe_str(report.get("runId")),
         "provider": _safe_str(report.get("provider")) or "unknown",
         "mode": _safe_str(report.get("mode")) or "demo",
-        "status": _safe_str(report.get("status")) or "failed",
-        "executed": bool(report.get("executed", False)),
+        "status": _safe_str(transport_result.get("status"))
+        or _safe_str(report.get("status"))
+        or "failed",
+        "executed": bool(
+            transport_result.get("executed", report.get("executed", False))
+        ),
         "safeStopBeforeSubmit": bool(report.get("safeStopBeforeSubmit", True)),
         "visibleFields": _safe_list(report.get("visibleFields")),
         "executionSteps": execution_steps,
-        "message": _safe_str(report.get("message")),
-        "runner": _safe_dict(report.get("runner")),
+        "message": _safe_str(
+            transport_result.get("message") or report.get("message")
+        ),
+        "runner": _safe_dict(
+            transport_result.get("runner") or report.get("runner")
+        ),
         "targetUrl": _safe_str(report.get("targetUrl")),
         "company": report.get("company"),
         "roleTitle": report.get("roleTitle"),
@@ -304,6 +361,14 @@ def build_python_response_from_report(
         "browser": {
             "summary": _safe_dict(_safe_dict(report.get("browser")).get("summary")),
         },
+        "actionLogs": _safe_list(transport_result.get("actionLogs")),
+        "reasoningLogs": _safe_list(
+            transport_result.get("reasoningLogs")
+        ),
+        "transportSummary": _safe_str(
+            transport_result.get("transportSummary")
+        ),
+        "transportResult": transport_result,
     }
 
     return response

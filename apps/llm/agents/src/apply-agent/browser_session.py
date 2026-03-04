@@ -1,3 +1,5 @@
+# cafair/apps/llm/agents/src/apply-agent/browser_session.py
+
 from __future__ import annotations
 
 from dataclasses import dataclass

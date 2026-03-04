@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, Literal, Optional, TypedDict, cast
 
 from .providers.base import ProviderAdapter
@@ -696,6 +697,68 @@ def _merge_runner_metadata(
     }
 
 
+def _load_runtime_bridge_executor() -> Any:
+    try:
+        from .runtime_bridge import run_runtime_bridge
+    except ImportError:
+        from runtime_bridge import run_runtime_bridge  # type: ignore
+
+    return run_runtime_bridge
+
+
+def _should_invoke_runtime_bridge(
+    normalized: TransportExecutionInput,
+) -> bool:
+    if normalized["mode"] != "live":
+        return False
+
+    if normalized["transport"] != "api":
+        return False
+
+    if not normalized["shouldApply"]:
+        return False
+
+    if normalized.get("runtimeBridgeResult") is not None:
+        return False
+
+    return bool(_normalize_text(os.getenv("NOVA_ACT_API")))
+
+
+def _invoke_runtime_bridge_if_needed(
+    normalized: TransportExecutionInput,
+) -> Optional[RuntimeBridgeResult]:
+    if not _should_invoke_runtime_bridge(normalized):
+        return normalized.get("runtimeBridgeResult")
+
+    run_runtime_bridge = _load_runtime_bridge_executor()
+
+    bridge_payload: Dict[str, Any] = {
+        "runId": normalized["runId"],
+        "targetUrl": normalized["targetUrl"],
+        "provider": normalized["provider"],
+        "mode": normalized["mode"],
+        "transport": normalized["transport"],
+        "shouldApply": normalized["shouldApply"],
+        "safeStopBeforeSubmit": normalized["safeStopBeforeSubmit"],
+        "company": normalized["company"],
+        "roleTitle": normalized["roleTitle"],
+        "adapterName": _get_adapter_name(normalized["adapter"]),
+    }
+
+    try:
+        bridge_result = run_runtime_bridge(bridge_payload)
+    except Exception:
+        return None
+
+    if not isinstance(bridge_result, dict):
+        return None
+
+    if bridge_result.get("ok") is False:
+        return None
+
+    return cast(RuntimeBridgeResult, bridge_result)
+
+
 def _build_live_steps_from_runtime_bridge(
     normalized: TransportExecutionInput,
 ) -> Optional[List[ExecutionStep]]:
@@ -747,7 +810,11 @@ def _build_live_steps_from_runtime_bridge(
 def _execute_live_mode(
     normalized: TransportExecutionInput,
 ) -> TransportExecutionResult:
-    runtime_bridge_result = normalized.get("runtimeBridgeResult")
+    runtime_bridge_result = _invoke_runtime_bridge_if_needed(normalized)
+
+    if runtime_bridge_result is not None:
+        normalized["runtimeBridgeResult"] = runtime_bridge_result
+
     execution_steps = _build_live_steps_from_runtime_bridge(normalized)
 
     if execution_steps is None:
@@ -845,8 +912,9 @@ def execute_transport(payload: Dict[str, Any]) -> TransportExecutionResult:
     - reasoningLogs
     - transportSummary
 
-    It is transport-aware and also merges a runtime-bridge result when
-    lower browser/runtime layers provide real execution data.
+    In live API mode, if NOVA_ACT_API is present, this can directly invoke
+    the runtime bridge so the real Nova Act SDK browser path is attempted
+    here instead of only returning a structured fallback.
     """
     normalized = _normalize_input(payload)
 

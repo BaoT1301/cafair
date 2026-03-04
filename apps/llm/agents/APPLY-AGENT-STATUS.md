@@ -1,5 +1,28 @@
 # Apply Agent Status
 
+```bash
+npx tsx apps/llm/agents/scripts/apply-agent/run-local.ts \
+  --transport api \
+  --mode live \
+  --provider greenhouse \
+  --url "https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002" \
+  --company "Flagship Pioneering" \
+  --role "IT Automation Engineering Intern" \
+  --should-apply true \
+  --safe-stop true
+
+npx tsx apps/llm/agents/scripts/apply-agent/run-local.ts \
+  --transport api \
+  --mode live \
+  --provider ashby \
+  --url "https://jobs.ashbyhq.com/openai/13a9e4e4-505b-4545-8b2b-b0bcc09c2b4f/application" \
+  --company "OpenAI" \
+  --role "Software Engineer Systems Research Internship" \
+  --should-apply true \
+  --safe-stop true
+```
+
+
 ## What is working so far
 
 The apply-agent pipeline is now split into two main layers:

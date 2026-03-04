@@ -2,20 +2,15 @@ from __future__ import annotations
 
 from typing import List
 
-from .base import (
-    BaseProviderAdapter,
-    ExecutionStep,
-    ProviderContext,
-    VisibleField,
-)
+from .base import BaseProviderAdapter, ExecutionStep, VisibleField
 
 
 class AshbyProviderAdapter(BaseProviderAdapter):
     provider_name = "ashby"
     adapter_name = "ashby-form-adapter"
 
-    def build_visible_fields(self, context: ProviderContext) -> List[VisibleField]:
-        fields = super().build_visible_fields(context)
+    def build_visible_fields(self) -> List[VisibleField]:
+        fields = super().build_visible_fields()
 
         fields.extend(
             [
@@ -31,14 +26,20 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                     label="LinkedIn",
                     field_type="text",
                     required=False,
-                    selector="input[name*='linkedin'], input[id*='linkedin'], input",
+                    selector=(
+                        "input[name*='linkedin'], "
+                        "input[id*='linkedin'], input"
+                    ),
                 ),
                 VisibleField(
                     name="website",
                     label="Website / Portfolio",
                     field_type="text",
                     required=False,
-                    selector="input[name*='website'], input[name*='portfolio'], input",
+                    selector=(
+                        "input[name*='website'], "
+                        "input[name*='portfolio'], input"
+                    ),
                 ),
                 VisibleField(
                     name="cover_letter",
@@ -59,77 +60,51 @@ class AshbyProviderAdapter(BaseProviderAdapter):
 
         return fields
 
-    def build_execution_steps(
+    def build_plan_steps(
         self,
-        context: ProviderContext,
+        *,
+        company: str | None,
+        role_title: str | None,
+        should_apply: bool,
+        safe_stop: bool,
     ) -> List[ExecutionStep]:
-        if not context.should_apply:
-            return self._build_skip_steps(context)
+        role_text = role_title or "target role"
+        company_text = company or "target company"
 
-        if context.mode == "plan":
-            return self._build_plan_steps(context)
+        if not should_apply:
+            return [
+                ExecutionStep(
+                    step_id="step_1",
+                    action="initialize",
+                    detail="Initialize Python Nova runner for ashby.",
+                ),
+                ExecutionStep(
+                    step_id="step_2",
+                    action="skip",
+                    detail=(
+                        f"Skip {role_text} at {company_text} because the "
+                        "job did not meet the apply threshold."
+                    ),
+                ),
+            ]
 
-        if context.mode == "demo":
-            return self._build_demo_steps(context)
-
-        return self._build_live_steps(context)
-
-    def _build_skip_steps(
-        self,
-        context: ProviderContext,
-    ) -> List[ExecutionStep]:
         return [
             ExecutionStep(
                 step_id="step_1",
                 action="initialize",
-                detail=(
-                    "Initialize Python Nova runner for ashby "
-                    f"using {context.transport} transport."
-                ),
+                detail="Initialize Python Nova runner for ashby.",
             ),
             ExecutionStep(
                 step_id="step_2",
-                action="navigate",
-                detail=f"Prepare browser navigation for {context.target_url}.",
-            ),
-            ExecutionStep(
-                step_id="step_3",
-                action="skip",
-                detail=(
-                    "Stop because the job did not meet the apply threshold. "
-                    "Do not open the Ashby application flow."
-                ),
-            ),
-        ]
-
-    def _build_plan_steps(
-        self,
-        context: ProviderContext,
-    ) -> List[ExecutionStep]:
-        return [
-            ExecutionStep(
-                step_id="step_1",
-                action="initialize",
-                detail=(
-                    "Initialize Python Nova runner for ashby "
-                    f"using {context.transport} transport."
-                ),
-            ),
-            ExecutionStep(
-                step_id="step_2",
-                action="navigate",
-                detail=f"Prepare browser navigation for {context.target_url}.",
-            ),
-            ExecutionStep(
-                step_id="step_3",
                 action="inspect_apply_entry",
                 detail=(
-                    "Inspect the Ashby careers page and locate the main "
-                    "Apply button or inline application form entry point."
+                    f"Inspect the Ashby careers page for {role_text} at "
+                    f"{company_text} and locate the main Apply button or "
+                    "inline application form entry point."
                 ),
             ),
             ExecutionStep(
-                step_id="step_4",
+                step_id="step_3",
                 action="inspect_resume_autofill",
                 detail=(
                     "Plan to upload the resume first because Ashby commonly "
@@ -137,7 +112,7 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 ),
             ),
             ExecutionStep(
-                step_id="step_5",
+                step_id="step_4",
                 action="inspect_required_fields",
                 detail=(
                     "Identify required fields, optional portfolio links, and "
@@ -145,7 +120,7 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 ),
             ),
             ExecutionStep(
-                step_id="step_6",
+                step_id="step_5",
                 action="plan_only",
                 detail=(
                     "Return the Ashby execution plan only. "
@@ -154,33 +129,50 @@ class AshbyProviderAdapter(BaseProviderAdapter):
             ),
         ]
 
-    def _build_demo_steps(
+    def build_demo_steps(
         self,
-        context: ProviderContext,
+        *,
+        company: str | None,
+        role_title: str | None,
+        should_apply: bool,
+        safe_stop: bool,
     ) -> List[ExecutionStep]:
+        role_text = role_title or "target role"
+        company_text = company or "target company"
+
+        if not should_apply:
+            return [
+                ExecutionStep(
+                    step_id="step_1",
+                    action="initialize",
+                    detail="Initialize Python Nova runner for ashby.",
+                ),
+                ExecutionStep(
+                    step_id="step_2",
+                    action="skip",
+                    detail=(
+                        f"Skip {role_text} at {company_text} because the "
+                        "job did not meet the apply threshold."
+                    ),
+                ),
+            ]
+
         return [
             ExecutionStep(
                 step_id="step_1",
                 action="initialize",
-                detail=(
-                    "Initialize Python Nova runner for ashby "
-                    f"using {context.transport} transport."
-                ),
+                detail="Initialize Python Nova runner for ashby.",
             ),
             ExecutionStep(
                 step_id="step_2",
-                action="navigate",
-                detail=f"Prepare browser navigation for {context.target_url}.",
-            ),
-            ExecutionStep(
-                step_id="step_3",
                 action="simulate_open",
                 detail=(
-                    "Simulate opening the Ashby Apply flow from the job page."
+                    f"Simulate opening the Ashby Apply flow for {role_text} "
+                    f"at {company_text}."
                 ),
             ),
             ExecutionStep(
-                step_id="step_4",
+                step_id="step_3",
                 action="simulate_resume_upload",
                 detail=(
                     "Simulate uploading the resume first to trigger Ashby "
@@ -188,15 +180,16 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 ),
             ),
             ExecutionStep(
-                step_id="step_5",
+                step_id="step_4",
                 action="simulate_prefill",
                 detail=(
-                    "Simulate reviewing autofilled name, email, and experience "
-                    "fields, then patch any missing required values."
+                    "Simulate reviewing autofilled name, email, and "
+                    "experience fields, then patch any missing required "
+                    "values."
                 ),
             ),
             ExecutionStep(
-                step_id="step_6",
+                step_id="step_5",
                 action="simulate_questions",
                 detail=(
                     "Simulate filling remaining required fields and handle "
@@ -204,19 +197,48 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 ),
             ),
             ExecutionStep(
-                step_id="step_7",
+                step_id="step_6",
                 action="safe_stop",
-                detail="Stop before final submit in safe mode.",
+                detail=(
+                    "Stop before final submit in safe mode."
+                    if safe_stop
+                    else "Safe stop disabled for demo flow."
+                ),
             ),
         ]
 
-    def _build_live_steps(
+    def build_live_steps(
         self,
-        context: ProviderContext,
+        *,
+        company: str | None,
+        role_title: str | None,
+        should_apply: bool,
+        safe_stop: bool,
+        transport: str,
     ) -> List[ExecutionStep]:
+        role_text = role_title or "target role"
+        company_text = company or "target company"
+
+        if not should_apply:
+            return [
+                ExecutionStep(
+                    step_id="step_1",
+                    action="initialize",
+                    detail="Initialize Python Nova runner for ashby.",
+                ),
+                ExecutionStep(
+                    step_id="step_2",
+                    action="skip",
+                    detail=(
+                        f"Skip {role_text} at {company_text} because the "
+                        "job did not meet the apply threshold."
+                    ),
+                ),
+            ]
+
         launch_detail = (
             "Launch API-driven Nova Act browser automation."
-            if context.transport == "api"
+            if transport == "api"
             else "Launch workflow-driven Nova Act browser automation."
         )
 
@@ -224,31 +246,24 @@ class AshbyProviderAdapter(BaseProviderAdapter):
             ExecutionStep(
                 step_id="step_1",
                 action="initialize",
-                detail=(
-                    "Initialize Python Nova runner for ashby "
-                    f"using {context.transport} transport."
-                ),
+                detail="Initialize Python Nova runner for ashby.",
             ),
             ExecutionStep(
                 step_id="step_2",
-                action="navigate",
-                detail=f"Prepare browser navigation for {context.target_url}.",
-            ),
-            ExecutionStep(
-                step_id="step_3",
                 action="launch_browser",
                 detail=launch_detail,
             ),
             ExecutionStep(
-                step_id="step_4",
+                step_id="step_3",
                 action="open_apply",
                 detail=(
-                    "Open the Ashby Apply flow from the careers page or the "
-                    "inline application entry point."
+                    f"Open the Ashby Apply flow for {role_text} at "
+                    f"{company_text} from the careers page or the inline "
+                    "application entry point."
                 ),
             ),
             ExecutionStep(
-                step_id="step_5",
+                step_id="step_4",
                 action="upload_resume",
                 detail=(
                     "Upload the resume first so Ashby can autofill applicant "
@@ -256,15 +271,16 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 ),
             ),
             ExecutionStep(
-                step_id="step_6",
+                step_id="step_5",
                 action="review_autofill",
                 detail=(
-                    "Review autofilled fields for accuracy and fill any missing "
-                    "required values such as phone or work authorization."
+                    "Review autofilled fields for accuracy and fill any "
+                    "missing required values such as phone or work "
+                    "authorization."
                 ),
             ),
             ExecutionStep(
-                step_id="step_7",
+                step_id="step_6",
                 action="answer_questions",
                 detail=(
                     "Complete additional required questions, attachments, and "
@@ -272,8 +288,12 @@ class AshbyProviderAdapter(BaseProviderAdapter):
                 ),
             ),
             ExecutionStep(
-                step_id="step_8",
+                step_id="step_7",
                 action="safe_stop",
-                detail="Stop before final submit in safe mode.",
+                detail=(
+                    "Stop before final submit in safe mode."
+                    if safe_stop
+                    else "Safe stop disabled; final submit may be allowed."
+                ),
             ),
         ]
