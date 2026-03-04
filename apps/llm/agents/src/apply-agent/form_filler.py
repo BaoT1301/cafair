@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal
 
 from .field_mapper import FieldMappingResult
 
@@ -33,6 +33,18 @@ class FillAction:
     reason: str
 
 
+@dataclass(frozen=True)
+class FillExecutionCandidate:
+    step_id: str
+    action: FillActionType
+    selector: str
+    field_name: str
+    label: str
+    field_type: str
+    required: bool
+    value: Any
+
+
 def _normalize_text(value: Any) -> str:
     if value is None:
         return ""
@@ -47,8 +59,10 @@ def _normalize_key(value: str) -> str:
     normalized = normalized.replace(" ", "_")
     normalized = normalized.replace("/", "_")
     normalized = normalized.replace(".", "_")
+
     while "__" in normalized:
         normalized = normalized.replace("__", "_")
+
     return normalized.strip("_")
 
 
@@ -77,7 +91,7 @@ def _resolve_action_type(field: FieldMappingResult) -> FillActionType:
     if field_type in {"select", "dropdown"}:
         return "select_option"
 
-    if field_type in {"email"}:
+    if field_type == "email":
         return "type_email"
 
     if field_type in {"tel", "phone"}:
@@ -165,9 +179,7 @@ def _plan_single_field(step_id: str, field: FieldMappingResult) -> FillAction:
                 step_id=step_id,
                 field=field,
                 action=action_type,
-                reason=(
-                    "Required field has no mapped value from applicant profile."
-                ),
+                reason="Required field has no mapped value from applicant profile.",
             )
 
         return _build_skip_action(
@@ -178,6 +190,7 @@ def _plan_single_field(step_id: str, field: FieldMappingResult) -> FillAction:
 
     if action_type == "upload_file":
         file_path = _normalize_text(field.value)
+
         if not file_path:
             if field.required:
                 return _build_blocked_action(
@@ -190,7 +203,9 @@ def _plan_single_field(step_id: str, field: FieldMappingResult) -> FillAction:
             return _build_skip_action(
                 step_id=step_id,
                 field=field,
-                reason="Optional file field has no file path, so it will be skipped.",
+                reason=(
+                    "Optional file field has no file path, so it will be skipped."
+                ),
             )
 
         return _build_ready_action(
@@ -212,19 +227,22 @@ def _plan_single_field(step_id: str, field: FieldMappingResult) -> FillAction:
 
     if action_type == "select_option":
         selected_value = _normalize_text(field.value)
-        if not selected_value and field.required:
-            return _build_blocked_action(
-                step_id=step_id,
-                field=field,
-                action=action_type,
-                reason="Required select field has no mapped option.",
-            )
 
         if not selected_value:
+            if field.required:
+                return _build_blocked_action(
+                    step_id=step_id,
+                    field=field,
+                    action=action_type,
+                    reason="Required select field has no mapped option.",
+                )
+
             return _build_skip_action(
                 step_id=step_id,
                 field=field,
-                reason="Optional select field has no mapped option, so it will be skipped.",
+                reason=(
+                    "Optional select field has no mapped option, so it will be skipped."
+                ),
             )
 
         return _build_ready_action(
@@ -237,15 +255,15 @@ def _plan_single_field(step_id: str, field: FieldMappingResult) -> FillAction:
 
     text_value = _normalize_text(_stringify_value(field.value))
 
-    if not text_value and field.required:
-        return _build_blocked_action(
-            step_id=step_id,
-            field=field,
-            action=action_type,
-            reason="Required text field has no mapped value.",
-        )
-
     if not text_value:
+        if field.required:
+            return _build_blocked_action(
+                step_id=step_id,
+                field=field,
+                action=action_type,
+                reason="Required text field has no mapped value.",
+            )
+
         return _build_skip_action(
             step_id=step_id,
             field=field,
@@ -268,8 +286,7 @@ def build_fill_actions(
 
     for index, field in enumerate(mapped_fields, start=1):
         step_id = f"fill_{index}"
-        action = _plan_single_field(step_id, field)
-        actions.append(action)
+        actions.append(_plan_single_field(step_id, field))
 
     return actions
 
@@ -322,4 +339,64 @@ def build_fill_plan(
     return {
         "actions": fill_actions_to_dicts(actions),
         "summary": summary,
+    }
+
+
+def build_fill_execution_candidates(
+    actions: List[FillAction],
+) -> List[FillExecutionCandidate]:
+    candidates: List[FillExecutionCandidate] = []
+
+    for action in actions:
+        if action.status != "ready":
+            continue
+
+        if action.action == "skip":
+            continue
+
+        candidates.append(
+            FillExecutionCandidate(
+                step_id=action.step_id,
+                action=action.action,
+                selector=action.selector,
+                field_name=action.field_name,
+                label=action.label,
+                field_type=action.field_type,
+                required=action.required,
+                value=action.value,
+            )
+        )
+
+    return candidates
+
+
+def fill_execution_candidates_to_dicts(
+    candidates: List[FillExecutionCandidate],
+) -> List[Dict[str, Any]]:
+    return [
+        {
+            "step_id": candidate.step_id,
+            "action": candidate.action,
+            "selector": candidate.selector,
+            "field_name": candidate.field_name,
+            "label": candidate.label,
+            "field_type": candidate.field_type,
+            "required": candidate.required,
+            "value": candidate.value,
+        }
+        for candidate in candidates
+    ]
+
+
+def build_ready_fill_execution_plan(
+    mapped_fields: List[FieldMappingResult],
+) -> Dict[str, Any]:
+    actions = build_fill_actions(mapped_fields)
+    summary = summarize_fill_actions(actions)
+    candidates = build_fill_execution_candidates(actions)
+
+    return {
+        "actions": fill_actions_to_dicts(actions),
+        "summary": summary,
+        "ready_execution_candidates": fill_execution_candidates_to_dicts(candidates),
     }

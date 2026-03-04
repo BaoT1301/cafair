@@ -13,6 +13,7 @@ from .field_mapper import map_profile_to_fields
 from .form_filler import build_form_fill_actions
 from .profile_loader import load_profile_for_provider
 from .providers.base import ProviderAdapter, get_provider_adapter
+from .transport_executor import execute_transport_plan
 
 
 Provider = Literal["greenhouse", "workday", "ashby", "unknown"]
@@ -157,13 +158,11 @@ def _build_runner_meta(
     }
 
 
-def run(payload: Dict[str, Any]) -> Dict[str, Any]:
-    normalized = _normalize_payload(payload)
-    _validate_payload(normalized)
-
-    adapter = get_provider_adapter(normalized["provider"])
-
-    provider_result = {
+def _build_provider_result(
+    normalized: NormalizedPayload,
+    adapter: ProviderAdapter,
+) -> Dict[str, Any]:
+    return {
         "provider": normalized["provider"],
         "safeStopBeforeSubmit": normalized["safeStopBeforeSubmit"],
         "selectors": adapter.selectors(),
@@ -175,6 +174,45 @@ def run(payload: Dict[str, Any]) -> Dict[str, Any]:
         ),
         "visibleFields": adapter.visible_fields(),
     }
+
+
+def _augment_response(
+    response: Dict[str, Any],
+    normalized: NormalizedPayload,
+    provider_result: Dict[str, Any],
+    transport_result: Dict[str, Any],
+) -> Dict[str, Any]:
+    if "status" in transport_result:
+        response["status"] = transport_result["status"]
+
+    if "executed" in transport_result:
+        response["executed"] = transport_result["executed"]
+
+    if "executionSteps" in transport_result:
+        response["executionSteps"] = transport_result["executionSteps"]
+
+    if transport_result.get("message"):
+        response["message"] = transport_result["message"]
+
+    if "runner" in transport_result:
+        response["runner"] = transport_result["runner"]
+
+    response["targetUrl"] = normalized["targetUrl"]
+    response["company"] = normalized["company"]
+    response["roleTitle"] = normalized["roleTitle"]
+    response["selectors"] = provider_result["selectors"]
+    response["plannedSteps"] = provider_result["plannedSteps"]
+
+    return response
+
+
+def run(payload: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = _normalize_payload(payload)
+    _validate_payload(normalized)
+
+    adapter = get_provider_adapter(normalized["provider"])
+
+    provider_result = _build_provider_result(normalized, adapter)
 
     profile_result = load_profile_for_provider(
         provider=normalized["provider"],
@@ -211,6 +249,26 @@ def run(payload: Dict[str, Any]) -> Dict[str, Any]:
         adapter_name=adapter.adapter_name,
     )
 
+    transport_result = execute_transport_plan(
+        run_id=normalized["runId"],
+        provider=normalized["provider"],
+        transport=normalized["transport"],
+        mode=normalized["mode"],
+        should_apply=normalized["shouldApply"],
+        safe_stop_before_submit=normalized["safeStopBeforeSubmit"],
+        target_url=normalized["targetUrl"],
+        company=normalized["company"],
+        role_title=normalized["roleTitle"],
+        adapter_name=adapter.adapter_name,
+        selectors=provider_result["selectors"],
+        planned_steps=provider_result["plannedSteps"],
+        fill_actions=form_fill_result["fillActions"],
+        browser_session_result=browser_session_result,
+        profile_result=profile_result,
+        field_mapping_result=field_mapping_result,
+        form_fill_result=form_fill_result,
+    )
+
     runner_meta = _build_runner_meta(
         provider=normalized["provider"],
         transport=normalized["transport"],
@@ -233,9 +291,17 @@ def run(payload: Dict[str, Any]) -> Dict[str, Any]:
         field_mapping_result=field_mapping_result,
         form_fill_result=form_fill_result,
         browser_session_result=browser_session_result,
+        transport_result=transport_result,
     )
 
-    return build_python_response_from_report(report)
+    response = build_python_response_from_report(report)
+
+    return _augment_response(
+        response=response,
+        normalized=normalized,
+        provider_result=provider_result,
+        transport_result=transport_result,
+    )
 
 
 def _read_stdin_payload() -> Dict[str, Any]:
