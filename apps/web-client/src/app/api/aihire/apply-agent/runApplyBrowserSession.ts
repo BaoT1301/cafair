@@ -1,42 +1,65 @@
-// Path: apps/web-client/src/lib/aihire/apply-agent/runApplyBrowserSession.ts
+// Path: apps/web-client/src/app/api/aihire/apply-agent/runApplyBrowserSession.ts
 
-export type ApplyBrowserSessionInput = {
+import { runNovaActApplyPlan } from "@/lib/aihire/apply-agent/novaActApplyRunner";
+import type {
+  ApplyExecutionPlan,
+  ApplicationProvider,
+} from "@/lib/aihire/apply-agent/applyAgentTypes";
+
+export type ApplyBrowserSessionMode = "demo" | "plan" | "live";
+
+export type RunApplyBrowserSessionInput = {
+  runId: string;
   targetUrl: string;
-  company?: string;
-  roleTitle?: string;
-  dryRun?: boolean;
+  provider: ApplicationProvider;
+  company?: string | null;
+  roleTitle?: string | null;
+  mode: ApplyBrowserSessionMode;
+  shouldApply: boolean;
+  plan: ApplyExecutionPlan;
 };
 
-export type ApplyBrowserSessionResult = {
+export type RunApplyBrowserSessionResult = {
   ok: boolean;
-  status: "planned" | "running" | "paused" | "completed" | "failed";
-  steps: string[];
+  runId: string;
+  provider: ApplicationProvider;
+  mode: ApplyBrowserSessionMode;
+  status: "planned" | "queued" | "running" | "completed" | "failed";
+  safeStopBeforeSubmit: boolean;
+  executed: boolean;
+  executionSteps: string[];
   message: string;
+  runner: {
+    type: "stub";
+    engine: "nova-act";
+    transport: "local-python-bridge";
+  };
 };
 
 export async function runApplyBrowserSession(
-  input: ApplyBrowserSessionInput,
-): Promise<ApplyBrowserSessionResult> {
-  const steps = [
-    `Open job page: ${input.targetUrl}`,
-    "Wait for page to fully load.",
-    "Inspect DOM for primary Apply button.",
-    "Check whether auth/sign-in is required.",
-    "Capture visible required fields.",
-    "Map saved profile fields to application inputs.",
-    "Fill text inputs, dropdowns, and uploads.",
-    input.dryRun === false
-      ? "Prepare for final submit (live mode)."
-      : "Pause before final submit (dry-run mode).",
-  ];
+  input: RunApplyBrowserSessionInput,
+): Promise<RunApplyBrowserSessionResult> {
+  const result = await runNovaActApplyPlan({
+    runId: input.runId,
+    targetUrl: input.targetUrl,
+    provider: input.provider,
+    company: input.company,
+    roleTitle: input.roleTitle,
+    mode: input.mode,
+    shouldApply: input.shouldApply,
+    plan: input.plan,
+  });
 
   return {
-    ok: true,
-    status: input.dryRun === false ? "running" : "planned",
-    steps,
-    message:
-      input.dryRun === false
-        ? "Browser execution handoff is ready for live automation wiring."
-        : "Dry-run browser plan is ready. Real browser actions are not wired yet.",
+    ok: result.ok,
+    runId: result.runId,
+    provider: result.provider,
+    mode: result.mode,
+    status: result.status,
+    safeStopBeforeSubmit: result.safeStopBeforeSubmit,
+    executed: result.executed,
+    executionSteps: result.executionSteps,
+    message: result.message,
+    runner: result.runner,
   };
 }

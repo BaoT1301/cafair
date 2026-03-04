@@ -1,7 +1,8 @@
-// Path: apps/web-client/src/app/api/aihire/apply-agent/run/route.ts
-
 import { NextResponse } from "next/server";
 import { addApplyAgentHistoryItem } from "@/app/api/aihire/apply-agent/history/route";
+import { detectApplicationProvider } from "@/lib/aihire/apply-agent/detectApplicationProvider";
+import { buildApplyExecutionPlan } from "@/lib/aihire/apply-agent/buildApplyExecutionPlan";
+import { runNovaActApplyPlan } from "@/lib/aihire/apply-agent/novaActApplyRunner";
 
 type ApplyAgentRunRequest = {
   targetUrl: string;
@@ -9,19 +10,36 @@ type ApplyAgentRunRequest = {
   roleTitle?: string;
   matchedKeywordCount?: number;
   autoApply?: boolean;
+  threshold?: number;
+  mode?: "demo" | "plan" | "live";
 };
 
 type ApplyAgentRunResponse = {
   ok: boolean;
   runId?: string;
-  status?: "queued" | "running" | "completed" | "failed";
-  mode?: "demo" | "live";
+  status?: "queued" | "planned" | "running" | "completed" | "failed";
+  mode?: "demo" | "plan" | "live";
+  provider?: "greenhouse" | "workday" | "ashby" | "unknown";
   targetUrl?: string;
   company?: string | null;
   roleTitle?: string | null;
   matchedKeywordCount?: number | null;
+  threshold?: number;
   shouldApply?: boolean;
-  steps?: string[];
+  plan?: {
+    provider: "greenhouse" | "workday" | "ashby" | "unknown";
+    safeStopBeforeSubmit: boolean;
+    selectors: string[];
+    steps: string[];
+  };
+  safeStopBeforeSubmit?: boolean;
+  executed?: boolean;
+  executionSteps?: string[];
+  runner?: {
+    type: "stub";
+    engine: "nova-act";
+    transport: "local-python-bridge";
+  };
   message?: string;
   error?: string;
   details?: string;
@@ -38,6 +56,14 @@ function isValidHttpUrl(value: string): boolean {
 
 function makeRunId(): string {
   return `aar_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeMode(
+  value: ApplyAgentRunRequest["mode"],
+): "demo" | "plan" | "live" {
+  if (value === "live") return "live";
+  if (value === "plan") return "plan";
+  return "demo";
 }
 
 export async function POST(req: Request) {
@@ -66,78 +92,92 @@ export async function POST(req: Request) {
       );
     }
 
+    const company =
+      typeof body.company === "string" && body.company.trim()
+        ? body.company.trim()
+        : null;
+
+    const roleTitle =
+      typeof body.roleTitle === "string" && body.roleTitle.trim()
+        ? body.roleTitle.trim()
+        : null;
+
     const matchedKeywordCount =
       typeof body.matchedKeywordCount === "number"
-        ? body.matchedKeywordCount
+        ? Math.max(0, Math.floor(body.matchedKeywordCount))
         : null;
+
+    const threshold =
+      typeof body.threshold === "number" && body.threshold > 0
+        ? Math.floor(body.threshold)
+        : 3;
 
     const shouldApply =
       typeof body.autoApply === "boolean"
         ? body.autoApply
-        : (matchedKeywordCount ?? 0) > 3;
+        : (matchedKeywordCount ?? 0) >= threshold;
+
+    const mode = normalizeMode(body.mode);
+    const provider = detectApplicationProvider(targetUrl);
+
+    const plan = buildApplyExecutionPlan({
+      targetUrl,
+      provider,
+      company,
+      roleTitle,
+      shouldApply,
+      mode,
+    });
 
     const runId = makeRunId();
 
-    const steps: string[] = [
-      "Open the target job application page.",
-      "Wait for the page to stabilize and identify the primary Apply button.",
-      "Capture visible fields and determine whether sign-in is required.",
-      "Check that the job still appears open and eligible.",
-    ];
+    const runnerResult = await runNovaActApplyPlan({
+      runId,
+      targetUrl,
+      provider,
+      company,
+      roleTitle,
+      mode,
+      shouldApply,
+      plan,
+    });
 
-    if (shouldApply) {
-      steps.push(
-        "Proceed with demo auto-apply flow because the match threshold passed.",
-        "Prefill candidate details from the saved resume/profile source.",
-        "Review required fields, validate missing inputs, and prepare submission.",
-        "Pause before final submit in demo mode unless live execution is explicitly enabled.",
-      );
-    } else {
-      steps.push(
-        "Stop before application because the match threshold did not pass.",
-        "Return a recommendation to skip this role for now.",
-      );
-    }
+    const historyStatus =
+      runnerResult.status === "planned" ? "queued" : runnerResult.status;
 
     addApplyAgentHistoryItem({
       mode: "run",
-      status: shouldApply ? "queued" : "completed",
+      status: historyStatus,
       summary: shouldApply
-        ? `Prepared apply-agent run for ${body.roleTitle?.trim() || "target role"} at ${body.company?.trim() || "target company"}.`
-        : `Skipped apply-agent run because the job did not meet the keyword threshold.`,
+        ? `Prepared ${provider} apply-agent ${mode} run ` +
+          `for ${roleTitle || "target role"} ` +
+          `at ${company || "target company"}.`
+        : `Skipped apply-agent run because the job did not meet the threshold.`,
       targetUrl,
-      company:
-        typeof body.company === "string" && body.company.trim()
-          ? body.company.trim()
-          : undefined,
-      roleTitle:
-        typeof body.roleTitle === "string" && body.roleTitle.trim()
-          ? body.roleTitle.trim()
-          : undefined,
+      company: company ?? undefined,
+      roleTitle: roleTitle ?? undefined,
       matchedKeywordCount: matchedKeywordCount ?? undefined,
     });
 
     return NextResponse.json<ApplyAgentRunResponse>(
       {
         ok: true,
-        runId,
-        status: shouldApply ? "queued" : "completed",
-        mode: "demo",
+        runId: runnerResult.runId,
+        status: runnerResult.status,
+        mode: runnerResult.mode,
+        provider: runnerResult.provider,
         targetUrl,
-        company:
-          typeof body.company === "string" && body.company.trim()
-            ? body.company.trim()
-            : null,
-        roleTitle:
-          typeof body.roleTitle === "string" && body.roleTitle.trim()
-            ? body.roleTitle.trim()
-            : null,
+        company,
+        roleTitle,
         matchedKeywordCount,
+        threshold,
         shouldApply,
-        steps,
-        message: shouldApply
-          ? "Apply-agent demo run is ready. Threshold passed, so this role is eligible for auto-apply flow."
-          : "Apply-agent demo run stopped. Threshold did not pass, so this role is not eligible for auto-apply flow.",
+        plan,
+        safeStopBeforeSubmit: runnerResult.safeStopBeforeSubmit,
+        executed: runnerResult.executed,
+        executionSteps: runnerResult.executionSteps,
+        runner: runnerResult.runner,
+        message: runnerResult.message,
       },
       { status: 200 },
     );
