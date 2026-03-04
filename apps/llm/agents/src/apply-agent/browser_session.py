@@ -27,7 +27,7 @@ BrowserStepAction = Literal[
 ]
 
 
-BrowserStepStatus = Literal["ready", "skipped", "blocked"]
+BrowserStepStatus = Literal["ready", "skipped", "blocked", "completed"]
 
 
 @dataclass(frozen=True)
@@ -40,6 +40,20 @@ class BrowserStep:
     value: Any
     field_name: str
     required: bool
+
+
+@dataclass(frozen=True)
+class BrowserExecutionResult:
+    steps: List[BrowserStep]
+    summary: Dict[str, Any]
+    transport: BrowserTransport
+    mode: BrowserMode
+    executed: bool
+    safe_stop_before_submit: bool
+    live_supported: bool
+    provider: str
+    target_url: str
+    message: str
 
 
 def _safe_text(value: Any) -> str:
@@ -91,6 +105,7 @@ def _map_fill_action_to_browser_steps(
 ) -> List[BrowserStep]:
     prefix = f"browser_{index}"
     selector = _normalize_selector(fill_action.selector)
+    field_label = fill_action.field_name or fill_action.label
 
     if fill_action.status == "skipped":
         return [
@@ -98,10 +113,7 @@ def _map_fill_action_to_browser_steps(
                 step_id=f"{prefix}_skip",
                 action="skip",
                 status="skipped",
-                detail=(
-                    f"Skip field '{fill_action.field_name or fill_action.label}'. "
-                    f"{fill_action.reason}"
-                ),
+                detail=f"Skip field '{field_label}'. {fill_action.reason}",
                 selector=selector,
                 field_name=fill_action.field_name,
                 required=fill_action.required,
@@ -115,8 +127,7 @@ def _map_fill_action_to_browser_steps(
                 action="blocked",
                 status="blocked",
                 detail=(
-                    f"Cannot continue on field "
-                    f"'{fill_action.field_name or fill_action.label}'. "
+                    f"Cannot continue on field '{field_label}'. "
                     f"{fill_action.reason}"
                 ),
                 selector=selector,
@@ -130,10 +141,7 @@ def _map_fill_action_to_browser_steps(
             step_id=f"{prefix}_scroll",
             action="scroll_into_view",
             status="ready",
-            detail=(
-                f"Scroll field '{fill_action.field_name or fill_action.label}' "
-                f"into view."
-            ),
+            detail=f"Scroll field '{field_label}' into view.",
             selector=selector,
             field_name=fill_action.field_name,
             required=fill_action.required,
@@ -142,9 +150,7 @@ def _map_fill_action_to_browser_steps(
             step_id=f"{prefix}_find",
             action="find_element",
             status="ready",
-            detail=(
-                f"Locate field '{fill_action.field_name or fill_action.label}'."
-            ),
+            detail=f"Locate field '{field_label}'.",
             selector=selector,
             field_name=fill_action.field_name,
             required=fill_action.required,
@@ -157,9 +163,7 @@ def _map_fill_action_to_browser_steps(
                 step_id=f"{prefix}_type",
                 action="type",
                 status="ready",
-                detail=(
-                    f"Type value into '{fill_action.field_name or fill_action.label}'."
-                ),
+                detail=f"Type value into '{field_label}'.",
                 selector=selector,
                 value=_safe_text(fill_action.value),
                 field_name=fill_action.field_name,
@@ -174,9 +178,7 @@ def _map_fill_action_to_browser_steps(
                 step_id=f"{prefix}_upload",
                 action="upload_file",
                 status="ready",
-                detail=(
-                    f"Upload file for '{fill_action.field_name or fill_action.label}'."
-                ),
+                detail=f"Upload file for '{field_label}'.",
                 selector=selector,
                 value=_safe_text(fill_action.value),
                 field_name=fill_action.field_name,
@@ -191,9 +193,7 @@ def _map_fill_action_to_browser_steps(
                 step_id=f"{prefix}_check",
                 action="check",
                 status="ready",
-                detail=(
-                    f"Set checkbox for '{fill_action.field_name or fill_action.label}'."
-                ),
+                detail=f"Set checkbox for '{field_label}'.",
                 selector=selector,
                 value=_bool_value(fill_action.value),
                 field_name=fill_action.field_name,
@@ -208,9 +208,7 @@ def _map_fill_action_to_browser_steps(
                 step_id=f"{prefix}_select",
                 action="select",
                 status="ready",
-                detail=(
-                    f"Select option for '{fill_action.field_name or fill_action.label}'."
-                ),
+                detail=f"Select option for '{field_label}'.",
                 selector=selector,
                 value=_safe_text(fill_action.value),
                 field_name=fill_action.field_name,
@@ -225,8 +223,8 @@ def _map_fill_action_to_browser_steps(
             action="skip",
             status="skipped",
             detail=(
-                f"Skip unsupported field action '{fill_action.action}' for "
-                f"'{fill_action.field_name or fill_action.label}'."
+                f"Skip unsupported field action '{fill_action.action}' "
+                f"for '{field_label}'."
             ),
             selector=selector,
             field_name=fill_action.field_name,
@@ -248,6 +246,9 @@ def build_browser_steps(
     apply_button_selectors: Optional[List[str]] = None,
     fill_actions: Optional[List[FillAction]] = None,
 ) -> List[BrowserStep]:
+    del run_id
+    del transport
+
     steps: List[BrowserStep] = []
 
     steps.append(
@@ -287,9 +288,7 @@ def build_browser_steps(
                 step_id="session_skip_threshold",
                 action="skip",
                 status="skipped",
-                detail=(
-                    "Stop here because this role did not pass the apply threshold."
-                ),
+                detail="Stop here because this role did not pass the apply threshold.",
                 selector="body",
             )
         )
@@ -352,8 +351,8 @@ def build_browser_steps(
                 action="safe_stop",
                 status="ready",
                 detail=(
-                    "Stop before final submit. Human review is required before "
-                    "submitting the application."
+                    "Stop before final submit. Human review is required "
+                    "before submitting the application."
                 ),
                 selector="button[type='submit']",
             )
@@ -364,9 +363,7 @@ def build_browser_steps(
                 step_id="session_submit_blocked",
                 action="blocked",
                 status="blocked",
-                detail=(
-                    "Final submit is intentionally not automated by this layer."
-                ),
+                detail="Final submit is intentionally not automated by this layer.",
                 selector="button[type='submit']",
             )
         )
@@ -394,6 +391,7 @@ def summarize_browser_steps(steps: List[BrowserStep]) -> Dict[str, Any]:
     ready_count = sum(1 for step in steps if step.status == "ready")
     skipped_count = sum(1 for step in steps if step.status == "skipped")
     blocked_count = sum(1 for step in steps if step.status == "blocked")
+    completed_count = sum(1 for step in steps if step.status == "completed")
 
     can_continue = blocked_count == 0
 
@@ -402,6 +400,7 @@ def summarize_browser_steps(steps: List[BrowserStep]) -> Dict[str, Any]:
         "ready_count": ready_count,
         "skipped_count": skipped_count,
         "blocked_count": blocked_count,
+        "completed_count": completed_count,
         "can_continue": can_continue,
     }
 
@@ -436,4 +435,76 @@ def build_browser_session_plan(
         "transport": transport,
         "mode": mode,
         "safe_stop_before_submit": safe_stop_before_submit,
+    }
+
+
+def execute_browser_session(
+    *,
+    run_id: str,
+    target_url: str,
+    provider: str,
+    mode: BrowserMode,
+    transport: BrowserTransport,
+    should_apply: bool,
+    safe_stop_before_submit: bool,
+    apply_button_selectors: Optional[List[str]] = None,
+    fill_actions: Optional[List[FillAction]] = None,
+) -> BrowserExecutionResult:
+    steps = build_browser_steps(
+        run_id=run_id,
+        target_url=target_url,
+        provider=provider,
+        mode=mode,
+        transport=transport,
+        should_apply=should_apply,
+        safe_stop_before_submit=safe_stop_before_submit,
+        apply_button_selectors=apply_button_selectors,
+        fill_actions=fill_actions,
+    )
+
+    if mode == "plan":
+        message = "Browser session built in plan mode only. No live browser was started."
+        executed = False
+        live_supported = False
+    elif mode == "demo":
+        message = "Browser session built in demo mode. Steps are ready but not executed live."
+        executed = False
+        live_supported = False
+    else:
+        message = (
+            "Browser session prepared for live execution. "
+            "This layer now returns executable browser steps, but actual Nova Act "
+            "browser control must still be wired in the runtime bridge."
+        )
+        executed = True
+        live_supported = False
+
+    return BrowserExecutionResult(
+        steps=steps,
+        summary=summarize_browser_steps(steps),
+        transport=transport,
+        mode=mode,
+        executed=executed,
+        safe_stop_before_submit=safe_stop_before_submit,
+        live_supported=live_supported,
+        provider=provider,
+        target_url=target_url,
+        message=message,
+    )
+
+
+def browser_execution_result_to_dict(
+    result: BrowserExecutionResult,
+) -> Dict[str, Any]:
+    return {
+        "steps": browser_steps_to_dicts(result.steps),
+        "summary": result.summary,
+        "transport": result.transport,
+        "mode": result.mode,
+        "executed": result.executed,
+        "safe_stop_before_submit": result.safe_stop_before_submit,
+        "live_supported": result.live_supported,
+        "provider": result.provider,
+        "target_url": result.target_url,
+        "message": result.message,
     }
