@@ -82,7 +82,7 @@ def _build_nova_instruction(
     provider = _safe_string(payload.get("provider"), "unknown")
     company = _safe_string(payload.get("company"), "target company")
     role_title = _safe_string(payload.get("roleTitle"), "target role")
-    safe_stop = _safe_bool(payload.get("safeStopBeforeSubmit"), True)
+    safe_stop = False
 
     email = "npnallstar@gmail.com"
     manual_resume_link = (
@@ -120,70 +120,96 @@ def _build_nova_instruction(
 
     lines: list[str] = [
         "You are an apply-agent browser runner using the Nova Act SDK.",
+        "Act like a thoughtful, careful, and serious applicant who genuinely wants to complete this application successfully.",
+        "Your goal is not to stop early. Your goal is to finish the application as completely and accurately as possible.",
+        "Move deliberately, read labels carefully, and make reasonable field-by-field decisions.",
         "Open and interact only with the target application flow requested.",
-        "Keep actions concise and visible.",
+        "Keep actions visible, concise, and grounded in what is actually on screen.",
+        "Do not rush past fields. Review each section before moving on.",
+        "If more fields are hidden below, scroll to reveal them and continue.",
+        "If a section looks incomplete, stay with it until all clearly required items in that section are handled.",
         f"Target URL: {target_url}",
         f"Provider: {provider}",
         f"Company: {company}",
         f"Role: {role_title}",
-        f"Use this email exactly: {email}",
-        (
-            "Use this manual resume link exactly for any manual resume, "
-            "enter manually, resume link, portfolio, or website field: "
-            f"{manual_resume_link}"
-        ),
-        "Use the provided cover letter text exactly when a cover letter text area appears.",
-        "Prefer a manual text field over the OS file picker if both appear for resume submission.",
         "",
-        "Execution goals:",
-        "1. Open the target job application page.",
-        "2. Wait for the page to stabilize.",
-        "3. Follow the provider-specific application path.",
-        "4. Capture visible applicant fields.",
-        "5. Prefill clearly mapped fields using the provided candidate values.",
+        "Candidate identity and fixed values:",
+        "- Full name: Lam Anh Truong",
+        "- Email: npnallstar@gmail.com",
+        "- Phone: 5514049519",
+        f"- Manual resume link: {manual_resume_link}",
+        "- Use the provided cover letter text exactly when a cover letter text area is present.",
+        "",
+        "High-level behavior rules:",
+        "1. Start by opening the target application page and waiting for it to fully stabilize.",
+        "2. Read the visible layout carefully before clicking anything.",
+        "3. Follow the provider-specific application path in a natural order.",
+        "4. Work section by section from top to bottom.",
+        "5. Scroll whenever necessary to reveal the next required fields.",
+        "6. Continue until the full application is completed, not just the first visible section.",
+        "7. Treat the task like a real applicant trying to finish the form successfully.",
+        "",
+        "Field completion rules:",
+        "1. For email fields, always type exactly: npnallstar@gmail.com",
+        "2. For phone fields, always type exactly: 5514049519",
+        "3. For name fields, use Lam Anh for first name and Truong for last name unless the form asks for full name in one field.",
+        "4. For cover letter textareas, paste the full cover letter provided below.",
+        "5. For resume-related text inputs, use the manual resume link exactly.",
+        "6. For dropdowns, radios, and checkboxes, choose the most reasonable truthful option that helps complete the application based on the provided candidate information and visible context.",
+        "7. If a field is optional and not clearly useful, it may be skipped after confirming it is optional.",
+        "8. If a field is required, do not move on until you have made a best effort to complete it.",
+        "",
+        "Resume handling rules:",
+        "- If a manual resume field appears, prefer that path first.",
+        "- This includes labels or controls like: Enter manually, Resume link, Resume URL, Portfolio, Website, Link, or similar text-entry alternatives.",
+        f"- When such a field appears, type this exact URL: {manual_resume_link}",
+        "- If both a manual text field and a file upload option are visible, prefer the manual text field first.",
+        "- Only use the file upload control if the application truly requires a file and there is no usable manual text-entry path.",
+        "- If a file upload is unavoidable, interact with the file input directly rather than getting stuck clicking unrelated UI repeatedly.",
+        "",
+        "Form navigation rules:",
+        "- After finishing a section, scroll down to reveal the next section.",
+        "- If the page changes after clicking Apply, wait for the form to fully load, then resume filling from the top of the form.",
+        "- If validation errors appear, read them and fix them before proceeding.",
+        "- If a field autofills, verify it looks correct before moving on.",
+        "- If the page contains multiple required sections, continue through every section until the final action area is reached.",
+        "- Avoid looping on the same failed action. If one method fails, choose the next most reasonable visible method.",
+        "",
+        "Completion and submit rules:",
+        "- Do not stop after partial completion.",
+        "- Continue scrolling and filling until you reach the final submit control.",
+        "- Before submitting, do a quick final pass over the visible section to confirm no obvious required fields are empty.",
+        "- Then click the final submit or send application button to complete the application.",
+        "- After submission, pause on the confirmation page or confirmation state so the outcome is visible.",
+        "",
+        "Candidate-specific fill shortcuts:",
+        "- Email fields: always type npnallstar@gmail.com",
+        "- Phone fields: always type 5514049519",
+        "- For manual resume, portfolio, website, link, or enter-manually text fields: always type the Google Drive resume link",
+        "- Prefer typed manual fields over opening the OS file picker whenever possible",
+        "- Keep scrolling until the entire form is covered and completed",
+        "- Do not stop early; finish the application and submit it",
+        "",
+        "Cover letter text to paste exactly if needed:",
+        cover_letter_text,
     ]
-
-    if safe_stop:
-        lines.append(
-            "6. Hit the final submit button when you finish most of the fields."
-        )
-    else:
-        lines.append(
-            "6. After all required fields are filled, click the final submit button and submit the application."
-        )
-        lines.append(
-            "7. If a required file upload appears, use the file input directly and complete the upload before submitting."
-        )
-
-    lines.extend(
-        [
-            "",
-            "Candidate-specific fill rules:",
-            f"- Email fields: always type {email}",
-            (
-                "- If a manual resume text field appears (for example Enter manually, "
-                "Resume link, Portfolio, Website, or Link), type this exact URL: "
-                f"{manual_resume_link}"
-            ),
-            (
-                "- If both a manual text field and a file upload control appear for "
-                "resume, prefer the manual text field first and avoid the OS file picker."
-            ),
-            "- If a cover letter textarea appears, paste this exact cover letter text:",
-            cover_letter_text,
-        ]
-    )
 
     if planned_steps:
         lines.append("")
-        lines.append("Provider plan:")
+        lines.append("Provider-specific plan guidance:")
+        lines.append(
+            "Use these provider-specific hints as guidance, but still adapt to the actual on-screen form if it differs."
+        )
         for step in planned_steps:
             if isinstance(step, str) and step.strip():
                 lines.append(f"- {step.strip()}")
 
     if browser_steps:
         lines.append("")
-        lines.append("Browser session steps:")
+        lines.append("Browser session execution guide:")
+        lines.append(
+            "These are the concrete browser-session steps already prepared for you. Follow them in spirit while still responding to the actual page state."
+        )
         for step in browser_steps:
             if not isinstance(step, dict):
                 continue
@@ -191,15 +217,14 @@ def _build_nova_instruction(
             if detail:
                 lines.append(f"- {detail}")
 
-    lines.append("")
-    if safe_stop:
-        lines.append(
-            "Try to resolve minor on-screen obstacles, but prefer typing into manual text fields instead of triggering the OS file picker, and stop only when the requested safe-stop behavior applies."
-        )
-    else:
-        lines.append(
-            "Try to resolve minor on-screen obstacles, prefer typing into manual text fields instead of triggering the OS file picker, and complete the submission once the form is fully filled."
-        )
+    lines.extend(
+        [
+            "",
+            "Final instruction:",
+            "Behave like a thoughtful applicant who wants to finish the application fully and correctly.",
+            "Read each field label before acting, make steady progress downward through the page, recover from small UI issues, and keep going until the application is submitted and the result is visible.",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -317,10 +342,7 @@ def run_local_nova_act_browser(
         "targetUrl": target_url,
         "company": _safe_string(payload.get("company")),
         "roleTitle": _safe_string(payload.get("roleTitle")),
-        "safeStopBeforeSubmit": _safe_bool(
-            payload.get("safeStopBeforeSubmit"),
-            True,
-        ),
+        "safeStopBeforeSubmit": False,
         "visibleFields": payload.get("visibleFields", []),
         "selectors": _safe_list_of_strings(payload.get("selectors")),
         "plannedSteps": _safe_list_of_strings(payload.get("plannedSteps")),
