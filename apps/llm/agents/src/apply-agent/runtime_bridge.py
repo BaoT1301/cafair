@@ -74,6 +74,45 @@ def load_browser_session_executor() -> tuple[Any, Any]:
     return execute_browser_session, browser_execution_result_to_dict
 
 
+def _safe_string(value: Any, default: str = "") -> str:
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value.strip()
+    return str(value).strip()
+
+
+def _safe_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes", "y", "on"}:
+            return True
+        if lowered in {"false", "0", "no", "n", "off"}:
+            return False
+
+    if isinstance(value, (int, float)):
+        return bool(value)
+
+    return default
+
+
+def _safe_list_of_strings(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+
+    output: list[str] = []
+    for item in value:
+        if isinstance(item, str):
+            text = item.strip()
+            if text:
+                output.append(text)
+
+    return output
+
+
 def _build_nova_instruction(
     payload: Dict[str, Any],
     browser_session_result: Dict[str, Any],
@@ -82,9 +121,10 @@ def _build_nova_instruction(
     provider = _safe_string(payload.get("provider"), "unknown")
     company = _safe_string(payload.get("company"), "target company")
     role_title = _safe_string(payload.get("roleTitle"), "target role")
-    safe_stop = False
+    safe_stop = _safe_bool(payload.get("safeStopBeforeSubmit"), True)
 
     email = "npnallstar@gmail.com"
+    phone = "5514049519"
     manual_resume_link = (
         "https://drive.google.com/file/d/1wKb7hlbshHesim7XOc5pAx5dTjCptCdy/view?usp=sharing"
     )
@@ -120,96 +160,84 @@ def _build_nova_instruction(
 
     lines: list[str] = [
         "You are an apply-agent browser runner using the Nova Act SDK.",
-        "Act like a thoughtful, careful, and serious applicant who genuinely wants to complete this application successfully.",
-        "Your goal is not to stop early. Your goal is to finish the application as completely and accurately as possible.",
-        "Move deliberately, read labels carefully, and make reasonable field-by-field decisions.",
-        "Open and interact only with the target application flow requested.",
-        "Keep actions visible, concise, and grounded in what is actually on screen.",
-        "Do not rush past fields. Review each section before moving on.",
-        "If more fields are hidden below, scroll to reveal them and continue.",
-        "If a section looks incomplete, stay with it until all clearly required items in that section are handled.",
+        "Complete the application carefully, field by field, based only on what is visible on screen, and continue until you reach the final submit area.",
+        "Do not guess hidden fields. Do not loop on failed actions. If one method fails, use the next reasonable visible method, then continue progressing downward through the application.",
         f"Target URL: {target_url}",
         f"Provider: {provider}",
         f"Company: {company}",
         f"Role: {role_title}",
         "",
-        "Candidate identity and fixed values:",
-        "- Full name: Lam Anh Truong",
-        "- Email: npnallstar@gmail.com",
-        "- Phone: 5514049519",
+        "Candidate fixed values:",
+        "- First name: Lam Anh",
+        "- Last name: Truong",
+        f"- Email: {email}",
+        f"- Phone: {phone}",
         f"- Manual resume link: {manual_resume_link}",
-        "- Use the provided cover letter text exactly when a cover letter text area is present.",
         "",
-        "High-level behavior rules:",
-        "1. Start by opening the target application page and waiting for it to fully stabilize.",
-        "2. Read the visible layout carefully before clicking anything.",
-        "3. Follow the provider-specific application path in a natural order.",
-        "4. Work section by section from top to bottom.",
-        "5. Scroll whenever necessary to reveal the next required fields.",
-        "6. Continue until the full application is completed, not just the first visible section.",
-        "7. Treat the task like a real applicant trying to finish the form successfully.",
+        "Hard rules:",
+        "1. Only type into visible editable text inputs or textareas.",
+        "2. Never type into upload/source buttons (Attach/Dropbox/Google Drive). Only type into real editable text inputs/textareas that accept a caret.",
+        "3. Never paste the resume URL into a button or file-upload trigger.",
+        "4. Before typing, verify the target is a real editable field that shows a text caret or accepts typing.",
+        "5. If a control is a chooser or source option, click it only to reveal the next step, not as the final place to paste text.",
+        "6. If validation errors appear, read them, fix them, and continue.",
+        "7. Scroll down as needed, keep revealing additional sections, and continue until you can clearly see the final submit area.",
+        "8. Do NOT stop just because Resume/CV and Cover Letter are filled. Those are only intermediate steps.",
+        "9. After the cover letter, continue scrolling and complete any additional required questions, dropdowns, radios, checkboxes, or compliance sections that appear.",
+        "10. Only return when you are at the final submit button (safe-stop mode) or after you clicked submit (non-safe-stop mode).",
         "",
-        "Field completion rules:",
-        "1. For email fields, always type exactly: npnallstar@gmail.com",
-        "2. For phone fields, always type exactly: 5514049519",
-        "3. For name fields, use Lam Anh for first name and Truong for last name unless the form asks for full name in one field.",
-        "4. For cover letter textareas, paste the full cover letter provided below.",
-        "5. For resume-related text inputs, use the manual resume link exactly.",
-        "6. For dropdowns, radios, and checkboxes, choose the most reasonable truthful option that helps complete the application based on the provided candidate information and visible context.",
-        "7. If a field is optional and not clearly useful, it may be skipped after confirming it is optional.",
-        "8. If a field is required, do not move on until you have made a best effort to complete it.",
-        "",
-        "Resume handling rules:",
-        "- If a manual resume field appears, prefer that path first.",
-        "- This includes labels or controls like: Enter manually, Resume link, Resume URL, Portfolio, Website, Link, or similar text-entry alternatives.",
-        f"- When such a field appears, type this exact URL: {manual_resume_link}",
-        "- If both a manual text field and a file upload option are visible, prefer the manual text field first.",
-        "- Only use the file upload control if the application truly requires a file and there is no usable manual text-entry path.",
-        "- If a file upload is unavoidable, interact with the file input directly rather than getting stuck clicking unrelated UI repeatedly.",
-        "",
-        "Form navigation rules:",
-        "- After finishing a section, scroll down to reveal the next section.",
-        "- If the page changes after clicking Apply, wait for the form to fully load, then resume filling from the top of the form.",
-        "- If validation errors appear, read them and fix them before proceeding.",
-        "- If a field autofills, verify it looks correct before moving on.",
-        "- If the page contains multiple required sections, continue through every section until the final action area is reached.",
-        "- Avoid looping on the same failed action. If one method fails, choose the next most reasonable visible method.",
-        "",
-        "Completion and submit rules:",
-        "- Do not stop after partial completion.",
-        "- Continue scrolling and filling until you reach the final submit control.",
-        "- Before submitting, do a quick final pass over the visible section to confirm no obvious required fields are empty.",
-        "- Then click the final submit or send application button to complete the application.",
-        "- After submission, pause on the confirmation page or confirmation state so the outcome is visible.",
-        "",
-        "Candidate-specific fill shortcuts:",
-        "- Email fields: always type npnallstar@gmail.com",
-        "- Phone fields: always type 5514049519",
-        "- For manual resume, portfolio, website, link, or enter-manually text fields: always type the Google Drive resume link",
-        "- Prefer typed manual fields over opening the OS file picker whenever possible",
-        "- Keep scrolling until the entire form is covered and completed",
-        "- Do not stop early; finish the application and submit it",
-        "",
-        "Cover letter text to paste exactly if needed:",
-        cover_letter_text,
+        "Field rules:",
+        f"- Use exactly {email} for every email field.",
+        f"- Use exactly {phone} for every phone field.",
+        "- Use 'Lam Anh' for first name and 'Truong' for last name unless the page clearly asks for a single full-name field.",
+        "- Filling Resume/CV and Cover Letter does NOT mean the application is finished.",
+"- After the cover letter is entered, continue scanning below for more required fields before considering the task complete.",
+"- If the submit button is not yet visible, the application is not finished.",
+        "Resume decision tree:",
+       "Resume/CV + Cover Letter instructions (Greenhouse-style controls):",
+"- If you see buttons like: Attach / Dropbox / Google Drive / Enter manually, ALWAYS click 'Enter manually' first.",
+"- Do NOT click the 'Google Drive' button (it opens a picker flow).",
+"- After clicking 'Enter manually', a real editable text field or textarea should appear.",
+f"- Paste this resume URL into the Resume/CV manual field exactly: {manual_resume_link}",
+"- Immediately after the cover letter is entered, continue scrolling downward; expect more required sections after it.",
+"- Do not return after the cover letter unless the final submit button is already visible and there are no unfinished required fields above it.",
+"- If an 'Enter manually' field does NOT appear, then fall back to any visible editable field labeled Resume link / URL / Website / Portfolio and paste the same resume URL.",
+"- Only use OS file upload as a last resort when there is no manual-entry option.",
     ]
+
+    if safe_stop:
+        lines.extend(
+        [
+                "6. Continue all the way through the application until the final submit button is visible on screen.",
+                "7. In safe-stop mode, stop only immediately before clicking the final submit button. Do not stop earlier.",
+        ]
+    )
+    else:
+        lines.extend(
+        [
+                "6. Continue all the way through the application until the final submit button is visible and all visible required fields are complete.",
+                "7. Then do one quick visible check for missing required inputs, click the final submit button once, and stop on the confirmation state.",
+        ]
+    )
+
+    lines.extend(
+        [
+            "",
+            "Cover letter text to paste exactly if a textarea is present:",
+            cover_letter_text,
+        ]
+    )
 
     if planned_steps:
         lines.append("")
-        lines.append("Provider-specific plan guidance:")
-        lines.append(
-            "Use these provider-specific hints as guidance, but still adapt to the actual on-screen form if it differs."
-        )
+        lines.append("Provider-specific hints:")
         for step in planned_steps:
             if isinstance(step, str) and step.strip():
                 lines.append(f"- {step.strip()}")
 
     if browser_steps:
         lines.append("")
-        lines.append("Browser session execution guide:")
-        lines.append(
-            "These are the concrete browser-session steps already prepared for you. Follow them in spirit while still responding to the actual page state."
-        )
+        lines.append("Prepared browser-step guidance:")
         for step in browser_steps:
             if not isinstance(step, dict):
                 continue
@@ -221,12 +249,12 @@ def _build_nova_instruction(
         [
             "",
             "Final instruction:",
-            "Behave like a thoughtful applicant who wants to finish the application fully and correctly.",
-            "Read each field label before acting, make steady progress downward through the page, recover from small UI issues, and keep going until the application is submitted and the result is visible.",
+            "Be precise. Only type into real text fields. Prefer manual resume text entry when available. Avoid guessing at resume controls. Do not treat the cover letter step as the end; finish the full application flow through the final submit area.",
         ]
     )
 
     return "\n".join(lines)
+
 
 def run_local_nova_act_browser(
     payload: Dict[str, Any],
@@ -305,15 +333,38 @@ def run_local_nova_act_browser(
             "detail": "Nova Act executed the live browser instruction.",
         }
     )
+    action_logs.append(
+        {
+            "stepId": "step_3",
+            "action": "handoff_complete",
+            "status": "completed",
+            "detail": "Runtime bridge captured the SDK result and marked the browser session as executed.",
+        }
+    )
     reasoning_logs.append(
         {
             "stepId": "step_2",
             "summary": (
-                "The bridge handed off the planned apply steps to Nova Act and "
+                "The bridge handed off the prepared apply flow to Nova Act and "
                 "captured the SDK result for upper layers."
             ),
         }
     )
+    reasoning_logs.append(
+        {
+            "stepId": "step_3",
+            "summary": (
+                "The returned browser-session payload must reflect real execution, "
+                "not only the pre-execution plan."
+            ),
+        }
+    )
+
+    updated_browser_session = dict(browser_session_result)
+    updated_browser_session["browser_opened"] = True
+    updated_browser_session["executed"] = True
+    updated_browser_session["current_url"] = target_url
+    updated_browser_session["sdk_execution_mode"] = "live_local_sdk"
 
     return {
         "ok": True,
@@ -333,8 +384,9 @@ def run_local_nova_act_browser(
         "actionLogs": action_logs,
         "reasoningLogs": reasoning_logs,
         "transportSummary": (
-            "Runtime bridge used the local Nova Act SDK to open a visible "
-            "browser and run the apply-agent instruction."
+            "Runtime bridge invoked the local Nova Act SDK in non-headless mode "
+            "and executed the apply-agent instruction. On the free tier, Nova may "
+            "still use a workflow-backed managed session while exposing live action logs."
         ),
         "provider": provider,
         "mode": _safe_string(payload.get("mode"), "live"),
@@ -342,56 +394,20 @@ def run_local_nova_act_browser(
         "targetUrl": target_url,
         "company": _safe_string(payload.get("company")),
         "roleTitle": _safe_string(payload.get("roleTitle")),
-        "safeStopBeforeSubmit": False,
+        "safeStopBeforeSubmit": _safe_bool(
+            payload.get("safeStopBeforeSubmit"),
+            True,
+        ),
         "visibleFields": payload.get("visibleFields", []),
         "selectors": _safe_list_of_strings(payload.get("selectors")),
         "plannedSteps": _safe_list_of_strings(payload.get("plannedSteps")),
-        "browserSession": browser_session_result,
+        "browserSession": updated_browser_session,
         "fieldFillPlan": payload.get("fieldFillPlan", []),
         "result": {
             "instruction": instruction,
             "actResult": act_result,
         },
     }
-
-
-def _safe_string(value: Any, default: str = "") -> str:
-    if value is None:
-        return default
-    if isinstance(value, str):
-        return value.strip()
-    return str(value).strip()
-
-
-def _safe_bool(value: Any, default: bool = False) -> bool:
-    if isinstance(value, bool):
-        return value
-
-    if isinstance(value, str):
-        lowered = value.strip().lower()
-        if lowered in {"true", "1", "yes", "y", "on"}:
-            return True
-        if lowered in {"false", "0", "no", "n", "off"}:
-            return False
-
-    if isinstance(value, (int, float)):
-        return bool(value)
-
-    return default
-
-
-def _safe_list_of_strings(value: Any) -> list[str]:
-    if not isinstance(value, list):
-        return []
-
-    output: list[str] = []
-    for item in value:
-        if isinstance(item, str):
-            text = item.strip()
-            if text:
-                output.append(text)
-
-    return output
 
 
 def _extract_browser_session_payload(
@@ -435,7 +451,7 @@ def _build_bridge_result_from_browser_session(
         status = "running"
         executed = True
         message = (
-            "Runtime bridge launched a real browser session through the "
+            "Runtime bridge reports an executed browser session from the "
             "browser_session layer."
         )
     else:
