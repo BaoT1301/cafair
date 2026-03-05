@@ -172,3 +172,146 @@ a3e8> ** View your act run here: /var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/
 
 {"ok": true, "runId": "aar_local_debug", "provider": "greenhouse", "mode": "live", "status": "running", "executed": true, "safeStopBeforeSubmit": false, "visibleFields": [{"name": "first_name", "label": "First Name", "type": "text", "required": true, "selector": "input[name='first_name'], input"}, {"name": "last_name", "label": "Last Name", "type": "text", "required": true, "selector": "input[name='last_name'], input"}, {"name": "email", "label": "Email", "type": "email", "required": true, "selector": "input[type='email']"}, {"name": "resume", "label": "Resume", "type": "file", "required": true, "selector": "input[type='file']"}, {"name": "cover_letter", "label": "Cover Letter", "type": "textarea", "required": false, "selector": "textarea"}], "executionSteps": [{"id": "step_1", "action": "initialize", "detail": "Initialize Python Nova runner for greenhouse via greenhouse-form-adapter."}, {"id": "step_2", "action": "navigate", "detail": "Prepare browser navigation for https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002."}, {"id": "step_3", "action": "load_adapter", "detail": "Load provider-specific field and action rules from greenhouse-form-adapter."}, {"id": "step_4", "action": "launch_browser", "detail": "Launch API-driven Nova Act browser automation."}, {"id": "step_5", "action": "detect_provider_flow", "detail": "Execute provider-specific application flow logic for greenhouse using greenhouse-form-adapter."}, {"id": "step_6", "action": "prefill", "detail": "Prefill visible application fields."}, {"id": "step_7", "action": "safe_stop", "detail": "Safe stop disabled; final submit may be allowed."}], "message": "Python Nova runner prepared successfully. Browser session prepared with 8 steps.", "runner": {"engine": "nova-act", "transport": "api", "adapter": "greenhouse-form-adapter", "provider": "greenhouse"}, "targetUrl": "https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002", "company": "Flagship Pioneering", "roleTitle": "IT Automation Engineering Intern", "selectors": ["a[href*='application']", "button", "form", "input", "textarea", "input[type='file']"], "plannedSteps": ["Open the job page for IT Automation Engineering Intern at Flagship Pioneering.", "Wait for the page to stabilize.", "Verify the application page is reachable.", "Find the Greenhouse Apply button.", "Open the application form.", "Capture visible applicant fields.", "Greenhouse often shows both file upload and optional manual-entry paths for resumes.", "If an 'Enter manually' / 'Resume link' / 'Portfolio' text field appears, paste the resume link there.", "Do not rely on Finder/OS file upload if a manual text entry field is available.", "Return plan only without launching live browser automation."], "profile": {"profile": {"first_name": "Lam Anh", "last_name": "Truong", "email": "npnallstar@gmail.com", "phone": "5514049519", "location": "", "linkedin_url": "", "github_url": "", "portfolio_url": "", "work_authorization": "", "visa_sponsorship_required": false, "school": "", "degree": "", "graduation_date": "", "resume_url": "https://drive.google.com/file/d/1wKb7hlbshHesim7XOc5pAx5dTjCptCdy/view?usp=sharing", "resume_path": "", "cover_letter_path": "", "default_cover_letter_text": "Hi there!\nI am writing because I am genuinely obsessed with the idea of rebuilding business processes as \"AI-native\" rather than just slapping AI on top of old workflows. When I saw that is exactly what the Enterprise AI team at Flagship Pioneering is doing, I knew I had to reach out.\nI love building things that solve real problems. Recently, I built a tool using DeepSeek and a RAG pipeline to turn natural language into SQL queries so staff could get real-time reports without needing to know how to code. I’ve also architected event-driven systems on the cloud that boosted efficiency by 80%. Whether it’s writing Python scripts, deploying on AWS, or using tools like Claude and Gemini to automate a manual mess, I am happiest when I’m making a process faster and smarter.\nI am currently finishing my Master’s in Computer Science at George Mason University. While I have a strong technical background, I’m most excited about the \"builder\" aspect of this role—figuring out which tool fits the job and making sure it actually works reliably in the real world.\nI am ready to be in Cambridge full-time this June to help the team invent new ways of working. I’d love to show you how my experience in AI and automation can help Flagship Pioneering continue to transform human health.\nBest,\nLam Anh Truong"}, "summary": {"loaded": true, "source": "direct_dict"}}, "mapping": {"mappedFields": [], "unmappedFields": [], "requiredFieldCount": 4, "requiredMappedCount": 0}, "fill": {"fillActions": [], "counts": {"total": 0, "ready": 0, "skipped": 0, "blocked": 0}}, "browser": {"summary": {"total_steps": 8, "ready_count": 7, "skipped_count": 0, "blocked_count": 1, "completed_count": 0, "can_continue": false, "has_safe_stop": false, "launches_browser": true}}, "actionLogs": [{"stepId": "step_1", "action": "initialize", "status": "executed", "detail": "Initialize Python Nova runner for greenhouse via greenhouse-form-adapter."}, {"stepId": "step_2", "action": "navigate", "status": "executed", "detail": "Prepare browser navigation for https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002."}, {"stepId": "step_3", "action": "load_adapter", "status": "executed", "detail": "Load provider-specific field and action rules from greenhouse-form-adapter."}, {"stepId": "step_4", "action": "launch_browser", "status": "executed", "detail": "Launch API-driven Nova Act browser automation."}, {"stepId": "step_5", "action": "detect_provider_flow", "status": "executed", "detail": "Execute provider-specific application flow logic for greenhouse using greenhouse-form-adapter."}, {"stepId": "step_6", "action": "prefill", "status": "executed", "detail": "Prefill visible application fields."}, {"stepId": "step_7", "action": "safe_stop", "status": "executed", "detail": "Safe stop disabled; final submit may be allowed."}], "reasoningLogs": [{"stepId": "step_1", "summary": "initialize was included because the apply-agent flow requires: Initialize Python Nova runner for greenhouse via greenhouse-form-adapter."}, {"stepId": "step_2", "summary": "navigate was included because the apply-agent flow requires: Prepare browser navigation for https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002."}, {"stepId": "step_3", "summary": "load_adapter was included because the apply-agent flow requires: Load provider-specific field and action rules from greenhouse-form-adapter."}, {"stepId": "step_4", "summary": "launch_browser was included because the apply-agent flow requires: Launch API-driven Nova Act browser automation."}, {"stepId": "step_5", "summary": "detect_provider_flow was included because the apply-agent flow requires: Execute provider-specific application flow logic for greenhouse using greenhouse-form-adapter."}, {"stepId": "step_6", "summary": "prefill was included because the apply-agent flow requires: Prefill visible application fields."}, {"stepId": "step_7", "summary": "safe_stop was included because the apply-agent flow requires: Safe stop disabled; final submit may be allowed."}], "transportSummary": "Transport executor executed a live run for greenhouse using api transport with 7 steps and final status running.", "transportResult": {"status": "running", "executed": true, "executionSteps": [{"id": "step_1", "action": "initialize", "detail": "Initialize Python Nova runner for greenhouse via greenhouse-form-adapter."}, {"id": "step_2", "action": "navigate", "detail": "Prepare browser navigation for https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002."}, {"id": "step_3", "action": "load_adapter", "detail": "Load provider-specific field and action rules from greenhouse-form-adapter."}, {"id": "step_4", "action": "launch_browser", "detail": "Launch API-driven Nova Act browser automation."}, {"id": "step_5", "action": "detect_provider_flow", "detail": "Execute provider-specific application flow logic for greenhouse using greenhouse-form-adapter."}, {"id": "step_6", "action": "prefill", "detail": "Prefill visible application fields."}, {"id": "step_7", "action": "safe_stop", "detail": "Safe stop disabled; final submit may be allowed."}], "actionLogs": [{"stepId": "step_1", "action": "initialize", "status": "executed", "detail": "Initialize Python Nova runner for greenhouse via greenhouse-form-adapter."}, {"stepId": "step_2", "action": "navigate", "status": "executed", "detail": "Prepare browser navigation for https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002."}, {"stepId": "step_3", "action": "load_adapter", "status": "executed", "detail": "Load provider-specific field and action rules from greenhouse-form-adapter."}, {"stepId": "step_4", "action": "launch_browser", "status": "executed", "detail": "Launch API-driven Nova Act browser automation."}, {"stepId": "step_5", "action": "detect_provider_flow", "status": "executed", "detail": "Execute provider-specific application flow logic for greenhouse using greenhouse-form-adapter."}, {"stepId": "step_6", "action": "prefill", "status": "executed", "detail": "Prefill visible application fields."}, {"stepId": "step_7", "action": "safe_stop", "status": "executed", "detail": "Safe stop disabled; final submit may be allowed."}], "reasoningLogs": [{"stepId": "step_1", "summary": "initialize was included because the apply-agent flow requires: Initialize Python Nova runner for greenhouse via greenhouse-form-adapter."}, {"stepId": "step_2", "summary": "navigate was included because the apply-agent flow requires: Prepare browser navigation for https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002."}, {"stepId": "step_3", "summary": "load_adapter was included because the apply-agent flow requires: Load provider-specific field and action rules from greenhouse-form-adapter."}, {"stepId": "step_4", "summary": "launch_browser was included because the apply-agent flow requires: Launch API-driven Nova Act browser automation."}, {"stepId": "step_5", "summary": "detect_provider_flow was included because the apply-agent flow requires: Execute provider-specific application flow logic for greenhouse using greenhouse-form-adapter."}, {"stepId": "step_6", "summary": "prefill was included because the apply-agent flow requires: Prefill visible application fields."}, {"stepId": "step_7", "summary": "safe_stop was included because the apply-agent flow requires: Safe stop disabled; final submit may be allowed."}], "runner": {"engine": "nova-act", "transport": "api", "adapter": "greenhouse-form-adapter", "provider": "greenhouse"}, "transportSummary": "Transport executor executed a live run for greenhouse using api transport with 7 steps and final status running.", "message": "Python Nova runner prepared successfully. Browser session prepared with 8 steps."}, "browserSession": {"steps": [{"step_id": "session_launch_browser", "action": "launch_browser", "status": "ready", "detail": "Launch API-driven Nova Act browser automation.", "selector": "body", "value": "api", "field_name": "", "required": false}, {"step_id": "session_open", "action": "open_page", "status": "ready", "detail": "Open target application page for greenhouse using api transport.", "selector": "https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002", "value": "https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002", "field_name": "", "required": false}, {"step_id": "session_wait", "action": "wait_for_page", "status": "ready", "detail": "Wait for the page to stabilize.", "selector": "body", "value": "", "field_name": "", "required": false}, {"step_id": "session_snapshot", "action": "capture_snapshot", "status": "ready", "detail": "Capture an initial snapshot of the visible page state.", "selector": "body", "value": "", "field_name": "", "required": false}, {"step_id": "apply_find", "action": "find_element", "status": "ready", "detail": "Find the provider-specific Apply entry point.", "selector": "a[href*='application']", "value": "", "field_name": "", "required": false}, {"step_id": "apply_click", "action": "click", "status": "ready", "detail": "Click the provider-specific Apply button.", "selector": "a[href*='application']", "value": "", "field_name": "", "required": false}, {"step_id": "apply_wait_after_click", "action": "wait_for_page", "status": "ready", "detail": "Wait for the application form to load.", "selector": "body", "value": "", "field_name": "", "required": false}, {"step_id": "session_submit_blocked", "action": "blocked", "status": "blocked", "detail": "Final submit is intentionally not automated by this layer.", "selector": "button[type='submit']", "value": "", "field_name": "", "required": false}], "summary": {"total_steps": 8, "ready_count": 7, "skipped_count": 0, "blocked_count": 1, "completed_count": 0, "can_continue": false, "has_safe_stop": false, "launches_browser": true}, "transport": "api", "mode": "live", "safe_stop_before_submit": false, "launch_requested": true, "runtime_bridge_required": true, "visible_browser_expected": true, "starting_url": "https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002", "current_url": "https://job-boards.greenhouse.io/fspco-op012325/jobs/8433215002", "browser_opened": false}, "fieldMapping": {"mappedFields": [], "results": [], "summary": {"total": 0}}, "formFill": {"actions": [], "summary": {"total_actions": 0, "ready_count": 0, "skipped_count": 0, "blocked_count": 0, "can_proceed": true, "blocked_required_fields": []}, "fillActions": []}, "applicantProfile": {"first_name": "Lam Anh", "last_name": "Truong", "email": "npnallstar@gmail.com", "phone": "5514049519", "location": "", "linkedin_url": "", "github_url": "", "portfolio_url": "", "work_authorization": "", "visa_sponsorship_required": false, "school": "", "degree": "", "graduation_date": "", "resume_url": "https://drive.google.com/file/d/1wKb7hlbshHesim7XOc5pAx5dTjCptCdy/view?usp=sharing", "resume_path": "", "cover_letter_path": "", "default_cover_letter_text": "Hi there!\nI am writing because I am genuinely obsessed with the idea of rebuilding business processes as \"AI-native\" rather than just slapping AI on top of old workflows. When I saw that is exactly what the Enterprise AI team at Flagship Pioneering is doing, I knew I had to reach out.\nI love building things that solve real problems. Recently, I built a tool using DeepSeek and a RAG pipeline to turn natural language into SQL queries so staff could get real-time reports without needing to know how to code. I’ve also architected event-driven systems on the cloud that boosted efficiency by 80%. Whether it’s writing Python scripts, deploying on AWS, or using tools like Claude and Gemini to automate a manual mess, I am happiest when I’m making a process faster and smarter.\nI am currently finishing my Master’s in Computer Science at George Mason University. While I have a strong technical background, I’m most excited about the \"builder\" aspect of this role—figuring out which tool fits the job and making sure it actually works reliably in the real world.\nI am ready to be in Cambridge full-time this June to help the team invent new ways of working. I’d love to show you how my experience in AI and automation can help Flagship Pioneering continue to transform human health.\nBest,\nLam Anh Truong"}, "mappedFields": [], "fillActions": [], "profileSummary": {"loaded": true, "source": "direct_dict"}}
 ```
+
+```bash
+	1.	Agent opens: https://github.com/SimplifyJobs/Summer2026-Internships
+	2.	Agent identifies best-fit internships for Lam Anh Truong
+	3.	Agent chooses 3 jobs (Greenhouse)
+	4.	Agent launches 3 visible Nova Act sessions in parallel
+	5.	Each run fills the form and stops at review (safe-stop)
+	6.	Human checks each tab/window and manually submits
+
+```
+
+### tentative Demo workflow 
+
+Phase A — Source jobs from Simplify list
+	1.	Open https://github.com/SimplifyJobs/Summer2026-Internships
+	2.	Read the internship table/list
+	3.	Extract candidate entries:
+	•	company
+	•	role title
+	•	location
+	•	apply link
+	•	source row metadata
+
+⸻
+
+Phase B — Retrieve each job description before scoring
+
+For each shortlisted entry from the list:
+	1.	Open the actual job link
+	2.	Detect provider type:
+	•	Greenhouse
+	•	Ashby
+	•	Workday
+	•	other
+	3.	Retrieve the real job description from the posting page:
+	•	title
+	•	responsibilities
+	•	required qualifications
+	•	preferred qualifications
+	•	location / work authorization notes
+	•	internship timing
+	4.	Normalize that into structured text
+
+This is critical because the GitHub list alone is not enough for a good-fit score.
+
+⸻
+
+Phase C — Score against Lam Anh’s resume
+
+Use Lam Anh’s resume/profile as the benchmark.
+
+Inputs for scoring
+	•	Resume:
+	•	Python, JS/TS, SQL, C++, Java
+	•	React / Next.js / Node.js
+	•	AWS / GCP / PostgreSQL / MongoDB
+	•	AI, RAG, DeepSeek, automation, cloud systems
+	•	Full-stack + data engineering + automation experience
+	•	Job description text from Phase B
+
+Scoring dimensions
+For each job, score on:
+	1.	Skill match
+	•	direct overlap with required skills
+	•	Python / backend / cloud / automation / AI gets high weight
+	2.	Experience match
+	•	data engineering
+	•	full-stack development
+	•	automation / workflow systems
+	•	real shipped projects
+	3.	Domain match
+	•	AI tooling
+	•	enterprise automation
+	•	developer platforms
+	•	backend systems
+	•	data infrastructure
+	4.	Eligibility / feasibility
+	•	internship level
+	•	location
+	•	work authorization constraints
+	•	“US citizen only” or similar hard blockers
+	5.	Strength of fit
+	•	required matches > preferred matches
+	•	penalize if too many must-haves are missing
+
+Output per job
+	•	fit score (e.g. 0–100)
+	•	rank
+	•	short explanation:
+	•	why it matches
+	•	missing requirements
+	•	blocker flags
+
+⸻
+
+Phase D — Rank and select top 3
+	1.	Sort by score
+	2.	Remove bad fits / blocked jobs
+	3.	Choose top 3 strongest matches
+	4.	Save:
+	•	company
+	•	role
+	•	provider
+	•	apply URL
+	•	score explanation
+
+⸻
+
+Phase E — Launch 3 apply runs in parallel
+
+For each of the top 3 jobs:
+	1.	Start a separate headful Nova Act session
+	2.	Navigate to the job page
+	3.	Click into application flow
+	4.	Fill:
+	•	name
+	•	npnallstar@gmail.com
+	•	5514049519
+	•	resume link via Enter manually
+	•	cover letter via Enter manually
+	5.	Continue scrolling and filling required visible fields
+	6.	Stop at final review / submit checkpoint
+
+Best implementation: 3 separate Python processes, one per job.
+
+⸻
+
+Phase F — Human review gate
+
+After all 3 runs finish:
+	1.	Show status of each application
+	2.	Human reviews all 3
+	3.	Human manually submits
+
+
+⸻
+
+Best architecture to achieve this
+	•	Discovery layer: reads Simplify list
+	•	JD retrieval layer: opens each posting and extracts description text
+	•	Scoring layer: compares JD text to Lam Anh profile
+	•	Execution layer: launches 3 Nova Act apply runs in parallel
+	•	Human gate: final review before submit
