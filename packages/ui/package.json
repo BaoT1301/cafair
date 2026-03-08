@@ -1,0 +1,30 @@
+{
+  "name": "@starter/ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./utils": "./src/utils.ts",
+    "./button": "./src/components/button.tsx",
+    "./card": "./src/components/card.tsx",
+    "./input": "./src/components/input.tsx",
+    "./skeleton": "./src/components/skeleton.tsx",
+    "./tabs": "./src/components/tabs.tsx",
+    "./logo": "./src/components/logo.tsx"
+  },
+  "dependencies": {
+    "@ngard/tiny-isequal": "^1.1.0",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.574.0",
+    "tailwind-merge": "^3.5.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  }
+}

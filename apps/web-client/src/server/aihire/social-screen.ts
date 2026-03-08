@@ -4,7 +4,7 @@
 // The frontend/backend should call this instead of directly importing
 // the agent service.
 
-import { runSocialScreenService } from "../../../../llm/agents/src/services/socialScreenService";
+import { runSocialScreenService } from "..//../../../agents/src/services/socialScreenService";
 
 export type SocialScreenServiceResult = Awaited<
   ReturnType<typeof runSocialScreenService>
@@ -99,7 +99,7 @@ function isNonEmptyString(value: unknown): value is string {
 }
 
 export async function getSocialScreen(
-  input: GetSocialScreenInput
+  input: GetSocialScreenInput,
 ): Promise<GetSocialScreenResponse> {
   try {
     if (!isNonEmptyString(input.candidateId)) {
@@ -271,9 +271,7 @@ export async function getSocialScreen(
 
     if (input.web) {
       const queries = Array.isArray(input.web.queries)
-        ? input.web.queries
-            .filter(isNonEmptyString)
-            .map((q) => q.trim())
+        ? input.web.queries.filter(isNonEmptyString).map((q) => q.trim())
         : [];
 
       const results = Array.isArray(input.web.results)
