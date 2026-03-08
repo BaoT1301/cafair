@@ -9,12 +9,16 @@
   "scripts": {
     "dev:web": "npm run dev --workspace=@starter/web",
     "build:web": "npm run build --workspace=@starter/web",
+    "dev:web-candidate": "npm run dev --workspace=@starter/web-candidate",
+    "build:web-candidate": "npm run build --workspace=@starter/web-candidate",
     "dev:llm": "npm run dev --workspace=@starter/llm",
     "build:llm": "npm run build --workspace=@starter/llm",
     "db:generate": "npm run db:generate --workspace=@starter/web",
     "db:migrate": "npm run db:migrate --workspace=@starter/web",
     "db:push": "npm run db:push --workspace=@starter/web",
     "db:studio": "npm run db:studio --workspace=@starter/web",
+    "db:generate:candidate": "npm run db:generate --workspace=@starter/web-candidate",
+    "db:push:candidate": "npm run db:push --workspace=@starter/web-candidate",
     "supa:start": "supabase start",
     "supa:stop": "supabase stop",
     "supa:status": "supabase status"
