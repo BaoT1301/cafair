@@ -1,6 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { SignIn, ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
-import { Logo } from "@/components/ui/logo";
+import { Logo } from "@starter/ui/logo";
 
 const SignInPage = () => {
   return (

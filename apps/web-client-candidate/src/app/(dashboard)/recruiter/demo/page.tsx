@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@starter/ui/card";
+import { Button } from "@starter/ui/button";
+import { Input } from "@starter/ui/input";
 import {
   Zap,
   Users,
