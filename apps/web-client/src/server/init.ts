@@ -17,7 +17,10 @@ export const createTRPCContext = cache(async () => {
     try {
       secureDb = await getSecureDb();
     } catch (error) {
-      console.error("Failed to initialize secure DB in TRPC context:", error);
+      console.error(
+        "[trpc-context] Failed to initialize secure DB:",
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 
@@ -43,12 +46,19 @@ export const createTRPCRouter = t.router;
 // Public procedure - no auth required
 export const publicProcedure = t.procedure;
 
-// Authed procedure - requires authenticated user
+// Authed procedure - requires authenticated user AND secure DB
 export const authedProcedure = t.procedure.use(async (opts) => {
   if (!opts.ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
+  if (!opts.ctx.secureDb) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Secure database connection unavailable. Check Clerk Supabase JWT template configuration.",
+    });
+  }
   return opts.next({
-    ctx: { ...opts.ctx, user: opts.ctx.user },
+    ctx: { ...opts.ctx, user: opts.ctx.user, secureDb: opts.ctx.secureDb },
   });
 });

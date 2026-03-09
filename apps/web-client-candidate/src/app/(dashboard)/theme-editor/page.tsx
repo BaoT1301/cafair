@@ -4,8 +4,8 @@ import { useEditorStore, useThemePresetStore } from "@/services/theme";
 import { ThemeStyleProps, ThemeMode } from "@/services/theme";
 import { COMMON_STYLES, colorFormatter } from "@/services/theme";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@starter/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@starter/ui/card";
 import {
   Sun,
   Moon,

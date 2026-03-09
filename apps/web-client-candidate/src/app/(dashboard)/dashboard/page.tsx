@@ -2,7 +2,7 @@
 
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@starter/ui/card";
 import Link from "next/link";
 import { AsyncBoundary } from "@/components/async-boundary";
 
