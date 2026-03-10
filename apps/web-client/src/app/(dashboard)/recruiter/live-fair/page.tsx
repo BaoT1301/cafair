@@ -54,12 +54,8 @@ const LANES = [
   },
 ];
 
-// ─── Mock skill tags per candidate slot ───────────────────
-const SKILL_SETS = [
-  ["PyTorch", "Python"], ["Java", "Spring Boot"], ["Python", "R"],
-  ["React", "TypeScript"], ["TensorFlow", "Python"], ["Excel", "SQL"],
-  ["Go", "Kubernetes"], ["C++", "CUDA"], ["Spark", "Scala"],
-];
+// Fallback skill tags used only when a candidate has no strengths data
+const FALLBACK_SKILLS = ["Python", "SQL", "Communication"];
 
 
 // ─── Score Bar ────────────────────────────────────────────
@@ -82,7 +78,9 @@ function CandidateCard({
   candidate: any; index: number; lane: typeof LANES[number];
 }) {
   const risk: Risk = candidate.riskLevel === "high" ? "high" : candidate.riskLevel === "medium" ? "medium" : "low";
-  const skills = SKILL_SETS[index % SKILL_SETS.length];
+  const skills: string[] = Array.isArray(candidate.strengths) && candidate.strengths.length > 0
+    ? (candidate.strengths as string[]).slice(0, 3)
+    : FALLBACK_SKILLS;
   const ActionIcon = lane.actionIcon;
 
   return (

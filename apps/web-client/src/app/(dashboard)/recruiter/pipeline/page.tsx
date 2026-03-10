@@ -203,9 +203,15 @@ export default function PipelinePage() {
 
   const { data: candidates = [], isLoading } = useQuery(trpc.recruiter.getCandidates.queryOptions());
 
+  const [dragSnapshot, setDragSnapshot] = useState<Candidate[] | null>(null);
+
   const updateStage = useMutation(
     trpc.recruiter.updateCandidateStage.mutationOptions({
       onSuccess: () => queryClient.invalidateQueries({ queryKey: trpc.recruiter.getCandidates.queryKey() }),
+      onError: () => {
+        // Roll back optimistic update to the pre-drag snapshot
+        if (dragSnapshot) setLocalCandidates(dragSnapshot);
+      },
     })
   );
 
@@ -263,6 +269,8 @@ export default function PipelinePage() {
     const dragged = displayCandidates.find(c => c.id === draggedId);
     if (!dragged || dragged.stage === targetStage) return;
 
+    // Save snapshot for rollback, then apply optimistic update
+    setDragSnapshot(displayCandidates as Candidate[]);
     setLocalCandidates(prev => {
       const base = prev.length > 0 ? prev : (candidates as Candidate[]);
       return base.map(c => c.id === draggedId ? { ...c, stage: targetStage! } : c);

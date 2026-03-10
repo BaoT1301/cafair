@@ -1,4 +1,4 @@
-import { createTRPCRouter, authedProcedure } from "@/server/init";
+import { createTRPCRouter, authedProcedure, dbProcedure } from "@/server/init";
 import {
   candidates,
   jobRoles,
@@ -53,7 +53,7 @@ export const recruiterRouter = createTRPCRouter({
       return { ...candidate, evidence: candidateEvidence };
     }),
 
-  updateCandidateStage: authedProcedure
+  updateCandidateStage: dbProcedure
     .input(
       z.object({
         id: z.string(),
@@ -61,17 +61,18 @@ export const recruiterRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [updated] = await ctx.secureDb!.rls((tx) =>
-        tx
-          .update(candidates)
-          .set({ stage: input.stage, updatedAt: new Date() })
-          .where(eq(candidates.id, input.id))
-          .returning(),
-      );
+      const [updated] = await ctx.db
+        .update(candidates)
+        .set({ stage: input.stage, updatedAt: new Date() })
+        .where(eq(candidates.id, input.id))
+        .returning();
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Candidate not found" });
+      }
       return updated;
     }),
 
-  updateCandidateLane: authedProcedure
+  updateCandidateLane: dbProcedure
     .input(
       z.object({
         id: z.string(),
@@ -79,13 +80,14 @@ export const recruiterRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [updated] = await ctx.secureDb!.rls((tx) =>
-        tx
-          .update(candidates)
-          .set({ lane: input.lane, updatedAt: new Date() })
-          .where(eq(candidates.id, input.id))
-          .returning(),
-      );
+      const [updated] = await ctx.db
+        .update(candidates)
+        .set({ lane: input.lane, updatedAt: new Date() })
+        .where(eq(candidates.id, input.id))
+        .returning();
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Candidate not found" });
+      }
       return updated;
     }),
 
@@ -148,7 +150,7 @@ export const recruiterRouter = createTRPCRouter({
     );
   }),
 
-  createAction: authedProcedure
+  createAction: dbProcedure
     .input(
       z.object({
         candidateId: z.string(),
@@ -162,25 +164,50 @@ export const recruiterRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [candidate] = await ctx.secureDb!.rls((tx) =>
-        tx.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)),
-      );
+      const [candidate] = await ctx.db
+        .select({ id: candidates.id })
+        .from(candidates)
+        .where(eq(candidates.id, input.candidateId));
       if (!candidate) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Candidate not found" });
       }
-      const [action] = await ctx.secureDb!.rls((tx) =>
+      const [action] = await ctx.db
+        .insert(recruiterActions)
+        .values({
+          userId: ctx.user.id,
+          candidateId: input.candidateId,
+          actionType: input.actionType,
+          notes: input.notes,
+          status: "queued",
+        })
+        .returning();
+      return action;
+    }),
+
+  // ─── Job Roles — mutations ─────────────────────────────────
+
+  createRole: authedProcedure
+    .input(
+      z.object({
+        title: z.string().min(1),
+        department: z.string().optional(),
+        jobDescription: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [role] = await ctx.secureDb!.rls((tx) =>
         tx
-          .insert(recruiterActions)
+          .insert(jobRoles)
           .values({
             userId: ctx.user.id,
-            candidateId: input.candidateId,
-            actionType: input.actionType,
-            notes: input.notes,
-            status: "queued",
+            title: input.title,
+            department: input.department ?? null,
+            jobDescription: input.jobDescription ?? null,
+            status: "on_track",
           })
           .returning(),
       );
-      return action;
+      return role;
     }),
 
   // ─── New procedures (split files) ─────────────────────────

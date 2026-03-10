@@ -4,41 +4,50 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f6f7f5;
-  --foreground: #1a2e1a;
+  /* Figma design tokens */
+  --background: #ffffff;
+  --foreground: #111827;
   --card: #ffffff;
-  --card-foreground: #1a2e1a;
+  --card-foreground: #111827;
   --popover: #ffffff;
-  --popover-foreground: #1a2e1a;
-  --primary: #2d6a4f;
+  --popover-foreground: #111827;
+  --primary: #0e3d27;
   --primary-foreground: #ffffff;
-  --secondary: #eef2ed;
-  --secondary-foreground: #2d3b2d;
-  --muted: #eef2ed;
-  --muted-foreground: #5c6b5c;
-  --accent: #e8f0e6;
-  --accent-foreground: #2d6a4f;
+  --secondary: #f7f7f7;
+  --secondary-foreground: #111827;
+  --muted: #f7f7f7;
+  --muted-foreground: #4b5563;
+  --accent: #e8f5ee;
+  --accent-foreground: #0e3d27;
   --destructive: #c53030;
   --destructive-foreground: #ffffff;
-  --border: #d4ddd2;
-  --input: #d4ddd2;
-  --ring: #2d6a4f;
-  --chart-1: #2d6a4f;
-  --chart-2: #40916c;
-  --chart-3: #b7791f;
-  --chart-4: #c53030;
-  --chart-5: #6b46c1;
-  --radius: 0.625rem;
+  --border: #e2e8e5;
+  --input: #e2e8e5;
+  --ring: #0e3d27;
+  --chart-1: #6fbf9a;
+  --chart-2: #2e8b57;
+  --chart-3: #1f6b43;
+  --chart-4: #e2e8e5;
+  --chart-5: #6b7280;
+  --radius: 0.875rem;
 
-  /* Sidebar — soft green-tinted white */
-  --sidebar-bg: #f0f4ee;
-  --sidebar-foreground: #5c6b5c;
-  --sidebar-primary: #2d6a4f;
+  /* Brand tokens */
+  --brand: #0e3d27;
+  --brand-2: #1f6b43;
+  --brand-bg: #e8f5ee;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --surface: #f7f7f7;
+
+  /* Sidebar */
+  --sidebar-bg: #f7f7f7;
+  --sidebar-foreground: #4b5563;
+  --sidebar-primary: #0e3d27;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e2ebe0;
-  --sidebar-accent-foreground: #1a2e1a;
-  --sidebar-border: #d4ddd2;
-  --sidebar-muted: #8a9a89;
+  --sidebar-accent: #e8f5ee;
+  --sidebar-accent-foreground: #0e3d27;
+  --sidebar-border: #e2e8e5;
+  --sidebar-muted: #6b7280;
 }
 
 .dark {
@@ -102,6 +111,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
+  --color-brand-bg: var(--brand-bg);
+  --color-surface: var(--surface);
   --color-sidebar-bg: var(--sidebar-bg);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

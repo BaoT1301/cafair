@@ -156,6 +156,30 @@ async function seed() {
       gaps: ["Python", "ML knowledge", "Statistics"], nextAction: "Redirect to analyst role",
       ownerId: "seed",
     },
+    // ── Mock candidate for full workflow testing ──
+    {
+      userId: "seed", eventId: event.id, roleId: sweRole.id,
+      name: "Hai Lam", school: "George Mason University", role: "Software Engineer Intern",
+      fitScore: 72, riskLevel: "medium", stage: "screen", lane: "quick_screen",
+      verified: false,
+      strengths: [
+        "Strong problem-solving fundamentals",
+        "Solid TypeScript and React skills",
+        "Fast learner — completed 3 side projects this semester",
+      ],
+      gaps: [
+        "Limited system design exposure",
+        "No prior internship experience",
+        "Backend and API design depth below bar",
+      ],
+      summary:
+        "Hai Lam is a junior at GMU with a solid frontend foundation and strong project initiative. " +
+        "AI scoring flagged limited backend depth and no prior internship experience as risks. " +
+        "However, the quality of side projects and demonstrated learning velocity suggest potential " +
+        "beyond the raw score. Recruiter override may be warranted if role has mentorship bandwidth.",
+      nextAction: "Complete phone screen; evaluate override if score doesn't reflect true potential",
+      ownerId: "seed",
+    },
   ]).returning();
 
   console.log("✓ Candidates created");
