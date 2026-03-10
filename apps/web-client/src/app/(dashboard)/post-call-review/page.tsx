@@ -68,10 +68,10 @@ const IMPRESSION_CONFIG: Record<Impression, { label: string; bg: string; text: s
 };
 
 const FOLLOW_UP_CONFIG: Record<FollowUpStatus, { icon: ComponentType<{ className?: string }>; label: string; color: string }> = {
-  sent:      { icon: CheckCircle2, label: "Sent",      color: "#16a34a" },
-  scheduled: { icon: Calendar,     label: "Scheduled", color: "#7c3aed" },
-  drafted:   { icon: FileText,     label: "Drafted",   color: "#2563eb" },
-  pending:   { icon: Clock,        label: "Pending",   color: "#94a3b8" },
+  sent:      { icon: CheckCircle2, label: "Sent",      color: "#1f6b43" },
+  scheduled: { icon: Calendar,     label: "Scheduled", color: "#6b7280" },
+  drafted:   { icon: FileText,     label: "Drafted",   color: "#92400e" },
+  pending:   { icon: Clock,        label: "Pending",   color: "#92400e" },
 };
 
 const EMAIL_TEMPLATES: Record<EmailTemplate, { label: string; subject: (name: string, role: string) => string; body: (name: string, role: string, strength?: string) => string }> = {
@@ -223,10 +223,11 @@ function CandidateRow({
       {/* Score */}
       <div
         className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold shadow-sm"
-        style={{
-          background: score >= 85 ? "#0e3d27" : score >= 75 ? "#1f6b43" : score >= 65 ? "#52b788" : "#e8f5ee",
-          color: score >= 65 ? "#fff" : "#0e3d27",
-        }}
+        style={
+          score >= 85
+            ? { background: "linear-gradient(180deg, #2e8b57 0%, #1f6b43 100%)", color: "#fff" }
+            : { background: "#f7f7f7", color: "#0e3d27" }
+        }
       >
         {score}
       </div>
@@ -291,10 +292,11 @@ function ReviewPanel({
           <div className="flex items-center gap-2 shrink-0">
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shadow-sm"
-              style={{
-                background: score >= 85 ? "#0e3d27" : score >= 75 ? "#1f6b43" : "#52b788",
-                color: "#fff",
-              }}
+              style={
+                score >= 85
+                  ? { background: "linear-gradient(180deg, #2e8b57 0%, #1f6b43 100%)", color: "#fff" }
+                  : { background: "#f7f7f7", color: "#0e3d27" }
+              }
             >
               {score}%
             </div>

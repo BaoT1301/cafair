@@ -48,10 +48,8 @@ function getSkills(c: Candidate): string[] {
 }
 
 function scoreRingStyle(score: number): { bg: string; text: string } {
-  if (score >= 85) return { bg: "#0e3d27", text: "#fff" };
-  if (score >= 75) return { bg: "#1f6b43", text: "#fff" };
-  if (score >= 65) return { bg: "#52b788", text: "#fff" };
-  return { bg: "#e8f5ee", text: "#0e3d27" };
+  if (score >= 85) return { bg: "linear-gradient(180deg, #2e8b57 0%, #1f6b43 100%)", text: "#fff" };
+  return { bg: "#f7f7f7", text: "#0e3d27" };
 }
 
 function rankBadgeClass(rank: number) {
@@ -122,11 +120,12 @@ function StagePill({ stage }: { stage: string }) {
   const isAdvanced = ["interview", "offer", "day1"].includes(stage);
   return (
     <span
-      className={`text-[10px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap border ${
+      className="text-[10px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap border"
+      style={
         isAdvanced
-          ? "bg-[#e8f5ee] text-[#0e3d27] border-[#c5e4d1]"
-          : "bg-secondary text-muted-foreground border-border"
-      }`}
+          ? { background: "#e8f5ee", color: "#1f6b43", borderColor: "#c5e4d1" }
+          : { background: "#f7f7f7", color: "#6b7280", borderColor: "#e2e8e5" }
+      }
     >
       {STAGE_LABELS[stage] ?? stage}
     </span>
@@ -203,13 +202,13 @@ function RankedRow({
       {/* Risk */}
       <div className="w-14 text-center shrink-0">
         <span
-          className={`text-[10px] font-semibold ${
-            !candidate.riskLevel || candidate.riskLevel === "low"
-              ? "text-emerald-600"
-              : candidate.riskLevel === "medium"
-              ? "text-amber-600"
-              : "text-red-600"
-          }`}
+          className="text-[10px] font-semibold"
+          style={{
+            color:
+              !candidate.riskLevel || candidate.riskLevel === "low"
+                ? "#6b7280"
+                : "#991b1b",
+          }}
         >
           {!candidate.riskLevel || candidate.riskLevel === "low"
             ? "Clear"
