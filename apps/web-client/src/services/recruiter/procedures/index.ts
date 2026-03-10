@@ -17,6 +17,9 @@ import { updateCandidateOwner } from "./update-candidate-owner";
 import { updateCandidateScore } from "./update-candidate-score";
 import { scoreCandidate } from "./score-candidate";
 
+// ─── AI Hire AI / Bedrock ────────────────────────────────
+import { getBedrockScreen } from "@/server/aihire/bedrock";
+
 export const recruiterRouter = createTRPCRouter({
   // ─── Candidates ───────────────────────────────────────────
 
@@ -89,6 +92,25 @@ export const recruiterRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Candidate not found" });
       }
       return updated;
+    }),
+
+  // ─── Bedrock recruiter screen ───────────────────────────
+
+  getBedrockScreen: authedProcedure
+    .input(
+      z.object({
+        candidateId: z.string(),
+        name: z.string(),
+        roleTitle: z.string(),
+        companyName: z.string().optional(),
+        resumeText: z.string(),
+        roleRequirements: z.array(z.string()).optional(),
+        transcriptText: z.string().optional(),
+        notes: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      return getBedrockScreen(input);
     }),
 
   // ─── Job Roles ────────────────────────────────────────────

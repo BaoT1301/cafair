@@ -1,6 +1,111 @@
-# CaFair — AI-Powered Career Fair Platform
+<div align="center">
+  <picture>
+    <img src="./ai-hire-ai-banner.svg" alt="AI Hire AI banner" width="900" />
+  </picture>
+</div>
 
-A monorepo for the CaFair recruiter dashboard with theming, auth, dual APIs, database, and an AI scoring service — built for the Amazon Nova AI Hackathon 2026.
+<br />
+
+<div align="center">
+  <img src="./logo.png" alt="AI Hire AI logo" width="110" />
+</div>
+
+<br />
+
+<div align="center">
+  <p><em>
+    AI Hire AI is a dual-sided multi-agent app that automates <strong>BOTH</strong> candidate applications and recruiter workflows in a busy world.
+  </em></p>
+
+  <p><em>
+    We envision the 2nd Earth where AI comes to <strong>HIRE</strong> another AI. So please stay tuned!
+  </em></p>
+</div>
+
+<div align="center">
+  <h3><a href="https://amazon-nova.devpost.com">amazon-nova.devpost.com</a></h3>
+</div>
+
+---
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Amazon%20Nova-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/Bedrock-0A66C2?style=for-the-badge&logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/Nova%20Act-7B61FF?style=for-the-badge&logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/OpenClaw-111827?style=for-the-badge&logo=opensourceinitiative&logoColor=white" />
+  <img src="https://img.shields.io/badge/SerpAPI-2E90FA?style=for-the-badge&logo=googlechrome&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" />
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/TSX-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/PNPM-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/tRPC-2596BE?style=for-the-badge&logo=trpc&logoColor=white" />
+  <img src="https://img.shields.io/badge/Hono-E36002?style=for-the-badge&logo=hono&logoColor=white" />
+  <img src="https://img.shields.io/badge/Clerk-6C47FF?style=for-the-badge&logo=clerk&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Drizzle-1E1E1E?style=for-the-badge&logo=drizzle&logoColor=C5F74F" />
+  <img src="https://img.shields.io/badge/Drizzle%20ORM-C5F74F?style=for-the-badge&logo=drizzle&logoColor=111111" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase%20Storage-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/JSON-000000?style=for-the-badge&logo=json&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" />
+  <img src="https://img.shields.io/badge/cURL-073551?style=for-the-badge&logo=curl&logoColor=white" />
+  <img src="https://img.shields.io/badge/REST%20API-4B5563?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+  <img src="https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white" />
+  <img src="https://img.shields.io/badge/Agentic%20Workflows-7C3AED?style=for-the-badge&logo=buffer&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Google%20Gemini-8E75FF?style=for-the-badge&logo=googlegemini&logoColor=white" />
+  <img src="https://img.shields.io/badge/Markdown-000000?style=for-the-badge&logo=markdown&logoColor=white" />
+  <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" />
+  <img src="https://img.shields.io/badge/MIT%20License-2B6CB0?style=for-the-badge&logo=opensourceinitiative&logoColor=white" />
+</p>
+
+---
+
+Hiring is getting faster, noisier, and more automated.
+
+AI Hire AI explores a future where:
+- candidates use AI to apply smarter,
+- recruiters use AI to screen faster,
+- and eventually, **AI agents interact with other AI agents** in the hiring loop.
+
+---
+
+- **Candidate-side AI**
+  - application planning
+  - resume tailoring
+  - job search workflow support
+  - follow-up guidance
+
+- **Recruiter-side AI**
+  - candidate triage
+  - verification and risk checks
+  - micro-screening
+  - social screening
+  - recruiter-ready summaries and ATS-style handoff
+
+---
+
 
 ## Stack
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@starter/ui";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { Navbar } from "@/components/navbar";
 import { Layers, Palette, Database, Code2 } from "lucide-react";

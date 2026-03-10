@@ -9,21 +9,32 @@
   "scripts": {
     "dev:web": "npm run dev --workspace=@starter/web",
     "build:web": "npm run build --workspace=@starter/web",
+    "dev:web-candidate": "npm run dev --workspace=@starter/web-candidate",
+    "build:web-candidate": "npm run build --workspace=@starter/web-candidate",
     "dev:llm": "npm run dev --workspace=@starter/llm",
     "build:llm": "npm run build --workspace=@starter/llm",
     "db:generate": "npm run db:generate --workspace=@starter/web",
     "db:migrate": "npm run db:migrate --workspace=@starter/web",
     "db:push": "npm run db:push --workspace=@starter/web",
     "db:studio": "npm run db:studio --workspace=@starter/web",
+    "db:generate:candidate": "npm run db:generate --workspace=@starter/web-candidate",
+    "db:push:candidate": "npm run db:push --workspace=@starter/web-candidate",
     "supa:start": "supabase start",
     "supa:stop": "supabase stop",
     "supa:status": "supabase status"
   },
   "devDependencies": {
+    "playwright": "^1.58.2",
     "supabase": "^2.76.10",
+    "tailwindcss": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock": "^3.1000.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1000.0",
+    "@aws-sdk/client-nova-act": "^3.999.0",
+    "@aws-sdk/client-s3": "^3.999.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0"
   }

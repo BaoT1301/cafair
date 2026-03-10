@@ -1,4 +1,5 @@
-// Re-export all schemas for Drizzle migrations
-export * from "@/services/users/schema";
-export * from "@/services/examples/schema";
-export * from "@/services/recruiter/schema";
+// Re-export shared schemas from @starter/db package
+export * from "@starter/db/schema";
+
+// App-specific schemas
+export * from "./socialScreenBatchJobs";

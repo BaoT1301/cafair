@@ -1,0 +1,14 @@
+{
+  "name": "@starter/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/schema/index.ts",
+  "types": "./src/schema/index.ts",
+  "exports": {
+    ".": "./src/schema/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1"
+  }
+}

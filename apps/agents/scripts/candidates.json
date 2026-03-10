@@ -1,0 +1,22 @@
+[
+  {
+    "candidateId": "cand_001",
+    "name": "Nguyen Phan Nguyen",
+    "linkedin": "https://www.linkedin.com/in/nguyenpn1/",
+    "github": "https://github.com/ngstephen1",
+    "webQueries": [
+      "Nguyen Phan Nguyen Virginia Tech",
+      "Nguyen Phan Nguyen Software Engineer"
+    ]
+  },
+  {
+    "candidateId": "cand_002",
+    "name": "Lam Anh Truong",
+    "linkedin": "https://www.linkedin.com/in/lamanhtruong",
+    "github": "https://github.com/lamanhtruong",
+    "webQueries": [
+      "Lam Anh Truong software engineer",
+      "lamanhtruong.com"
+    ]
+  }
+]
