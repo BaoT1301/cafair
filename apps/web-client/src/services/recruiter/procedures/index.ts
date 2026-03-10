@@ -232,6 +232,56 @@ export const recruiterRouter = createTRPCRouter({
       return role;
     }),
 
+  // ─── Role Alignment ────────────────────────────────────────
+
+  getRoleById: authedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const [role] = await ctx.secureDb!.rls((tx) =>
+        tx.select().from(jobRoles).where(eq(jobRoles.id, input.id)).limit(1),
+      );
+      if (!role) throw new TRPCError({ code: "NOT_FOUND", message: "Role not found" });
+      return {
+        ...role,
+        // Alignment fields not yet in DB — return empty defaults
+        criteria: [],
+        experienceRange: { min: 3, max: 7, autoReject: false },
+        dealbreakers: [],
+        thresholds: { advance: 80, review: 65, reject: 65, autoReject: false },
+        interviewFocusAreas: [],
+        riskTolerance: 42,
+      };
+    }),
+
+  saveRoleAlignment: authedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        title: z.string().optional(),
+        jobDescription: z.string().optional(),
+        criteria: z.any().optional(),
+        experienceRange: z.any().optional(),
+        dealbreakers: z.any().optional(),
+        thresholds: z.any().optional(),
+        interviewFocusAreas: z.array(z.string()).optional(),
+        riskTolerance: z.number().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [role] = await ctx.secureDb!.rls((tx) =>
+        tx
+          .update(jobRoles)
+          .set({
+            ...(input.title !== undefined && { title: input.title }),
+            ...(input.jobDescription !== undefined && { jobDescription: input.jobDescription }),
+          })
+          .where(eq(jobRoles.id, input.id))
+          .returning(),
+      );
+      if (!role) throw new TRPCError({ code: "NOT_FOUND", message: "Role not found" });
+      return role;
+    }),
+
   // ─── New procedures (split files) ─────────────────────────
   getActionsByCandidate,
   markFollowUpSent,
