@@ -106,6 +106,7 @@ function CandidateHeader({
   isLive,
   id,
   onSchedule,
+  onAddNote,
   updateStage,
   moveStageOpen,
   setMoveStageOpen,
@@ -115,6 +116,7 @@ function CandidateHeader({
   isLive: boolean;
   id: string;
   onSchedule: () => void;
+  onAddNote: () => void;
   updateStage: any;
   moveStageOpen: boolean;
   setMoveStageOpen: (v: boolean) => void;
@@ -210,7 +212,10 @@ function CandidateHeader({
           <Calendar className="w-4 h-4" />
           Schedule Interview
         </button>
-        <button className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[14px] border border-[#e2e8e5] bg-white text-[14px] font-normal text-[#111827] hover:bg-[#f7f7f7] transition-colors">
+        <button
+          onClick={onAddNote}
+          className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[14px] border border-[#e2e8e5] bg-white text-[14px] font-normal text-[#111827] hover:bg-[#f7f7f7] transition-colors"
+        >
           <Plus className="w-4 h-4" />
           Add Note
         </button>
@@ -430,6 +435,236 @@ function OverrideModal({
   );
 }
 
+/* ─── Schedule Interview Modal ───────────────────────────────── */
+function ScheduleModal({
+  candidateName,
+  onClose,
+  onConfirm,
+  isPending,
+}: {
+  candidateName: string;
+  onClose: () => void;
+  onConfirm: (notes: string) => void;
+  isPending: boolean;
+}) {
+  const today = new Date().toISOString().split("T")[0];
+  const [date, setDate]   = useState(today);
+  const [time, setTime]   = useState("10:00");
+  const [type, setType]   = useState("Phone Screen");
+  const [notes, setNotes] = useState("");
+  const canSubmit = date && time;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-[20px] shadow-2xl w-[460px] max-w-full flex flex-col overflow-hidden">
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-[#e2e8e5]">
+          <div>
+            <h2 className="text-[18px] font-bold text-[#111827] leading-7">Schedule Interview</h2>
+            <p className="text-[13px] text-[#6b7280] mt-0.5">with <span className="font-semibold text-[#111827]">{candidateName}</span></p>
+          </div>
+          <button onClick={onClose} className="text-[#9ca3af] hover:text-[#111827] transition-colors mt-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="px-6 py-5 flex flex-col gap-4">
+          <div className="flex gap-3">
+            <div className="flex-1 flex flex-col gap-1.5">
+              <label className="text-[12px] font-semibold text-[#4b5563]">Date</label>
+              <input
+                type="date"
+                value={date}
+                min={today}
+                onChange={(e) => setDate(e.target.value)}
+                className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43]"
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <label className="text-[12px] font-semibold text-[#4b5563]">Time</label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43]"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-semibold text-[#4b5563]">Interview Type</label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43] bg-white"
+            >
+              <option>Phone Screen</option>
+              <option>Technical Interview</option>
+              <option>Final Interview</option>
+              <option>Culture Fit</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-semibold text-[#4b5563]">Notes (optional)</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any notes for the interviewer..."
+              rows={3}
+              className="px-3 py-2 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] placeholder:text-[#9ca3af] focus:outline-none focus:ring-1 focus:ring-[#1f6b43] resize-none"
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e2e8e5] bg-[#f7f7f7]">
+          <button
+            onClick={onClose}
+            className="h-10 px-5 rounded-[12px] border border-[#e2e8e5] bg-white text-[14px] font-medium text-[#111827] hover:bg-[#f7f7f7] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => canSubmit && onConfirm(`${type} on ${date} at ${time}${notes ? " — " + notes : ""}`)}
+            disabled={!canSubmit || isPending}
+            className="h-10 px-5 rounded-[12px] text-white text-[14px] font-medium flex items-center gap-2 disabled:opacity-40 transition-opacity"
+            style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
+          >
+            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Confirm Schedule
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Note Modal ─────────────────────────────────────────────── */
+function NoteModal({
+  onClose,
+  onConfirm,
+  isPending,
+}: {
+  onClose: () => void;
+  onConfirm: (note: string) => void;
+  isPending: boolean;
+}) {
+  const [text, setText] = useState("");
+  const canSubmit = text.trim().length > 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-[20px] shadow-2xl w-[440px] max-w-full flex flex-col overflow-hidden">
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-[#e2e8e5]">
+          <h2 className="text-[18px] font-bold text-[#111827] leading-7">Add Note</h2>
+          <button onClick={onClose} className="text-[#9ca3af] hover:text-[#111827] transition-colors mt-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="px-6 py-5">
+          <textarea
+            autoFocus
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Add your recruiter note here..."
+            rows={5}
+            className="w-full px-3 py-2 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] placeholder:text-[#9ca3af] focus:outline-none focus:ring-1 focus:ring-[#1f6b43] resize-none"
+          />
+        </div>
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e2e8e5] bg-[#f7f7f7]">
+          <button
+            onClick={onClose}
+            className="h-10 px-5 rounded-[12px] border border-[#e2e8e5] bg-white text-[14px] font-medium text-[#111827] hover:bg-[#f7f7f7] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => canSubmit && onConfirm(text.trim())}
+            disabled={!canSubmit || isPending}
+            className="h-10 px-5 rounded-[12px] text-white text-[14px] font-medium flex items-center gap-2 disabled:opacity-40 transition-opacity"
+            style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
+          >
+            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Save Note
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Escalate Modal ─────────────────────────────────────────── */
+function EscalateModal({
+  candidateName,
+  onClose,
+  onConfirm,
+  isPending,
+}: {
+  candidateName: string;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  isPending: boolean;
+}) {
+  const [reason, setReason] = useState("");
+  const canSubmit = reason.trim().length >= 5;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-[20px] shadow-2xl w-[460px] max-w-full flex flex-col overflow-hidden">
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-[#e2e8e5]">
+          <div>
+            <h2 className="text-[18px] font-bold text-[#111827] leading-7">Escalate to Hiring Manager</h2>
+            <p className="text-[13px] text-[#6b7280] mt-0.5">Re: <span className="font-semibold text-[#111827]">{candidateName}</span></p>
+          </div>
+          <button onClick={onClose} className="text-[#9ca3af] hover:text-[#111827] transition-colors mt-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="px-6 py-5 flex flex-col gap-4">
+          <p className="text-[13px] text-[#4b5563] leading-5">
+            This will notify the hiring manager and log the escalation to the candidate&apos;s action history.
+          </p>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-semibold text-[#4b5563]">Reason for escalation</label>
+            <textarea
+              autoFocus
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Exceptional candidate — needs fast-track decision..."
+              rows={4}
+              className="w-full px-3 py-2 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] placeholder:text-[#9ca3af] focus:outline-none focus:ring-1 focus:ring-[#1f6b43] resize-none"
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e2e8e5] bg-[#f7f7f7]">
+          <button
+            onClick={onClose}
+            className="h-10 px-5 rounded-[12px] border border-[#e2e8e5] bg-white text-[14px] font-medium text-[#111827] hover:bg-[#f7f7f7] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => canSubmit && onConfirm(reason.trim())}
+            disabled={!canSubmit || isPending}
+            className="h-10 px-5 rounded-[12px] text-white text-[14px] font-medium flex items-center gap-2 disabled:opacity-40 transition-opacity"
+            style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
+          >
+            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Send Escalation
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Override Banner ────────────────────────────────────────── */
 function OverrideBanner({ override, onUndo }: { override: OverrideDecision; onUndo: () => void }) {
   const isReject  = override.type === "reject";
@@ -477,7 +712,10 @@ function DebateSummary({
   onAccept,
   onReview,
   onOverride,
+  onRequestEvidence,
+  onEscalate,
   isAdvancing,
+  isRequestingEvidence,
   override,
 }: {
   candidate: any;
@@ -485,10 +723,14 @@ function DebateSummary({
   onAccept: () => void;
   onReview: () => void;
   onOverride: () => void;
+  onRequestEvidence: () => void;
+  onEscalate: () => void;
   isAdvancing: boolean;
+  isRequestingEvidence: boolean;
   override: OverrideDecision | null;
   onUndoOverride: () => void;
 }) {
+  const [evidenceRequested, setEvidenceRequested] = useState(false);
   const score = candidate.fitScore ?? 0;
   const strengths: string[] = (candidate.strengths as string[]) ?? [];
   const gaps: string[] = (candidate.gaps as string[]) ?? [];
@@ -537,10 +779,32 @@ function DebateSummary({
           >
             {override ? "✎ Override Applied" : "Override Decision"}
           </button>
-          <button className="h-9 px-[14px] rounded-[10px] border-[1.25px] border-[#0e3d27] text-[13px] font-medium text-[#0e3d27] bg-white hover:bg-[#e8f5ee] transition-colors whitespace-nowrap">
-            Request More Evidence
+          <button
+            onClick={() => {
+              if (!evidenceRequested) {
+                onRequestEvidence();
+                setEvidenceRequested(true);
+              }
+            }}
+            disabled={isRequestingEvidence || evidenceRequested}
+            className={`h-9 px-[14px] rounded-[10px] border-[1.25px] text-[13px] font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 disabled:cursor-default ${
+              evidenceRequested
+                ? "border-[#1f6b43] bg-[#e8f5ee] text-[#1f6b43]"
+                : "border-[#0e3d27] text-[#0e3d27] bg-white hover:bg-[#e8f5ee]"
+            }`}
+          >
+            {isRequestingEvidence
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : evidenceRequested
+              ? <CheckCircle2 className="w-3.5 h-3.5" />
+              : null
+            }
+            {evidenceRequested ? "Evidence Requested" : "Request More Evidence"}
           </button>
-          <button className="h-9 px-[14px] rounded-[10px] border-[1.25px] border-[#e2e8e5] text-[13px] font-normal text-[#0e3d27] bg-white hover:bg-[#f7f7f7] transition-colors whitespace-nowrap">
+          <button
+            onClick={onEscalate}
+            className="h-9 px-[14px] rounded-[10px] border-[1.25px] border-[#e2e8e5] text-[13px] font-normal text-[#0e3d27] bg-white hover:bg-[#f7f7f7] transition-colors whitespace-nowrap"
+          >
             Escalate to Hiring Manager
           </button>
         </div>
@@ -1145,9 +1409,12 @@ export default function CandidateDetailPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const [moveStageOpen,  setMoveStageOpen]  = useState(false);
-  const [overrideOpen,   setOverrideOpen]   = useState(false);
-  const [override,       setOverride]       = useState<OverrideDecision | null>(null);
+  const [moveStageOpen,    setMoveStageOpen]    = useState(false);
+  const [overrideOpen,     setOverrideOpen]     = useState(false);
+  const [override,         setOverride]         = useState<OverrideDecision | null>(null);
+  const [scheduleOpen,     setScheduleOpen]     = useState(false);
+  const [noteOpen,         setNoteOpen]         = useState(false);
+  const [escalateOpen,     setEscalateOpen]     = useState(false);
 
   const { data: candidate, isLoading } = useQuery(
     trpc.recruiter.getCandidateWithEvidence.queryOptions({ id })
@@ -1274,7 +1541,32 @@ export default function CandidateDetailPage() {
   };
 
   const handleReview = () => {
-    createAction.mutate({ candidateId: id, actionType: "schedule_interview" });
+    setScheduleOpen(true);
+  };
+
+  const handleScheduleConfirm = (notes: string) => {
+    createAction.mutate(
+      { candidateId: id, actionType: "schedule_interview", notes },
+      { onSuccess: () => setScheduleOpen(false) }
+    );
+  };
+
+  const handleNoteConfirm = (note: string) => {
+    createAction.mutate(
+      { candidateId: id, actionType: "follow_up_email", notes: `NOTE: ${note}` },
+      { onSuccess: () => setNoteOpen(false) }
+    );
+  };
+
+  const handleRequestEvidence = () => {
+    createAction.mutate({ candidateId: id, actionType: "request_evidence", notes: "Recruiter requested additional evidence" });
+  };
+
+  const handleEscalateConfirm = (reason: string) => {
+    createAction.mutate(
+      { candidateId: id, actionType: "escalate", notes: reason },
+      { onSuccess: () => setEscalateOpen(false) }
+    );
   };
 
   const isOverridePending = createAction.isPending || updateStage.isPending;
@@ -1311,7 +1603,8 @@ export default function CandidateDetailPage() {
         dbStage={dbStage}
         isLive={isLive}
         id={id}
-        onSchedule={() => createAction.mutate({ candidateId: id, actionType: "schedule_interview" })}
+        onSchedule={() => setScheduleOpen(true)}
+        onAddNote={() => setNoteOpen(true)}
         updateStage={updateStage}
         moveStageOpen={moveStageOpen}
         setMoveStageOpen={setMoveStageOpen}
@@ -1336,8 +1629,11 @@ export default function CandidateDetailPage() {
             onAccept={handleAccept}
             onReview={handleReview}
             onOverride={() => setOverrideOpen(true)}
+            onRequestEvidence={handleRequestEvidence}
+            onEscalate={() => setEscalateOpen(true)}
             onUndoOverride={() => setOverride(null)}
             isAdvancing={updateStage.isPending}
+            isRequestingEvidence={createAction.isPending}
             override={override}
           />
 
@@ -1367,6 +1663,35 @@ export default function CandidateDetailPage() {
           onClose={() => setOverrideOpen(false)}
           onConfirm={handleOverrideConfirm}
           isPending={isOverridePending}
+        />
+      )}
+
+      {/* Schedule Interview Modal */}
+      {scheduleOpen && candidate && (
+        <ScheduleModal
+          candidateName={candidate.name}
+          onClose={() => setScheduleOpen(false)}
+          onConfirm={handleScheduleConfirm}
+          isPending={createAction.isPending}
+        />
+      )}
+
+      {/* Add Note Modal */}
+      {noteOpen && (
+        <NoteModal
+          onClose={() => setNoteOpen(false)}
+          onConfirm={handleNoteConfirm}
+          isPending={createAction.isPending}
+        />
+      )}
+
+      {/* Escalate Modal */}
+      {escalateOpen && candidate && (
+        <EscalateModal
+          candidateName={candidate.name}
+          onClose={() => setEscalateOpen(false)}
+          onConfirm={handleEscalateConfirm}
+          isPending={createAction.isPending}
         />
       )}
     </div>

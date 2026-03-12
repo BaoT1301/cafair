@@ -3,8 +3,9 @@
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Search, ChevronDown, Plus } from "lucide-react";
+import { Search, ChevronDown, Plus, X } from "lucide-react";
 import { useState, useMemo } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 /* ─── Status Badge ───────────────────────────────────────────── */
 function StatusBadge({ status }: { status: string }) {
@@ -80,6 +81,7 @@ function PipelineRow({
 function RoleCard({
   role,
   candidateCounts,
+  onDelete,
 }: {
   role: {
     id: string;
@@ -94,6 +96,7 @@ function RoleCard({
     reviewing: number;
     interview: number;
   };
+  onDelete?: (id: string) => void;
 }) {
   const openDays = role.createdAt
     ? Math.max(0, Math.floor((Date.now() - new Date(role.createdAt).getTime()) / 86400000))
@@ -132,7 +135,17 @@ function RoleCard({
             {role.department ?? "General"}&nbsp;·&nbsp;Open {openDays} days
           </p>
         </div>
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-2 shrink-0">
+          <StatusBadge status={status} />
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(role.id); }}
+              className="w-6 h-6 flex items-center justify-center rounded-md text-[#9ca3af] hover:bg-red-50 hover:text-red-500 transition-all active:scale-[0.9]"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Pipeline bars */}
@@ -212,8 +225,17 @@ const MOCK_COUNTS: Record<string, { applied: number; screened: number; reviewing
 /* ─── Page ───────────────────────────────────────────────────── */
 export default function RoleManagementPage() {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { data: roles }      = useQuery(trpc.recruiter.getRoles.queryOptions());
   const { data: candidates } = useQuery(trpc.recruiter.getCandidates.queryOptions());
+
+  const deleteMutation = useMutation(
+    trpc.recruiter.deleteRole.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.recruiter.getRoles.queryOptions().queryKey });
+      },
+    }),
+  );
 
   const [search,       setSearch]       = useState("");
   const [deptFilter,   setDeptFilter]   = useState("all");
@@ -328,6 +350,7 @@ export default function RoleManagementPage() {
                   ? (MOCK_COUNTS[role.id] ?? { applied: 0, screened: 0, reviewing: 0, interview: 0 })
                   : (countsByRole[role.id]  ?? { applied: 0, screened: 0, reviewing: 0, interview: 0 })
               }
+              onDelete={isMock ? undefined : (id) => deleteMutation.mutate({ id })}
             />
           ))}
         </div>

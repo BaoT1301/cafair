@@ -2,8 +2,8 @@
 
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
-import { useState, useCallback } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
 import {
   ArrowLeft,
   Save,
@@ -15,7 +15,7 @@ import {
   XCircle,
   Loader2,
   TrendingUp,
-  Trash2,
+  X as XIcon,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -63,6 +63,7 @@ function SectionCard({ children, className = "" }: { children: React.ReactNode; 
 export default function RoleAlignmentPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const roleId = params.id as string;
@@ -82,6 +83,10 @@ export default function RoleAlignmentPage() {
     }),
   );
 
+  const generateMutation = useMutation(
+    trpc.recruiter.generateRoleAlignment.mutationOptions(),
+  );
+
   /* ─── State ──────────────────────────────────────────────── */
   const [title, setTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -96,6 +101,14 @@ export default function RoleAlignmentPage() {
   const [initialized, setInitialized] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [aiGenerated, setAiGenerated] = useState(false);
+
+  /* ─── Auto-generate when redirected from new role ────────── */
+  useEffect(() => {
+    if (initialized && searchParams.get("autoGenerate") === "true" && !aiGenerated && jobDescription.trim()) {
+      handleGenerateCriteria();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialized]);
 
   /* ─── Init from DB ───────────────────────────────────────── */
   if (role && !initialized) {
@@ -132,36 +145,56 @@ export default function RoleAlignmentPage() {
     });
   }, [roleId, title, jobDescription, criteria, expRange, dealbreakers, thresholds, focusAreas, riskTolerance, rounds, saveMutation]);
 
-  /* ─── Generate AI Criteria (stub) ────────────────────────── */
-  const handleGenerateCriteria = useCallback(() => {
+  /* ─── Generate AI Criteria ───────────────────────────────── */
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const handleGenerateCriteria = useCallback(async () => {
+    if (!jobDescription.trim()) return;
     setGenerating(true);
-    setTimeout(() => {
-      setCriteria([
-        { criterion: "System Design",      type: "Technical",  weight: 25, minReq: 3, evidenceSource: "Interview, Micro-screen" },
-        { criterion: "Python Backend",     type: "Technical",  weight: 25, minReq: 3, evidenceSource: "Resume, Micro-screen" },
-        { criterion: "Stakeholder Communication", type: "Soft Skill", weight: 15, minReq: 2, evidenceSource: "Interview transcript" },
-        { criterion: "Cloud (AWS)",        type: "Technical",  weight: 10, minReq: 0, evidenceSource: "Resume" },
-        { criterion: "Leadership/Roadmap", type: "Soft Skill", weight: 10, minReq: 0, evidenceSource: "Interview" },
-        { criterion: "Domain Exposure",    type: "Domain",     weight: 5,  minReq: 0, evidenceSource: "Resume" },
-      ]);
-      setDealbreakers([
-        { rule: "No work authorization",            triggerCondition: "Work auth status = not authorized",     action: "Auto-reject" },
-        { rule: "Policy violation based on company", triggerCondition: "Ethical breach ≥ GPA threshold",       action: "Flag" },
-        { rule: "Negative employment/misconduct history", triggerCondition: "Gap > 1 year with no explanation", action: "Flag" },
-      ]);
-      setFocusAreas([
-        "Technical proficiency",
-        "Code quality & architecture",
-        "System Design thinking",
-        "Communication & collaboration",
-      ]);
-      setExpRange({ min: 3, max: 7, autoReject: false });
-      setThresholds({ advance: 80, review: 65, reject: 65, autoReject: false });
-      setRiskTolerance(42);
-      setGenerating(false);
+    setAiError(null);
+
+    try {
+      const result = await generateMutation.mutateAsync({
+        jobDescription,
+        roleTitle: title || "This role",
+      });
+
+      // Map LLM output to the page's Criterion type
+      setCriteria(
+        result.criteria.map((c) => ({
+          criterion: c.name,
+          type: c.mustHave ? "Technical" : "Soft Skill",
+          weight: Math.round(c.weight / result.criteria.reduce((sum, x) => sum + x.weight, 0) * 100),
+          minReq: c.mustHave ? 3 : 0,
+          evidenceSource: "Resume, Interview",
+        })),
+      );
+
+      // Map dealbreaker strings to Dealbreaker type
+      setDealbreakers(
+        result.dealbreakers.map((rule) => ({
+          rule,
+          triggerCondition: "Auto-evaluated by Nova AI",
+          action: "Flag",
+        })),
+      );
+
+      setFocusAreas(result.interviewFocusAreas);
+      setExpRange(result.experienceRange);
+      setThresholds(result.thresholds);
+      setRiskTolerance(result.riskTolerance);
       setAiGenerated(true);
-    }, 1500);
-  }, []);
+    } catch (err: any) {
+      const msg: string = err?.message ?? "AI analysis failed";
+      setAiError(
+        msg.includes("LLM service") || msg.includes("fetch") || msg.includes("ECONNREFUSED")
+          ? "Could not reach AI — make sure the LLM service is running (cd apps/llm && npm run dev)"
+          : msg,
+      );
+    } finally {
+      setGenerating(false);
+    }
+  }, [jobDescription, title, generateMutation]);
 
   /* ─── Scoring Preview ────────────────────────────────────── */
   const exampleScores = criteria.map((c, i) => {
@@ -295,7 +328,106 @@ export default function RoleAlignmentPage() {
                 Set Criteria Manually
               </button>
             </div>
+
+            {aiError && (
+              <div className="flex items-start gap-2 px-4 py-3 rounded-[10px] bg-red-50 border border-red-200">
+                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-[13px] text-red-700 leading-snug">{aiError}</p>
+              </div>
+            )}
           </SectionCard>
+
+          {/* ── Interview Rounds ── */}
+          {aiGenerated && (
+            <SectionCard>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-[18px] font-bold text-[#111827] leading-7 tracking-[-0.4492px]">
+                  Interview Rounds
+                </h2>
+                <p className="text-[13px] text-[#6b7280] leading-5">
+                  Set up your hiring funnel. The AI will shortlist the top candidates and route them through each round.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {rounds.map((round, idx) => (
+                  <div
+                    key={round.id}
+                    className="flex items-center gap-3 bg-[#f7f7f7] border-[1.25px] border-[#e2e8e5] rounded-[10px] px-4 py-3"
+                  >
+                    {/* Round index */}
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-semibold text-white"
+                      style={{ background: "linear-gradient(180deg, #2e8b57 0%, #1f6b43 100%)" }}
+                    >
+                      {idx + 1}
+                    </div>
+
+                    {/* Round name */}
+                    <input
+                      type="text"
+                      value={round.name}
+                      onChange={(e) =>
+                        setRounds(rounds.map((r) => r.id === round.id ? { ...r, name: e.target.value } : r))
+                      }
+                      placeholder="Round name (e.g. Phone Screen)"
+                      className="flex-1 h-9 bg-white border-[1.25px] border-[#e2e8e5] rounded-[8px] px-3 text-[14px] text-[#111827] placeholder:text-[#9ca3af] outline-none focus:border-[#1f6b43] focus:ring-1 focus:ring-[#1f6b43] transition-colors"
+                    />
+
+                    {/* Candidate count */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[13px] text-[#6b7280] whitespace-nowrap">
+                        {idx === 0 ? "Shortlist" : "Take"}
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={round.count}
+                        onChange={(e) =>
+                          setRounds(rounds.map((r) => r.id === round.id ? { ...r, count: parseInt(e.target.value) || 1 } : r))
+                        }
+                        className="w-16 h-9 bg-white border-[1.25px] border-[#e2e8e5] rounded-[8px] px-2 text-[14px] text-[#111827] text-center outline-none focus:border-[#1f6b43] transition-colors"
+                      />
+                      <span className="text-[13px] text-[#6b7280] whitespace-nowrap">candidates</span>
+                    </div>
+
+                    {/* Remove button (not on first round) */}
+                    {rounds.length > 1 && (
+                      <button
+                        onClick={() => setRounds(rounds.filter((r) => r.id !== round.id))}
+                        className="w-6 h-6 flex items-center justify-center rounded-md text-[#9ca3af] hover:bg-red-50 hover:text-red-500 transition-all active:scale-[0.9] shrink-0"
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add round */}
+                <button
+                  onClick={() =>
+                    setRounds([...rounds, { id: `round-${Date.now()}`, name: "", count: 5 }])
+                  }
+                  className="flex items-center gap-2 text-[13px] font-medium text-[#0e3d27] hover:text-[#1f6b43] transition-colors self-start"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add round
+                </button>
+              </div>
+
+              {/* Shortlist summary banner */}
+              {rounds[0] && (
+                <div className="flex items-center gap-2 bg-[#e8f5ee] rounded-[10px] px-4 py-3">
+                  <span className="text-[13px] text-[#0e3d27]">
+                    AI will automatically shortlist the top{" "}
+                    <span className="font-bold">{rounds[0].count}</span>{" "}
+                    candidates from your candidate pool
+                  </span>
+                </div>
+              )}
+            </SectionCard>
+          )}
 
           {/* ── Success Profile ── */}
           {aiGenerated && (
@@ -441,98 +573,6 @@ export default function RoleAlignmentPage() {
                   </button>
                 </div>
               </div>
-            </SectionCard>
-          )}
-
-          {/* ── Interview Rounds ── */}
-          {aiGenerated && (
-            <SectionCard>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-[18px] font-bold text-[#111827] leading-7 tracking-[-0.4492px]">
-                  Interview Rounds
-                </h2>
-                <p className="text-[13px] text-[#6b7280] leading-5">
-                  Set up your hiring funnel. The AI will shortlist the top candidates and route them through each round.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {rounds.map((round, idx) => (
-                  <div
-                    key={round.id}
-                    className="flex items-center gap-3 bg-[#f7f7f7] border-[1.25px] border-[#e2e8e5] rounded-[10px] px-4 py-3"
-                  >
-                    {/* Round index */}
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-semibold text-white"
-                      style={{ background: "linear-gradient(180deg, #2e8b57 0%, #1f6b43 100%)" }}
-                    >
-                      {idx + 1}
-                    </div>
-
-                    {/* Round name */}
-                    <input
-                      type="text"
-                      value={round.name}
-                      onChange={(e) =>
-                        setRounds(rounds.map((r) => r.id === round.id ? { ...r, name: e.target.value } : r))
-                      }
-                      placeholder="Round name (e.g. Phone Screen)"
-                      className="flex-1 h-9 bg-white border-[1.25px] border-[#e2e8e5] rounded-[8px] px-3 text-[14px] text-[#111827] placeholder:text-[#9ca3af] outline-none focus:border-[#1f6b43] focus:ring-1 focus:ring-[#1f6b43] transition-colors"
-                    />
-
-                    {/* Candidate count */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[13px] text-[#6b7280] whitespace-nowrap">
-                        {idx === 0 ? "Shortlist" : "Take"}
-                      </span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={999}
-                        value={round.count}
-                        onChange={(e) =>
-                          setRounds(rounds.map((r) => r.id === round.id ? { ...r, count: parseInt(e.target.value) || 1 } : r))
-                        }
-                        className="w-16 h-9 bg-white border-[1.25px] border-[#e2e8e5] rounded-[8px] px-2 text-[14px] text-[#111827] text-center outline-none focus:border-[#1f6b43] transition-colors"
-                      />
-                      <span className="text-[13px] text-[#6b7280] whitespace-nowrap">candidates</span>
-                    </div>
-
-                    {/* Remove button (not on first round) */}
-                    {rounds.length > 1 && (
-                      <button
-                        onClick={() => setRounds(rounds.filter((r) => r.id !== round.id))}
-                        className="text-[#9ca3af] hover:text-[#991b1b] transition-colors shrink-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-
-                {/* Add round */}
-                <button
-                  onClick={() =>
-                    setRounds([...rounds, { id: `round-${Date.now()}`, name: "", count: 5 }])
-                  }
-                  className="flex items-center gap-2 text-[13px] font-medium text-[#0e3d27] hover:text-[#1f6b43] transition-colors self-start"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add round
-                </button>
-              </div>
-
-              {/* Shortlist summary banner */}
-              {rounds[0] && (
-                <div className="flex items-center gap-2 bg-[#e8f5ee] rounded-[10px] px-4 py-3">
-                  <span className="text-[13px] text-[#0e3d27]">
-                    AI will automatically shortlist the top{" "}
-                    <span className="font-bold">{rounds[0].count}</span>{" "}
-                    candidates from your candidate pool
-                  </span>
-                </div>
-              )}
             </SectionCard>
           )}
 

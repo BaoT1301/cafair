@@ -1,10 +1,13 @@
 "use client";
 
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { Search, ChevronDown, Share2, BarChart2 } from "lucide-react";
+import {
+  Search, ChevronDown, Share2, BarChart2,
+  X, Loader2, CheckCircle2, Calendar, Link as LinkIcon,
+} from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────── */
 type Candidate = {
@@ -209,13 +212,187 @@ function TierSection({
   );
 }
 
+/* ─── Schedule Batch Modal ───────────────────────────────────── */
+function ScheduleBatchModal({
+  candidates,
+  onClose,
+  onConfirm,
+  isPending,
+  isSuccess,
+}: {
+  candidates: Candidate[];
+  onClose: () => void;
+  onConfirm: (data: { date: string; time: string; duration: string; type: string }) => void;
+  isPending: boolean;
+  isSuccess: boolean;
+}) {
+  const today = new Date().toISOString().split("T")[0]!;
+  const [date, setDate]         = useState(today);
+  const [time, setTime]         = useState("10:00");
+  const [duration, setDuration] = useState("30");
+  const [callType, setCallType] = useState("Phone Screen");
+
+  if (isSuccess) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      >
+        <div className="bg-white rounded-[20px] shadow-2xl w-[440px] max-w-full">
+          <div className="px-8 py-10 flex flex-col items-center text-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-[#e8f5ee] flex items-center justify-center">
+              <CheckCircle2 className="w-7 h-7 text-[#1f6b43]" />
+            </div>
+            <div>
+              <h2 className="text-[18px] font-bold text-[#111827]">Batch Scheduled</h2>
+              <p className="text-[13px] text-[#6b7280] mt-1 leading-5">
+                {candidates.length} {callType} call{candidates.length !== 1 ? "s" : ""} queued for {date} starting at {time}.
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="h-10 px-6 rounded-[12px] text-white text-[14px] font-medium"
+              style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-[20px] shadow-2xl w-[520px] max-w-full flex flex-col overflow-hidden">
+
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-[#e2e8e5]">
+          <div>
+            <h2 className="text-[18px] font-bold text-[#111827] leading-7">Schedule Batch Calls</h2>
+            <p className="text-[13px] text-[#6b7280] mt-0.5">
+              {candidates.length} candidate{candidates.length !== 1 ? "s" : ""} selected
+            </p>
+          </div>
+          <button onClick={onClose} className="text-[#9ca3af] hover:text-[#111827] transition-colors mt-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Candidate list */}
+        <div className="max-h-[180px] overflow-y-auto divide-y divide-[#e2e8e5] border-b border-[#e2e8e5]">
+          {candidates.map((c, i) => (
+            <div key={c.id} className="flex items-center gap-3 px-6 py-2.5">
+              <span className="w-5 h-5 rounded-full bg-[#0e3d27] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                {i + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[#111827] truncate">{c.name}</p>
+                <p className="text-[11px] text-[#6b7280] truncate">{c.school}</p>
+              </div>
+              <span className="text-[12px] font-bold text-[#0e3d27] shrink-0">{c.fitScore ?? 0}%</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Form */}
+        <div className="px-6 py-5 flex flex-col gap-4">
+          <div className="flex gap-3">
+            <div className="flex-1 flex flex-col gap-1.5">
+              <label className="text-[12px] font-semibold text-[#4b5563]">Start Date</label>
+              <input
+                type="date"
+                value={date}
+                min={today}
+                onChange={(e) => setDate(e.target.value)}
+                className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43]"
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <label className="text-[12px] font-semibold text-[#4b5563]">Start Time</label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43]"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-1 flex flex-col gap-1.5">
+              <label className="text-[12px] font-semibold text-[#4b5563]">Call Type</label>
+              <select
+                value={callType}
+                onChange={(e) => setCallType(e.target.value)}
+                className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43] bg-white"
+              >
+                <option>Phone Screen</option>
+                <option>Video Screen</option>
+                <option>Technical Screen</option>
+              </select>
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <label className="text-[12px] font-semibold text-[#4b5563]">Duration per call</label>
+              <select
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43] bg-white"
+              >
+                <option value="15">15 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Time block preview */}
+          <div className="bg-[#f7f7f7] rounded-[10px] px-4 py-3 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[#0e3d27] shrink-0" />
+            <p className="text-[12px] text-[#4b5563]">
+              <span className="font-semibold text-[#111827]">{candidates.length} call{candidates.length !== 1 ? "s" : ""}</span>
+              {" · "}{duration} min each{" · "}
+              total block ~{Math.ceil((candidates.length * parseInt(duration)) / 60 * 10) / 10}h starting {time} on {date}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e2e8e5]">
+          <button
+            onClick={onClose}
+            className="h-10 px-5 rounded-[12px] border border-[#e2e8e5] bg-white text-[14px] font-medium text-[#111827] hover:bg-[#f7f7f7] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm({ date, time, duration, type: callType })}
+            disabled={isPending || !date || !time}
+            className="h-10 px-5 rounded-[12px] text-white text-[14px] font-medium flex items-center gap-2 disabled:opacity-50 transition-opacity"
+            style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
+          >
+            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Confirm Schedule
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Shortlist Panel ────────────────────────────────────────── */
 function ShortlistPanel({
-  shortlistedCandidates, total, onCompare, isInterviewTab,
+  shortlistedCandidates, total, onCompare, onScheduleBatch, onShareLink, shareSuccess, isInterviewTab,
 }: {
   shortlistedCandidates: Candidate[];
   total: number;
   onCompare: () => void;
+  onScheduleBatch: () => void;
+  onShareLink: () => void;
+  shareSuccess: boolean;
   isInterviewTab: boolean;
 }) {
   return (
@@ -288,7 +465,7 @@ function ShortlistPanel({
             <button
               onClick={onCompare}
               disabled={shortlistedCandidates.length < 2 || shortlistedCandidates.length > 3}
-              className="h-10 rounded-[14px] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-opacity disabled:opacity-40"
+              className="h-10 rounded-[14px] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
             >
               <BarChart2 className="h-4 w-4" />
@@ -303,15 +480,23 @@ function ShortlistPanel({
           </>
         ) : (
           <button
-            className="h-10 rounded-[14px] text-white text-sm font-semibold flex items-center justify-center"
+            onClick={onScheduleBatch}
+            disabled={shortlistedCandidates.length === 0}
+            className="h-10 rounded-[14px] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
           >
+            <Calendar className="h-4 w-4" />
             Schedule Batch Call
           </button>
         )}
-        <button className="h-10 rounded-[14px] border border-[#0e3d27] text-sm font-medium text-[#4b5563] flex items-center justify-center gap-2 hover:bg-[#e8f5ee] transition-colors shadow-[0px_4px_12px_0px_rgba(46,139,87,0.25)]">
-          <Share2 className="h-4 w-4" />
-          Share Link
+        <button
+          onClick={onShareLink}
+          className="h-10 rounded-[14px] border border-[#0e3d27] text-sm font-medium text-[#4b5563] flex items-center justify-center gap-2 hover:bg-[#e8f5ee] transition-all active:scale-[0.97]"
+        >
+          {shareSuccess
+            ? <><LinkIcon className="h-4 w-4 text-[#1f6b43]" /><span className="text-[#1f6b43]">Link Copied!</span></>
+            : <><Share2 className="h-4 w-4" />Share Link</>
+          }
         </button>
       </div>
     </div>
@@ -347,7 +532,12 @@ export default function CandidateQueuePage() {
     roleParam.startsWith("mock-") ? "all" : roleParam
   );
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
-  const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
+  const [shortlisted, setShortlisted]         = useState<Set<string>>(new Set());
+  const [batchOpen, setBatchOpen]             = useState(false);
+  const [batchSuccess, setBatchSuccess]       = useState(false);
+  const [shareSuccess, setShareSuccess]       = useState(false);
+
+  const createAction = useMutation(trpc.recruiter.createAction.mutationOptions());
 
   // Shortlist limit — set by recruiter in JD setup, stored in localStorage
   const [shortlistLimit, setShortlistLimit] = useState<number>(20);
@@ -402,6 +592,28 @@ export default function CandidateQueuePage() {
 
   const shortlistedCandidates = allSorted.filter((c) => shortlisted.has(c.id));
 
+  const handleShareLink = () => {
+    navigator.clipboard.writeText(window.location.href).catch(() => {});
+    setShareSuccess(true);
+    setTimeout(() => setShareSuccess(false), 2000);
+  };
+
+  const handleBatchConfirm = async ({ date, time, duration, type }: { date: string; time: string; duration: string; type: string }) => {
+    for (const candidate of shortlistedCandidates) {
+      await createAction.mutateAsync({
+        candidateId: candidate.id,
+        actionType: "schedule_interview",
+        notes: `Batch ${type} · ${date} ${time} · ${duration} min`,
+      });
+    }
+    setBatchSuccess(true);
+  };
+
+  const handleBatchClose = () => {
+    setBatchOpen(false);
+    setBatchSuccess(false);
+  };
+
   if (isError) return (
     <div className="flex items-center justify-center h-64">
       <p className="text-sm text-[#6b7280]">Failed to load candidates. Please refresh.</p>
@@ -436,16 +648,16 @@ export default function CandidateQueuePage() {
 
       {/* ── Filter Tabs + Sort ── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 bg-[#e2e8e5] rounded-[14px] p-1.5">
+        <div className="flex items-center gap-0.5 bg-white border border-[#e2e8e5] rounded-[14px] p-1">
           {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="px-4 py-1.5 rounded-[14px] text-sm transition-colors whitespace-nowrap"
+              className="px-4 py-1.5 rounded-[10px] text-sm transition-all whitespace-nowrap active:scale-[0.97]"
               style={
                 activeTab === tab
-                  ? { background: "#e2e8e5", color: "#111827", fontWeight: 600 }
-                  : { background: "white", color: "#4b5563", fontWeight: 400 }
+                  ? { background: "#0e3d27", color: "#ffffff", fontWeight: 600 }
+                  : { background: "transparent", color: "#4b5563", fontWeight: 400 }
               }
             >
               {tab}
@@ -542,8 +754,22 @@ export default function CandidateQueuePage() {
             const ids = shortlistedCandidates.map((c) => c.id).join(",");
             router.push(`/candidate-queue/compare?ids=${ids}`);
           }}
+          onScheduleBatch={() => setBatchOpen(true)}
+          onShareLink={handleShareLink}
+          shareSuccess={shareSuccess}
         />
       </div>
+
+      {/* Batch Schedule Modal */}
+      {batchOpen && (
+        <ScheduleBatchModal
+          candidates={shortlistedCandidates}
+          onClose={handleBatchClose}
+          onConfirm={handleBatchConfirm}
+          isPending={createAction.isPending}
+          isSuccess={batchSuccess}
+        />
+      )}
     </div>
   );
 }

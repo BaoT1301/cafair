@@ -1,7 +1,7 @@
 "use client";
 
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, type ComponentType } from "react";
 import {
@@ -15,6 +15,9 @@ import {
   Star,
   Share2,
   BarChart2,
+  X,
+  Loader2,
+  Link as LinkIcon,
 } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────── */
@@ -65,23 +68,31 @@ function StatPill({
   label,
   value,
   sub,
+  highlight,
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   value: string | number;
   sub?: string;
+  highlight?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-3 flex-1">
-      <div className="w-8 h-8 rounded-lg bg-[#e8f5ee] flex items-center justify-center shrink-0">
-        <Icon className="w-4 h-4 text-[#0e3d27]" />
+    <div
+      className={`flex items-center gap-3 bg-card border rounded-xl px-4 py-3 flex-1 transition-all duration-300 ${
+        highlight ? "border-[#1f6b43] shadow-[0_0_0_2px_#1f6b4320]" : "border-border"
+      }`}
+    >
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-300 ${highlight ? "bg-[#1f6b43]" : "bg-[#e8f5ee]"}`}>
+        <Icon className={`w-4 h-4 transition-colors duration-300 ${highlight ? "text-white" : "text-[#0e3d27]"}`} />
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium leading-none mb-1">
           {label}
         </p>
         <div className="flex items-baseline gap-1">
-          <span className="text-xl font-bold text-foreground leading-none">{value}</span>
+          <span className={`text-xl font-bold leading-none transition-colors duration-300 ${highlight ? "text-[#0e3d27]" : "text-foreground"}`}>
+            {value}
+          </span>
           {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
         </div>
       </div>
@@ -347,15 +358,143 @@ function FinalistCard({
   );
 }
 
+/* ─── Finalize Modal ─────────────────────────────────────────── */
+function FinalizeModal({
+  candidates,
+  onClose,
+  onConfirm,
+  isPending,
+  isSuccess,
+}: {
+  candidates: Candidate[];
+  onClose: () => void;
+  onConfirm: () => void;
+  isPending: boolean;
+  isSuccess: boolean;
+}) {
+  const sorted = [...candidates].sort((a, b) => (b.fitScore ?? 0) - (a.fitScore ?? 0));
+
+  if (isSuccess) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      >
+        <div className="bg-white rounded-[20px] shadow-2xl w-[440px] max-w-full flex flex-col overflow-hidden">
+          <div className="px-8 py-10 flex flex-col items-center text-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-[#e8f5ee] flex items-center justify-center">
+              <CheckCircle2 className="w-7 h-7 text-[#1f6b43]" />
+            </div>
+            <div>
+              <h2 className="text-[18px] font-bold text-[#111827]">Shortlist Finalized</h2>
+              <p className="text-[13px] text-[#6b7280] mt-1 leading-5">
+                {sorted.length} candidate{sorted.length !== 1 ? "s" : ""} have been synced to ATS and queued for next steps.
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="h-10 px-6 rounded-[12px] text-white text-[14px] font-medium"
+              style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-[20px] shadow-2xl w-[500px] max-w-full flex flex-col overflow-hidden">
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-[#e2e8e5]">
+          <div>
+            <h2 className="text-[18px] font-bold text-[#111827] leading-7">Finalize Shortlist</h2>
+            <p className="text-[13px] text-[#6b7280] mt-0.5">
+              {sorted.length} candidate{sorted.length !== 1 ? "s" : ""} will be synced to ATS and advanced to interview stage.
+            </p>
+          </div>
+          <button onClick={onClose} className="text-[#9ca3af] hover:text-[#111827] transition-colors mt-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Candidate list */}
+        <div className="max-h-[280px] overflow-y-auto divide-y divide-[#e2e8e5]">
+          {sorted.map((c, i) => (
+            <div key={c.id} className="flex items-center gap-3 px-6 py-3">
+              <span className="w-5 h-5 rounded-full bg-[#0e3d27] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                {i + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[#111827] truncate">{c.name}</p>
+                <p className="text-[11px] text-[#6b7280] truncate">{c.school}</p>
+              </div>
+              <span className="text-[13px] font-bold text-[#0e3d27] shrink-0">{c.fitScore ?? 0}%</span>
+            </div>
+          ))}
+        </div>
+
+        {/* What happens section */}
+        <div className="px-6 py-4 bg-[#f7f7f7] border-t border-[#e2e8e5]">
+          <p className="text-[11px] font-semibold text-[#4b5563] uppercase tracking-wide mb-2">What happens next</p>
+          <div className="space-y-1.5">
+            {[
+              "ATS sync action queued for each candidate",
+              "Candidates marked as shortlisted in your pipeline",
+              "Follow-up emails drafted and ready to send",
+            ].map((step, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#1f6b43] shrink-0" />
+                <span className="text-[12px] text-[#4b5563]">{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e2e8e5]">
+          <button
+            onClick={onClose}
+            className="h-10 px-5 rounded-[12px] border border-[#e2e8e5] bg-white text-[14px] font-medium text-[#111827] hover:bg-[#f7f7f7] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isPending}
+            className="h-10 px-5 rounded-[12px] text-white text-[14px] font-medium flex items-center gap-2 disabled:opacity-50 transition-opacity"
+            style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
+          >
+            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Confirm &amp; Sync to ATS
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Shortlist Panel ────────────────────────────────────────── */
 function ShortlistPanel({
   shortlistedCandidates,
   topScore,
   onRemove,
+  onFinalize,
+  onExport,
+  onShare,
+  shareSuccess,
 }: {
   shortlistedCandidates: Candidate[];
   topScore: number;
   onRemove: (id: string) => void;
+  onFinalize: () => void;
+  onExport: () => void;
+  onShare: () => void;
+  shareSuccess: boolean;
 }) {
   const sorted = useMemo(
     () => [...shortlistedCandidates].sort((a, b) => (b.fitScore ?? 0) - (a.fitScore ?? 0)),
@@ -442,6 +581,7 @@ function ShortlistPanel({
       {/* Actions */}
       <div className="px-4 py-3.5 border-t border-border flex flex-col gap-2">
         <button
+          onClick={onFinalize}
           disabled={sorted.length === 0}
           className="w-full h-10 rounded-[14px] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
@@ -450,13 +590,23 @@ function ShortlistPanel({
           Finalize Shortlist
         </button>
         <div className="flex gap-2">
-          <button className="flex-1 h-8 rounded-lg border border-border text-[10px] font-semibold text-foreground flex items-center justify-center gap-1 hover:bg-muted transition-colors">
-            <Share2 className="w-3 h-3" />
-            Share
+          <button
+            onClick={onShare}
+            disabled={sorted.length === 0}
+            className="flex-1 h-8 rounded-lg border border-border text-[10px] font-semibold text-foreground flex items-center justify-center gap-1 hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {shareSuccess
+              ? <><LinkIcon className="w-3 h-3 text-[#1f6b43]" /><span className="text-[#1f6b43]">Copied!</span></>
+              : <><Share2 className="w-3 h-3" />Share</>
+            }
           </button>
-          <button className="flex-1 h-8 rounded-lg border border-border text-[10px] font-semibold text-foreground flex items-center justify-center gap-1 hover:bg-muted transition-colors">
+          <button
+            onClick={onExport}
+            disabled={sorted.length === 0}
+            className="flex-1 h-8 rounded-lg border border-border text-[10px] font-semibold text-foreground flex items-center justify-center gap-1 hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
             <Download className="w-3 h-3" />
-            Export
+            Export CSV
           </button>
         </div>
       </div>
@@ -478,10 +628,15 @@ export default function RankingPage() {
   );
   const { data: roles } = useQuery(trpc.recruiter.getRoles.queryOptions());
 
-  const [view, setView] = useState<View>("All Candidates");
+  const [view, setView]           = useState<View>("All Candidates");
   const [filterRole, setFilterRole] = useState("all");
-  const [search, setSearch] = useState("");
+  const [search, setSearch]         = useState("");
   const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
+  const [finalizeOpen, setFinalizeOpen]     = useState(false);
+  const [finalizeSuccess, setFinalizeSuccess] = useState(false);
+  const [shareSuccess, setShareSuccess]       = useState(false);
+
+  const createAction = useMutation(trpc.recruiter.createAction.mutationOptions());
 
   const candidates = rawCandidates as Candidate[] | undefined;
 
@@ -531,6 +686,69 @@ export default function RankingPage() {
       ? Math.round(allSorted.reduce((s, c) => s + (c.fitScore ?? 0), 0) / allSorted.length)
       : 0;
 
+  /* ── Export CSV ─────────────────────────────────────────────── */
+  const buildCsv = (rows: Candidate[]) => {
+    const header = "Rank,Name,School,Fit Score,Stage,Risk Level\n";
+    const lines = rows.map((c, i) =>
+      [
+        i + 1,
+        `"${c.name}"`,
+        `"${c.school ?? ""}"`,
+        c.fitScore ?? 0,
+        STAGE_LABELS[c.stage ?? ""] ?? c.stage ?? "",
+        c.riskLevel ?? "low",
+      ].join(",")
+    );
+    return header + lines.join("\n");
+  };
+
+  const triggerDownload = (csv: string, filename: string) => {
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportAll = () => {
+    triggerDownload(buildCsv(allSorted), "all-candidates-ranked.csv");
+  };
+
+  const handleExportShortlist = () => {
+    const sorted = [...shortlistedCandidates].sort((a, b) => (b.fitScore ?? 0) - (a.fitScore ?? 0));
+    triggerDownload(buildCsv(sorted), "shortlist.csv");
+  };
+
+  /* ── Share ───────────────────────────────────────────────────── */
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href).catch(() => {});
+    setShareSuccess(true);
+    setTimeout(() => setShareSuccess(false), 2000);
+  };
+
+  /* ── Finalize ────────────────────────────────────────────────── */
+  const handleFinalizeConfirm = async () => {
+    for (const candidate of shortlistedCandidates) {
+      await createAction.mutateAsync({
+        candidateId: candidate.id,
+        actionType: "sync_to_ats",
+        notes: `Finalized shortlist — candidate ranked #${shortlistedCandidates.indexOf(candidate) + 1}`,
+      });
+    }
+    setFinalizeSuccess(true);
+  };
+
+  const handleFinalizeClose = () => {
+    const wasSuccess = finalizeSuccess;
+    setFinalizeOpen(false);
+    setFinalizeSuccess(false);
+    // After a successful finalize, switch to Shortlisted view so the
+    // recruiter immediately sees the finalized candidates in the ranked list.
+    if (wasSuccess) setView("Shortlisted");
+  };
+
   if (isError) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -561,11 +779,15 @@ export default function RankingPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 pt-1">
-          <button className="h-9 px-3.5 rounded-lg border border-border bg-card text-xs font-medium text-foreground flex items-center gap-1.5 hover:bg-muted transition-colors">
+          <button
+            onClick={handleExportAll}
+            className="h-9 px-3.5 rounded-lg border border-border bg-card text-xs font-medium text-foreground flex items-center gap-1.5 hover:bg-muted transition-colors"
+          >
             <Download className="w-3.5 h-3.5" />
-            Export
+            Export All
           </button>
           <button
+            onClick={() => setFinalizeOpen(true)}
             disabled={shortlisted.size === 0}
             className="h-9 px-4 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
@@ -593,6 +815,7 @@ export default function RankingPage() {
           label="Shortlisted"
           value={shortlisted.size}
           sub={`of ${allSorted.length}`}
+          highlight={shortlisted.size > 0}
         />
         <StatPill
           icon={TrendingUp}
@@ -739,8 +962,23 @@ export default function RankingPage() {
           shortlistedCandidates={shortlistedCandidates}
           topScore={topScore}
           onRemove={toggleShortlist}
+          onFinalize={() => setFinalizeOpen(true)}
+          onExport={handleExportShortlist}
+          onShare={handleShare}
+          shareSuccess={shareSuccess}
         />
       </div>
+
+      {/* ── Finalize Modal ── */}
+      {finalizeOpen && (
+        <FinalizeModal
+          candidates={shortlistedCandidates}
+          onClose={handleFinalizeClose}
+          onConfirm={handleFinalizeConfirm}
+          isPending={createAction.isPending}
+          isSuccess={finalizeSuccess}
+        />
+      )}
     </div>
   );
 }

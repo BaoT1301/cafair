@@ -16,6 +16,7 @@ import { markFollowUpSent } from "./mark-follow-up-sent";
 import { updateCandidateOwner } from "./update-candidate-owner";
 import { updateCandidateScore } from "./update-candidate-score";
 import { scoreCandidate } from "./score-candidate";
+import { generateRoleAlignment } from "./generate-role-alignment";
 
 // ─── AI Hire AI / Bedrock ────────────────────────────────
 import { getBedrockScreen } from "@/server/aihire/bedrock";
@@ -181,6 +182,10 @@ export const recruiterRouter = createTRPCRouter({
           "follow_up_email",
           "schedule_interview",
           "move_stage",
+          "send_rejection",
+          "send_offer_email",
+          "request_evidence",
+          "escalate",
         ]),
         notes: z.string().optional(),
       }),
@@ -230,6 +235,15 @@ export const recruiterRouter = createTRPCRouter({
           .returning(),
       );
       return role;
+    }),
+
+  deleteRole: authedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.secureDb!.rls((tx) =>
+        tx.delete(jobRoles).where(eq(jobRoles.id, input.id)),
+      );
+      return { success: true };
     }),
 
   // ─── Role Alignment ────────────────────────────────────────
@@ -288,4 +302,5 @@ export const recruiterRouter = createTRPCRouter({
   updateCandidateOwner,
   updateCandidateScore,
   scoreCandidate,
+  generateRoleAlignment,
 });
