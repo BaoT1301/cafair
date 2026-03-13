@@ -11,7 +11,20 @@
 // or
 //   { ok: false, error, details? }
 
-import { runBedrockCandidateScreen } from "../../../../agents/src/agents/bedrockScreen";
+// Dynamic import so Vercel build succeeds without the agents package
+type RunBedrockCandidateScreen = typeof import("../../../../agents/src/agents/bedrockScreen").runBedrockCandidateScreen;
+let _runBedrockCandidateScreen: RunBedrockCandidateScreen | null = null;
+async function loadBedrockAgent(): Promise<RunBedrockCandidateScreen> {
+  if (!_runBedrockCandidateScreen) {
+    try {
+      const mod = await import("../../../../agents/src/agents/bedrockScreen");
+      _runBedrockCandidateScreen = mod.runBedrockCandidateScreen;
+    } catch {
+      throw new Error("Bedrock agent package not available in this environment");
+    }
+  }
+  return _runBedrockCandidateScreen;
+}
 
 export interface GetBedrockScreenInput {
   candidateId: string;
@@ -26,7 +39,7 @@ export interface GetBedrockScreenInput {
 
 export interface GetBedrockScreenSuccess {
   ok: true;
-  result: Awaited<ReturnType<typeof runBedrockCandidateScreen>>;
+  result: unknown;
 }
 
 export interface GetBedrockScreenFailure {
@@ -73,6 +86,7 @@ export async function getBedrockScreen(
   try {
     const normalized = normalizeInput(input);
 
+    const runBedrockCandidateScreen = await loadBedrockAgent();
     const result = await runBedrockCandidateScreen({
       candidateId: normalized.candidateId,
       name: normalized.name,
