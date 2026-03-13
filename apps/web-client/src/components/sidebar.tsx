@@ -3,108 +3,196 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import {
-  LayoutDashboard,
-  ClipboardList,
-  Radio,
+  Building2,
+  Briefcase,
   Users,
-  Send,
-  Kanban,
+  BarChart2,
+  Flag,
+  MessageSquare,
+  ClipboardCheck,
   Settings,
-  Zap,
-  Database,
-  Play,
+  PanelLeftClose,
 } from "lucide-react";
+import { useState } from "react";
 
 const navItems = [
-  { label: "Dashboard", href: "/recruiter", icon: LayoutDashboard },
-  { label: "Pre-Fair", href: "/recruiter/pre-fair", icon: ClipboardList },
-  { label: "Live Fair", href: "/recruiter/live-fair", icon: Radio },
-  { label: "Candidates", href: "/recruiter/candidates", icon: Users },
-  { label: "Follow-ups", href: "/recruiter/follow-ups", icon: Send },
-  { label: "Pipeline", href: "/recruiter/pipeline", icon: Kanban },
-  { label: "Demo", href: "/recruiter/demo", icon: Play },
+  { label: "Hiring Center",       href: "/hiring-center",    icon: Building2 },
+  { label: "Role Management",     href: "/roles",             icon: Briefcase },
+  { label: "Candidate Queue",     href: "/candidate-queue",  icon: Users },
+  { label: "Ranking & Shortlist", href: "/ranking",           icon: BarChart2 },
+  { label: "Risk Flags",          href: "/risk-flags",        icon: Flag },
+  { label: "Conversation",        href: "/conversation",      icon: MessageSquare },
+  { label: "Post-Call Review",    href: "/post-call-review", icon: ClipboardCheck },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("sidebar-collapsed") === "true";
+  });
+
+  const toggle = (value: boolean) => {
+    setIsCollapsed(value);
+    localStorage.setItem("sidebar-collapsed", String(value));
+  };
+
+  const firstName = user?.firstName ?? "Sarah";
+  const lastName  = user?.lastName  ?? "Chen";
+  const email     = user?.emailAddresses?.[0]?.emailAddress ?? "sarah@virginia.com";
+  const avatarUrl = user?.imageUrl;
+  const initials  = `${firstName[0] ?? "S"}${lastName[0] ?? "C"}`;
+
+  const Avatar = ({ size = 32 }: { size?: number }) =>
+    avatarUrl ? (
+      <img
+        src={avatarUrl}
+        alt={firstName}
+        className="rounded-full object-cover shrink-0"
+        style={{ width: size, height: size }}
+      />
+    ) : (
+      <div
+        className="rounded-full bg-[#0e3d27] flex items-center justify-center shrink-0"
+        style={{ width: size, height: size }}
+      >
+        <span className="text-white text-xs font-semibold">{initials}</span>
+      </div>
+    );
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-50 flex-col bg-sidebar-bg border-r border-sidebar-border">
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
-          <Zap className="h-4 w-4 text-primary-foreground" />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-bold text-foreground leading-tight">
-            FairSignal
-          </span>
-          <span className="text-[10px] text-sidebar-muted leading-tight">
-            Recruiter Copilot
-          </span>
-        </div>
+    <aside
+      className={cn(
+        "flex flex-col h-full bg-[#f7f7f7] rounded-2xl shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)] shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out",
+        isCollapsed ? "w-[68px]" : "w-[259px]"
+      )}
+    >
+      {/* ── Logo / Header ── */}
+      <div
+        className={cn(
+          "flex items-center border-b border-[#e2e8e5] py-6 shrink-0",
+          isCollapsed ? "justify-center px-2" : "justify-between px-4"
+        )}
+      >
+        {isCollapsed ? (
+          <button
+            onClick={() => toggle(false)}
+            aria-label="Expand sidebar"
+            className="shrink-0"
+          >
+            <img
+              src="https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504"
+              alt="AlHire logo"
+              className="w-12 h-12 object-cover pointer-events-none"
+            />
+          </button>
+        ) : (
+          <>
+            <div className="flex items-center gap-1 min-w-0">
+              <img
+                src="https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504"
+                alt="AlHire logo"
+                className="w-12 h-12 object-cover pointer-events-none shrink-0"
+              />
+              <span className="font-semibold text-[20px] text-[#111827] leading-5 whitespace-nowrap">
+                AlHire
+              </span>
+            </div>
+            <button
+              onClick={() => toggle(true)}
+              aria-label="Collapse sidebar"
+              className="text-[#4b5563] hover:text-[#111827] transition-colors shrink-0"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Nav Links */}
-      <nav className="flex-1 space-y-0.5 px-3 mt-2">
+      {/* ── Navigation ── */}
+      <nav
+        className={cn(
+          "flex-1 flex flex-col gap-1 py-8 overflow-y-auto overflow-x-hidden",
+          isCollapsed ? "px-2 items-center" : "px-4"
+        )}
+      >
         {navItems.map((item) => {
           const isActive =
-            pathname === item.href ||
-            (item.href !== "/recruiter" && pathname.startsWith(item.href));
-          const isDashboardActive =
-            item.href === "/recruiter" && pathname === "/recruiter";
+            pathname === item.href || pathname.startsWith(item.href + "/");
 
-          const active = isActive || isDashboardActive;
+          if (isCollapsed) {
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.label}
+                className={cn(
+                  "flex items-center justify-center rounded-[10px] p-3 transition-colors",
+                  isActive
+                    ? "bg-[#e8f5ee] text-[#0e3d27]"
+                    : "text-[#4b5563] hover:bg-[#e8f5ee]/60 hover:text-[#0e3d27]"
+                )}
+              >
+                <item.icon className="w-4 h-4 shrink-0" />
+              </Link>
+            );
+          }
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                "flex items-center gap-3 rounded-[10px] py-3 pr-3 text-[14px] tracking-[-0.015em] transition-colors whitespace-nowrap",
+                isActive
+                  ? "bg-[#e8f5ee] border-l-[5px] border-[#1f6b43] pl-[17px] font-semibold text-[#0e3d27]"
+                  : "pl-3 font-normal text-[#4b5563] hover:bg-[#e8f5ee]/60 hover:text-[#0e3d27]"
               )}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
+              <item.icon className="w-4 h-4 shrink-0" />
               <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Bottom - Dev Data & Settings */}
-      <div className="px-3 pb-4 space-y-0.5">
-        <Link
-          href="/dev"
-          aria-current={pathname === "/dev" ? "page" : undefined}
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
-            pathname === "/dev"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-          )}
-        >
-          <Database className="h-4 w-4 shrink-0" />
-          <span>Dev Data</span>
-        </Link>
-        <Link
-          href="/recruiter/settings"
-          aria-current={pathname === "/recruiter/settings" ? "page" : undefined}
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
-            pathname === "/recruiter/settings"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-          )}
-        >
-          <Settings className="h-4 w-4 shrink-0" />
-          <span>Settings</span>
-        </Link>
-      </div>
+      {/* ── User Profile ── */}
+      {isCollapsed ? (
+        <div className="py-3 px-2 flex flex-col items-center gap-2 border-t border-[#e2e8e5] shrink-0">
+          <Avatar />
+          <Link
+            href="/recruiter/settings"
+            className="w-8 h-8 flex items-center justify-center rounded-[10px] text-[#4b5563] hover:bg-[#e2e8e5] transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+          </Link>
+        </div>
+      ) : (
+        <div className="px-4 py-4 border-t border-[#e2e8e5] shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar />
+              <div className="flex flex-col gap-1 min-w-0">
+                <span className="text-[14px] font-semibold text-[#0b0b0b] leading-4 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {firstName} {lastName}
+                </span>
+                <span className="text-[12px] text-[#727272] leading-4 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {email}
+                </span>
+              </div>
+            </div>
+            <Link
+              href="/recruiter/settings"
+              className="w-[30px] h-[30px] flex items-center justify-center rounded-[10px] text-[#4b5563] hover:bg-[#e2e8e5] transition-colors shrink-0"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

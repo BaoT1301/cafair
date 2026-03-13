@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Clock, Mic, CornerDownRight, UserCheck,
-  Zap, X, ChevronRight, Play, Shield,
+  Zap, X, ChevronRight, Play, Shield, CheckCircle2,
 } from "lucide-react";
 import { RiskBadge } from "@/components/recruiter/RiskBadge";
 import { Avatar } from "@/components/recruiter/Avatar";
@@ -54,13 +55,7 @@ const LANES = [
   },
 ];
 
-// ─── Mock skill tags per candidate slot ───────────────────
-const SKILL_SETS = [
-  ["PyTorch", "Python"], ["Java", "Spring Boot"], ["Python", "R"],
-  ["React", "TypeScript"], ["TensorFlow", "Python"], ["Excel", "SQL"],
-  ["Go", "Kubernetes"], ["C++", "CUDA"], ["Spark", "Scala"],
-];
-
+const FALLBACK_SKILLS = ["Python", "SQL", "Communication"];
 
 // ─── Score Bar ────────────────────────────────────────────
 function ScoreBar({ score, risk }: { score: number; risk: Risk }) {
@@ -77,16 +72,23 @@ function ScoreBar({ score, risk }: { score: number; risk: Risk }) {
 
 // ─── Candidate Card ───────────────────────────────────────
 function CandidateCard({
-  candidate, index, lane,
+  candidate, index, lane, onAction, isPending, isDone,
 }: {
-  candidate: any; index: number; lane: typeof LANES[number];
+  candidate: any;
+  index: number;
+  lane: typeof LANES[number];
+  onAction: () => void;
+  isPending: boolean;
+  isDone: boolean;
 }) {
   const risk: Risk = candidate.riskLevel === "high" ? "high" : candidate.riskLevel === "medium" ? "medium" : "low";
-  const skills = SKILL_SETS[index % SKILL_SETS.length];
-  const ActionIcon = lane.actionIcon;
+  const skills: string[] = Array.isArray(candidate.strengths) && candidate.strengths.length > 0
+    ? (candidate.strengths as string[]).slice(0, 3)
+    : FALLBACK_SKILLS;
+  const ActionIcon = isDone ? CheckCircle2 : lane.actionIcon;
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+    <div className={`bg-card border border-border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all ${isDone ? "opacity-50" : ""}`}>
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <Avatar name={candidate.name} index={index} />
@@ -114,9 +116,19 @@ function CandidateCard({
       </div>
 
       {/* Action button */}
-      <button className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl transition-all ${lane.actionClass}`}>
-        <ActionIcon className="w-3.5 h-3.5" />
-        {lane.actionLabel}
+      <button
+        onClick={onAction}
+        disabled={isPending || isDone}
+        className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+          isDone ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : lane.actionClass
+        }`}
+      >
+        {isPending ? (
+          <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <ActionIcon className="w-3.5 h-3.5" />
+        )}
+        {isDone ? "Done" : isPending ? "Working…" : lane.actionLabel}
       </button>
     </div>
   );
@@ -151,7 +163,6 @@ function RulesPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-        {/* Routing Rules */}
         <div>
           <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-3">Routing Rules</p>
           <div className="space-y-2.5">
@@ -173,7 +184,6 @@ function RulesPanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Live Insights */}
         <div>
           <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-3">Live Insights</p>
           <div className="space-y-2">
@@ -194,18 +204,92 @@ function RulesPanel({ onClose }: { onClose: () => void }) {
 // ─── Main Live Fair Page ──────────────────────────────────
 export default function LiveFairPage() {
   const trpc = useTRPC();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
   const { data: candidates = [] } = useQuery(trpc.recruiter.getCandidates.queryOptions());
   const { data: activeEvent } = useQuery(trpc.recruiter.getActiveEvent.queryOptions());
   const { data: stats } = useQuery(trpc.recruiter.getDashboardStats.queryOptions());
 
   const [showRules, setShowRules] = useState(false);
+  // Track pending and done states per-candidate
+  const [pending, setPending] = useState<Set<string>>(new Set());
+  const [done, setDone] = useState<Set<string>>(new Set());
+
+  const updateStage = useMutation(
+    trpc.recruiter.updateCandidateStage.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.recruiter.getCandidates.queryKey() });
+        queryClient.invalidateQueries({ queryKey: trpc.recruiter.getDashboardStats.queryKey() });
+      },
+    })
+  );
+
+  const createAction = useMutation(
+    trpc.recruiter.createAction.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.recruiter.getCandidates.queryKey() });
+      },
+    })
+  );
+
+  const markPending = (id: string) => setPending(prev => new Set(prev).add(id));
+  const markDone = (id: string) => {
+    setPending(prev => { const s = new Set(prev); s.delete(id); return s; });
+    setDone(prev => new Set(prev).add(id));
+  };
+
+  // Build action handler based on lane
+  const getActionHandler = (lane: Lane, candidate: any) => () => {
+    if (pending.has(candidate.id) || done.has(candidate.id)) return;
+
+    if (lane === "recruiter_now") {
+      // View profile — just navigate
+      router.push(`/recruiter/candidates/${candidate.id}`);
+      return;
+    }
+
+    if (lane === "quick_screen") {
+      // Start 3-min screen → advance candidate to "screen" stage
+      markPending(candidate.id);
+      updateStage.mutate(
+        { id: candidate.id, stage: "screen" },
+        {
+          onSuccess: () => markDone(candidate.id),
+          onError: () => {
+            setPending(prev => { const s = new Set(prev); s.delete(candidate.id); return s; });
+          },
+        }
+      );
+      return;
+    }
+
+    if (lane === "redirect") {
+      // Send resources → queue a follow-up email action
+      markPending(candidate.id);
+      createAction.mutate(
+        {
+          candidateId: candidate.id,
+          actionType: "follow_up_email",
+          notes: "Redirect resources sent from live fair",
+        },
+        {
+          onSuccess: () => markDone(candidate.id),
+          onError: () => {
+            setPending(prev => { const s = new Set(prev); s.delete(candidate.id); return s; });
+          },
+        }
+      );
+      return;
+    }
+  };
 
   // Distribute candidates across lanes using their lane field or fallback by index
   const getLaneCandidates = (lane: Lane) => {
-    const laned = candidates.filter(c => c.lane === lane);
+    const laned = (candidates as any[]).filter(c => c.lane === lane);
     if (laned.length > 0) return laned;
     // Fallback: distribute by index for demo
-    const all = [...candidates];
+    const all = [...(candidates as any[])];
     if (lane === "recruiter_now") return all.filter((_, i) => i % 3 === 0).slice(0, 6);
     if (lane === "quick_screen") return all.filter((_, i) => i % 3 === 1).slice(0, 4);
     return all.filter((_, i) => i % 3 === 2).slice(0, 3);
@@ -290,6 +374,9 @@ export default function LiveFairPage() {
                     candidate={candidate}
                     index={i}
                     lane={lane}
+                    onAction={getActionHandler(lane.key, candidate)}
+                    isPending={pending.has(candidate.id)}
+                    isDone={done.has(candidate.id)}
                   />
                 ))}
               </div>
@@ -302,7 +389,6 @@ export default function LiveFairPage() {
       <div className="flex shrink-0">
         {showRules && <RulesPanel onClose={() => setShowRules(false)} />}
 
-        {/* Rules tab trigger */}
         {!showRules && (
           <button
             onClick={() => setShowRules(true)}
