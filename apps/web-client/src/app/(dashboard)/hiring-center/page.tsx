@@ -30,6 +30,15 @@ import {
   Upload,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { motion } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.35, delay: Math.min(i, 10) * 0.045, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
 
 /* ─── Types ──────────────────────────────────────────────── */
 
@@ -1575,7 +1584,7 @@ export default function HiringCenterPage() {
     <div className="flex flex-col gap-4 h-full">
 
       {/* ══ Top Card ══ */}
-      <div className="bg-[#f7f7f7] rounded-2xl px-4 py-5 flex flex-col gap-6 shrink-0">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="bg-[#f7f7f7] rounded-2xl px-4 py-5 flex flex-col gap-6 shrink-0">
 
         {/* Row 1: Greeting + Buttons */}
         <div className="flex items-center gap-2 w-full">
@@ -1665,13 +1674,13 @@ export default function HiringCenterPage() {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ══ Bottom Card ══ */}
-      <div className="bg-[#f7f7f7] rounded-2xl px-4 py-5 flex flex-col gap-12 flex-1 overflow-y-auto">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08, ease: [0.22, 1, 0.36, 1] }} className="bg-[#f7f7f7] rounded-2xl px-4 py-5 flex flex-col gap-12 flex-1 overflow-y-auto">
 
         {/* Stat Cards Row */}
-        <div className="flex flex-wrap gap-4 w-full">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.15, ease: [0.22, 1, 0.36, 1] }} className="flex flex-wrap gap-4 w-full">
           <StatCard
             label="New applicants"
             value={totalCandidates}
@@ -1703,10 +1712,10 @@ export default function HiringCenterPage() {
             subtitle="Ready to send"
             onClick={() => router.push("/recruiter/pipeline")}
           />
-        </div>
+        </motion.div>
 
         {/* Approvals + Sidebar */}
-        <div className="flex gap-6 items-start">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.22, ease: [0.22, 1, 0.36, 1] }} className="flex gap-6 items-start">
 
           {/* Left: Pending Approvals */}
           <div className="bg-white rounded-[14px] p-4 flex flex-col gap-4 flex-1 min-w-0">
@@ -1746,8 +1755,8 @@ export default function HiringCenterPage() {
             <ApprovalBreakdown total={approvalActions.length || MOCK_APPROVALS_ALL.filter(a => !dismissedIds.has(a.id)).length} />
             <AgentActivity items={activityItems} onViewLog={() => setShowLog(true)} />
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* ══ Modals & Panels ══ */}
       {showReviewAll && (

@@ -9,6 +9,7 @@ import {
   MicOff, PhoneOff, Video,
 } from "lucide-react";
 import { getInitials } from "@/lib/recruiter-utils";
+import { motion } from "framer-motion";
 
 /* ─── Types ──────────────────────────────────────────────────── */
 
@@ -1023,9 +1024,9 @@ export default function ConversationPage() {
   }
 
   return (
-    <div className="flex bg-card border border-border rounded-xl overflow-hidden h-full" style={{ borderColor: "#e2e8e5" }}>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="flex bg-card border border-border rounded-xl overflow-hidden h-full" style={{ borderColor: "#e2e8e5" }}>
       {/* Left: Conversation list */}
-      <div className="w-[272px] shrink-0 flex flex-col border-r bg-card" style={{ borderColor: "#e2e8e5" }}>
+      <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35, delay: 0.08, ease: [0.22, 1, 0.36, 1] }} className="w-[272px] shrink-0 flex flex-col border-r bg-card" style={{ borderColor: "#e2e8e5" }}>
         <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "#f0f0f0" }}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-bold" style={{ color: "#111827" }}>Messages</h2>
@@ -1077,10 +1078,10 @@ export default function ConversationPage() {
             ))
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Center: Thread */}
-      <div className="flex-1 min-w-0 flex flex-col" style={{ background: "rgba(247,247,247,0.3)" }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.12, ease: [0.22, 1, 0.36, 1] }} className="flex-1 min-w-0 flex flex-col" style={{ background: "rgba(247,247,247,0.3)" }}>
         {activeCandidate ? (
           <ThreadView
             candidate={activeCandidate}
@@ -1107,10 +1108,10 @@ export default function ConversationPage() {
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Right: AI Insights */}
-      <div className="w-[252px] shrink-0 border-l flex flex-col bg-card" style={{ borderColor: "#e2e8e5" }}>
+      <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35, delay: 0.16, ease: [0.22, 1, 0.36, 1] }} className="w-[252px] shrink-0 border-l flex flex-col bg-card" style={{ borderColor: "#e2e8e5" }}>
         <div className="px-4 py-3.5 border-b shrink-0" style={{ borderColor: "#f0f0f0" }}>
           <div className="flex items-center gap-1.5">
             <Bot className="w-3.5 h-3.5" style={{ color: "#0e3d27" }} />
@@ -1139,7 +1140,7 @@ export default function ConversationPage() {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Modals */}
       {showCall && activeCandidate && (
@@ -1163,6 +1164,6 @@ export default function ConversationPage() {
           onAddSystemMsg={addSystemMessage}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

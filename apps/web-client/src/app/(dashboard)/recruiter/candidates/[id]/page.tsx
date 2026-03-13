@@ -7,6 +7,7 @@ import { RiskBadge } from "@/components/recruiter/RiskBadge";
 import { SocialScreenModal } from "@/components/recruiter/SocialScreenModal";
 import { getInitials, STAGE_ORDER } from "@/lib/recruiter-utils";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   FileText,
@@ -437,16 +438,17 @@ export default function CandidateDetailPage() {
   ];
 
   return (
-    <div className="space-y-4 w-full">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="space-y-4 w-full">
 
       {/* Back */}
-      <button
+      <motion.button
+        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
         onClick={() => router.back()}
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
-      </button>
+      </motion.button>
 
       {/* ── High-risk alert banner ── */}
       {candidate.riskLevel === "high" && !riskBannerDismissed && (
@@ -469,7 +471,7 @@ export default function CandidateDetailPage() {
 
       <div className="flex gap-5">
         {/* Left content */}
-        <div className="flex-1 space-y-4 min-w-0">
+        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35, delay: 0.1, ease: [0.22, 1, 0.36, 1] }} className="flex-1 space-y-4 min-w-0">
 
           {/* Header card */}
           <div className="bg-card border border-border rounded-xl shadow-sm p-5">
@@ -806,10 +808,10 @@ export default function CandidateDetailPage() {
               )}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Right sidebar */}
-        <div className="w-[220px] shrink-0 space-y-4">
+        <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35, delay: 0.15, ease: [0.22, 1, 0.36, 1] }} className="w-[220px] shrink-0 space-y-4">
 
           {/* Actions */}
           <div className="bg-card border border-border rounded-xl shadow-sm p-4 space-y-2">
@@ -970,7 +972,7 @@ export default function CandidateDetailPage() {
               {candidate.riskLevel === "high" ? "Run Social Screen" : "Run Web Scan"}
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Close stage picker on outside click */}
@@ -997,6 +999,6 @@ export default function CandidateDetailPage() {
           onClose={() => setSocialScreenOpen(false)}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

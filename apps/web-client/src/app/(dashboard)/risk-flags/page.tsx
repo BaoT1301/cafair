@@ -6,6 +6,15 @@ import {
   Search, ChevronDown, X, AlertTriangle, CheckCircle2,
   User, Send, ExternalLink, MessageSquare, Clock,
 } from "lucide-react";
+import { motion } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.35, delay: Math.min(i, 10) * 0.045, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
 
 /* ─── Types ──────────────────────────────────────────────────── */
 
@@ -939,7 +948,8 @@ export default function RiskFlagsPage() {
     <div className="flex flex-col gap-4 h-full">
 
       {/* ── Header ── */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="rounded-[16px] px-5 py-4 flex items-center justify-between shrink-0"
         style={{ background: "#f7f7f7", boxShadow: "0px 1px 4px rgba(0,0,0,0.05)" }}
       >
@@ -978,10 +988,10 @@ export default function RiskFlagsPage() {
             style={{ color: "#111827" }}
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Body ── */}
-      <div className="flex gap-4 flex-1 min-h-0">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08, ease: [0.22, 1, 0.36, 1] }} className="flex gap-4 flex-1 min-h-0">
 
         {/* Left: filters + flag list */}
         <div
@@ -1023,9 +1033,9 @@ export default function RiskFlagsPage() {
                 <p className="text-[13px] mt-1" style={{ color: "#9ca3af" }}>No flags match the current filters.</p>
               </div>
             ) : (
-              filtered.map(flag => (
+              filtered.map((flag, i) => (
+                <motion.div key={flag.id} custom={i} variants={fadeUp} initial="hidden" animate="visible">
                 <FlagCard
-                  key={flag.id}
                   flag={flag}
                   isSelected={selectedFlag?.id === flag.id}
                   isReviewing={reviewingId === flag.id}
@@ -1035,13 +1045,14 @@ export default function RiskFlagsPage() {
                   onMarkReviewed={handleMarkReviewed}
                   onEscalate={setEscalatingFlag}
                 />
+                </motion.div>
               ))
             )}
           </div>
         </div>
 
         {/* Right: detail panel */}
-        <div className="w-[320px] shrink-0 flex flex-col min-h-0">
+        <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35, delay: 0.14, ease: [0.22, 1, 0.36, 1] }} className="w-[320px] shrink-0 flex flex-col min-h-0">
           <FlagDetailPanel
             flag={selectedFlag}
             escalationInfo={selectedFlag ? escalated.get(selectedFlag.id) : undefined}
@@ -1049,8 +1060,8 @@ export default function RiskFlagsPage() {
             onEscalate={setEscalatingFlag}
             onViewDetail={setViewingFlag}
           />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* ── Modals ── */}
       {viewingFlag && (

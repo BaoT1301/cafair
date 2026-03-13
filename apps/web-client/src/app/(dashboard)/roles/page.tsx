@@ -4,6 +4,15 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Search, ChevronDown, Plus, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.35, delay: Math.min(i, 10) * 0.045, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
 import { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -124,7 +133,7 @@ function RoleCard({
   }
 
   return (
-    <div className="bg-white rounded-[16px] p-[25px] flex flex-col gap-4 w-full min-w-0">
+    <div className="bg-white rounded-[16px] p-[25px] flex flex-col gap-4 w-full min-w-0 h-full">
       {/* Title row */}
       <div className="flex items-start justify-between h-[54px]">
         <div className="flex flex-col gap-[2px] flex-1 min-w-0">
@@ -163,8 +172,8 @@ function RoleCard({
         </div>
       )}
 
-      {/* View Candidates link */}
-      <div className="flex justify-end">
+      {/* View Candidates link — pushed to bottom */}
+      <div className="flex justify-end mt-auto">
         <Link
           href={`/candidate-queue?role=${role.id}`}
           className="text-[14px] font-semibold text-[#0e3d27] leading-5 tracking-[-0.015em] underline decoration-solid"
@@ -244,7 +253,8 @@ export default function RoleManagementPage() {
 
   function handleDelete(id: string) {
     setDeletedIds(prev => new Set(prev).add(id));
-    setTimeout(() => deleteMutation.mutate({ id }), 350);
+    // Fire mutation after exit animation completes (~300ms)
+    setTimeout(() => deleteMutation.mutate({ id }), 300);
   }
 
   const [search,       setSearch]       = useState("");
@@ -290,7 +300,7 @@ export default function RoleManagementPage() {
     <div className="flex flex-col gap-4 h-full">
 
       {/* ── Header card ── */}
-      <div className="bg-[#f7f7f7] rounded-[16px] shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)] px-4 py-5 flex flex-col gap-[23px] shrink-0">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="bg-[#f7f7f7] rounded-[16px] shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)] px-4 py-5 flex flex-col gap-[23px] shrink-0">
         <h1 className="text-[32px] font-bold text-[#111827] leading-10 tracking-[0.006em]">
           Role Management
         </h1>
@@ -303,10 +313,10 @@ export default function RoleManagementPage() {
             Add  New Position
           </button>
         </Link>
-      </div>
+      </motion.div>
 
       {/* ── Content card ── */}
-      <div className="bg-[#f7f7f7] rounded-[16px] shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05)] px-4 py-5 flex flex-col gap-9 flex-1 min-h-0 overflow-y-auto">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08, ease: [0.22, 1, 0.36, 1] }} className="bg-[#f7f7f7] rounded-[16px] shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05)] px-4 py-5 flex flex-col gap-9 flex-1 min-h-0 overflow-y-auto">
 
         {/* Search + filters */}
         <div className="flex items-center gap-5 shrink-0">
@@ -366,18 +376,17 @@ export default function RoleManagementPage() {
           </div>
         ) : (
         <div className="grid grid-cols-3 gap-6">
-          {displayRoles.map((role) => {
-            const isDeleting = deletedIds.has(role.id);
-            return (
-              <div
+          <AnimatePresence mode="popLayout">
+            {displayRoles.filter(r => !deletedIds.has(r.id)).map((role, i) => (
+              <motion.div
                 key={role.id}
-                style={{
-                  opacity: isDeleting ? 0 : 1,
-                  transform: isDeleting ? "scale(0.93) translateY(-8px)" : "scale(1) translateY(0)",
-                  transition: "opacity 350ms ease, transform 350ms cubic-bezier(0.4,0,0.2,1)",
-                  pointerEvents: isDeleting ? "none" : undefined,
-                  willChange: "opacity, transform",
-                }}
+                custom={i}
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                exit={{ opacity: 0, scale: 0.9, y: -10, transition: { duration: 0.28, ease: [0.4, 0, 0.2, 1] as const } }}
+                layout
+                className="h-full"
               >
                 <RoleCard
                   role={role}
@@ -388,13 +397,13 @@ export default function RoleManagementPage() {
                   }
                   onDelete={isMock ? undefined : handleDelete}
                 />
-              </div>
-            );
-          })}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
         )}
 
-      </div>
+      </motion.div>
     </div>
   );
 }

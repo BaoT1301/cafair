@@ -28,6 +28,15 @@ import {
   Users,
 } from "lucide-react";
 import { getInitials } from "@/lib/recruiter-utils";
+import { motion } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.35, delay: Math.min(i, 10) * 0.045, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
 
 /* ─── Types ──────────────────────────────────────────────────── */
 type Candidate = {
@@ -930,7 +939,7 @@ export default function PostCallReviewPage() {
       )}
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="flex items-start justify-between">
         <div>
           <h1 className="text-[28px] font-bold text-foreground leading-tight">Post-Call Review</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -968,18 +977,18 @@ export default function PostCallReviewPage() {
             )}
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Stat pills ── */}
-      <div className="flex gap-3">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08, ease: [0.22, 1, 0.36, 1] }} className="flex gap-3">
         <StatPill icon={Users}        label="Candidates Reviewed" value={stats.total} />
         <StatPill icon={TrendingUp}   label="Advancing"           value={stats.advancing} sub={`of ${stats.total}`} accent />
         <StatPill icon={CheckCircle2} label="Follow-ups Sent"     value={stats.sent + stats.scheduled} />
         <StatPill icon={AlertCircle}  label="Needs Action"        value={stats.pending} />
-      </div>
+      </motion.div>
 
       {/* ── Progress card ── */}
-      <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.14, ease: [0.22, 1, 0.36, 1] }} className="bg-card border border-border rounded-xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-foreground">Follow-up Completion</p>
@@ -1003,10 +1012,10 @@ export default function PostCallReviewPage() {
           <LegendDot color="#52b788" label={`Drafted: ${stats.drafted}`} />
           <LegendDot color="#c5e4d1" label={`Pending: ${stats.pending}`} />
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Main layout ── */}
-      <div className="flex gap-5" style={{ height: "calc(100vh - 330px)", minHeight: 400 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} className="flex gap-5" style={{ height: "calc(100vh - 330px)", minHeight: 400 }}>
 
         {/* ── Left: Candidate list ── */}
         <div className="flex-1 min-w-0 bg-card border border-border rounded-xl overflow-hidden shadow-sm flex flex-col">
@@ -1173,7 +1182,7 @@ export default function PostCallReviewPage() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { SocialScreenModal } from "@/components/recruiter/SocialScreenModal";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -1077,16 +1078,19 @@ function DebateSummary({
             )}
           </div>
           {/* Recommended next */}
-          <div className="text-center">
+          <AnimatePresence mode="wait">
+          <motion.div key={dbStage + (isRejected ? "-rejected" : "")} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="text-center w-full">
             <p className="text-[14px] font-normal text-[#cde9db] leading-5">
               {isRejected ? "Recruiter decision:" : "Recommended next:"}
             </p>
             <p className="text-[18px] font-medium text-white leading-6 mt-0.5">
               {isRejected ? "Rejected" : recommendedNext}
             </p>
-          </div>
+          </motion.div>
+          </AnimatePresence>
           {/* Summary or override reason */}
-          <p className="text-[14px] font-normal text-[#e8f5ee] text-center leading-[22.75px] flex-1">
+          <AnimatePresence mode="wait">
+          <motion.p key={dbStage + "-summary"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }} className="text-[14px] font-normal text-[#e8f5ee] text-center leading-[22.75px] flex-1">
             {isRejected
               ? `Recruiter override: "${override!.reason}"`
               : (candidate.summary ?? (
@@ -1097,7 +1101,8 @@ function DebateSummary({
                   "Promising candidate at fair. Schedule a phone screen to validate technical depth."
                 ))
             }
-          </p>
+          </motion.p>
+          </AnimatePresence>
           {/* Buttons */}
           <div className="flex gap-4 w-full">
             <button
@@ -1224,6 +1229,9 @@ function DraftCards({ candidate, dbStage }: { candidate: any; dbStage: string })
           </button>
         </div>
 
+        <AnimatePresence mode="wait">
+        <motion.div key={dbStage} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
+
         {emailState === "dismissed" && (
           <div className="flex flex-col items-center py-6 gap-2">
             <p className="text-[14px] text-[#6b7280]">Email draft dismissed.</p>
@@ -1263,6 +1271,8 @@ function DraftCards({ candidate, dbStage }: { candidate: any; dbStage: string })
             </div>
           </div>
         )}
+        </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* ATS Note Draft */}
@@ -1275,6 +1285,8 @@ function DraftCards({ candidate, dbStage }: { candidate: any; dbStage: string })
             <Pencil className="w-4 h-4" />
           </button>
         </div>
+        <AnimatePresence mode="wait">
+        <motion.div key={dbStage} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
         <p className="text-[14px] font-normal text-[#111827] leading-[22.75px] mb-4">
           {atsNote}
         </p>
@@ -1284,6 +1296,8 @@ function DraftCards({ candidate, dbStage }: { candidate: any; dbStage: string })
           </span>
           <p className="text-[14px] font-medium text-[#0e3d27]">✓ Approved</p>
         </div>
+        </motion.div>
+        </AnimatePresence>
       </div>
 
     </div>
@@ -1869,7 +1883,12 @@ export default function CandidateDetailPage() {
   const isOverridePending = createAction.isPending || updateStage.isPending;
 
   return (
-    <div className="flex flex-col gap-4 p-5 pb-8">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col gap-4 p-5 pb-8"
+    >
 
       {/* ── Auth error banner — visible when stage mutation returns 401 ── */}
       {updateStage.isError && (
@@ -1895,6 +1914,7 @@ export default function CandidateDetailPage() {
       )}
 
       {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}>
       <CandidateHeader
         candidate={candidate}
         dbStage={dbStage}
@@ -1908,6 +1928,7 @@ export default function CandidateDetailPage() {
         setMoveStageOpen={setMoveStageOpen}
         onSocialScreen={() => setSocialScreenOpen(true)}
       />
+      </motion.div>
 
       {isLive ? (
         <LiveInterviewView />
@@ -1922,6 +1943,7 @@ export default function CandidateDetailPage() {
           )}
 
           {/* Debate Summary */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}>
           <DebateSummary
             candidate={candidate}
             dbStage={dbStage}
@@ -1935,16 +1957,21 @@ export default function CandidateDetailPage() {
             isRequestingEvidence={createAction.isPending}
             override={override}
           />
+          </motion.div>
 
           {/* Email Draft + ATS Note */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}>
           <DraftCards candidate={candidate} dbStage={dbStage} />
+          </motion.div>
 
           {/* Candidate Profile */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}>
           <CandidateProfile
             candidate={candidate}
             dbStage={dbStage}
             actions={actions ?? []}
           />
+          </motion.div>
         </>
       )}
 
@@ -2011,6 +2038,6 @@ export default function CandidateDetailPage() {
           isPending={createAction.isPending}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -8,6 +8,15 @@ import {
   Search, ChevronDown, Share2, BarChart2,
   X, Loader2, CheckCircle2, Calendar, Link as LinkIcon,
 } from "lucide-react";
+import { motion } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.35, delay: Math.min(i, 10) * 0.045, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
 
 /* ─── Types ──────────────────────────────────────────────────── */
 type Candidate = {
@@ -103,7 +112,11 @@ function CandidateRow({
   const hasRisk      = candidate.riskLevel === "high" || candidate.riskLevel === "medium";
 
   return (
-    <div
+    <motion.div
+      custom={rank - 1}
+      variants={fadeUp}
+      initial="hidden"
+      animate="visible"
       className={`flex items-center gap-4 px-6 py-3.5 border-b border-[#e2e8e5] last:border-0 hover:bg-[#f7f7f7]/60 transition-colors cursor-pointer ${
         isShortlisted ? "bg-[#e8f5ee]/30" : "bg-white"
       }`}
@@ -172,7 +185,7 @@ function CandidateRow({
 
       {/* Score */}
       <ScoreCircle score={score} />
-    </div>
+    </motion.div>
   );
 }
 
@@ -630,7 +643,7 @@ export default function CandidateQueuePage() {
     <div className="space-y-4 p-5">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between bg-[#f7f7f7] rounded-[16px] px-4 py-5">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex items-center justify-between bg-[#f7f7f7] rounded-[16px] px-4 py-5">
         <h1 className="text-[32px] font-bold text-[#111827] leading-10 tracking-[0.006em]">
           Candidate Queue
         </h1>
@@ -644,10 +657,10 @@ export default function CandidateQueuePage() {
             className="h-[42px] w-full rounded-[14px] border border-[#e2e8e5] bg-white pl-9 pr-4 text-sm text-[#111827] placeholder:text-[#4b5563] focus:outline-none focus:ring-1 focus:ring-[#1f6b43]"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Filter Tabs + Sort ── */}
-      <div className="flex items-center justify-between">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08 }} className="flex items-center justify-between">
         <div className="flex items-center gap-0.5 bg-white border border-[#e2e8e5] rounded-[14px] p-1">
           {TABS.map((tab) => (
             <button
@@ -681,7 +694,7 @@ export default function CandidateQueuePage() {
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4b5563] pointer-events-none" />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Shortlist tab info banner ── */}
       {activeTab === "Shortlisted" && (

@@ -22,6 +22,15 @@ import {
   Check,
   Cpu,
 } from "lucide-react";
+import { motion } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.35, delay: Math.min(i, 10) * 0.045, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
 
 /* ─── Types ──────────────────────────────────────────────────── */
 type Candidate = {
@@ -165,7 +174,11 @@ function RankedRow({
   const hasRisk = candidate.riskLevel === "high" || candidate.riskLevel === "medium";
 
   return (
-    <div
+    <motion.div
+      custom={rank - 1}
+      variants={fadeUp}
+      initial="hidden"
+      animate="visible"
       onClick={() => onClick(candidate.id)}
       className={`flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 cursor-pointer hover:bg-muted/20 transition-colors ${
         isShortlisted ? "bg-[#e8f5ee]/30" : rank <= 3 ? "bg-[#f9fbfa]" : ""
@@ -230,7 +243,7 @@ function RankedRow({
             : "2 Flags"}
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1012,7 +1025,7 @@ export default function RankingPage() {
     <div className="space-y-4 p-5">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex items-start justify-between">
         <div>
           <h1 className="text-[28px] font-bold text-foreground leading-tight">
             Ranking &amp; Shortlist
@@ -1044,10 +1057,10 @@ export default function RankingPage() {
             )}
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Stat pills ── */}
-      <div className="flex gap-3">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08 }} className="flex gap-3">
         <StatPill
           icon={Users}
           label="Candidates Ranked"
@@ -1070,10 +1083,10 @@ export default function RankingPage() {
           label="Average Score"
           value={`${avgScore}%`}
         />
-      </div>
+      </motion.div>
 
       {/* ── Filter bar ── */}
-      <div className="flex items-center justify-between gap-4">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.13 }} className="flex items-center justify-between gap-4">
         {/* View tabs */}
         <div className="flex items-center gap-1 bg-secondary rounded-xl p-1 shrink-0">
           {VIEWS.map((v) => (
@@ -1121,7 +1134,7 @@ export default function RankingPage() {
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Main content ── */}
       <div className="flex gap-5 items-start">
