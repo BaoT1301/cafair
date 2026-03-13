@@ -1,9 +1,13 @@
 import { authedProcedure } from "@/server/init";
+import { currentUser } from "@clerk/nextjs/server";
 import { users } from "../schema";
 import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const syncFromClerk = authedProcedure.mutation(async ({ ctx }) => {
-  const clerkUser = ctx.user;
+  // Fetch full Clerk user data within this procedure (ctx.user only has id)
+  const clerkUser = await currentUser();
+  if (!clerkUser) throw new TRPCError({ code: "UNAUTHORIZED" });
 
   const [existing] = await ctx.db
     .select()

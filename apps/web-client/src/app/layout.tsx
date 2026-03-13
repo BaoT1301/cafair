@@ -5,12 +5,18 @@ import { ThemeProvider } from "@/services/theme";
 import { ThemeLoader } from "@/services/theme";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Suspense } from "react";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "@/styles/globals.css";
 
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "CaFair",
-  description:
-    "A full-stack starter template with theming, auth, tRPC, Hono, Drizzle, and LLM prompt service.",
+  title: "AlHire",
+  description: "AI-powered hiring copilot for recruiters.",
 };
 
 export default function RootLayout({
@@ -21,7 +27,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className="antialiased">
+        <body className={`antialiased ${plusJakartaSans.variable} font-[family-name:var(--font-plus-jakarta)]`}>
           <Suspense>
             <NuqsAdapter>
               <TRPCReactProvider>

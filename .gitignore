@@ -51,4 +51,6 @@ supabase/.temp
 .turbo
 
 
-MasterDoc_AWS Hack 26.pdf
+MasterDoc_AWS Hack 26.pdf.mcp.json
+CLAUDE.md
+.claude/

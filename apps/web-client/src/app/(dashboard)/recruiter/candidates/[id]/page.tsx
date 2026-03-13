@@ -4,7 +4,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { RiskBadge } from "@/components/recruiter/RiskBadge";
-import { StageBadge } from "@/components/recruiter/StageBadge";
 import { getInitials, STAGE_ORDER } from "@/lib/recruiter-utils";
 import { useState } from "react";
 import {
@@ -21,9 +20,19 @@ import {
   AlertTriangle,
   CheckCircle2,
   Star,
+  ChevronDown,
+  Sparkles,
 } from "lucide-react";
 
 type Tab = "overview" | "evidence" | "notes" | "actions";
+
+const STAGE_LABELS: Record<string, string> = {
+  fair: "In Queue",
+  screen: "Screening",
+  interview: "Interview",
+  offer: "Offer",
+  day1: "Day 1",
+};
 
 export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +41,9 @@ export default function CandidateDetailPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [noteText, setNoteText] = useState("");
+  const [showStagePicker, setShowStagePicker] = useState(false);
+  // Optimistic stage — null means "use server value"
+  const [optimisticStage, setOptimisticStage] = useState<string | null>(null);
 
   const { data: candidate, isLoading } = useQuery(
     trpc.recruiter.getCandidateWithEvidence.queryOptions({ id })
@@ -41,8 +53,53 @@ export default function CandidateDetailPage() {
     trpc.recruiter.getActionsByCandidate.queryOptions({ candidateId: id })
   );
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({
+      queryKey: trpc.recruiter.getCandidateWithEvidence.queryKey({ id }),
+    });
+    queryClient.invalidateQueries({
+      queryKey: trpc.recruiter.getCandidates.queryKey(),
+    });
+    queryClient.invalidateQueries({
+      queryKey: trpc.recruiter.getActionsByCandidate.queryKey({ candidateId: id }),
+    });
+  };
+
+  const updateStage = useMutation(
+    trpc.recruiter.updateCandidateStage.mutationOptions({
+      onMutate: ({ stage }) => {
+        // Optimistic update immediately
+        setOptimisticStage(stage);
+        setShowStagePicker(false);
+      },
+      onSuccess: () => {
+        invalidateAll();
+      },
+      onError: () => {
+        // Roll back optimistic update
+        setOptimisticStage(null);
+      },
+    })
+  );
+
   const createAction = useMutation(
     trpc.recruiter.createAction.mutationOptions({
+      onSuccess: (action) => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.recruiter.getActionsByCandidate.queryKey({ candidateId: id }),
+        });
+        // Simulate action lifecycle: queued → success after 3s
+        if (action?.id) {
+          setTimeout(() => {
+            markDone.mutate({ actionId: action.id });
+          }, 3000);
+        }
+      },
+    })
+  );
+
+  const markDone = useMutation(
+    trpc.recruiter.markFollowUpSent.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: trpc.recruiter.getActionsByCandidate.queryKey({ candidateId: id }),
@@ -50,6 +107,43 @@ export default function CandidateDetailPage() {
       },
     })
   );
+
+  const [aiError, setAiError] = useState<string | null>(null);
+  const scoreWithAI = useMutation(
+    trpc.recruiter.scoreCandidate.mutationOptions({
+      onSuccess: () => {
+        setAiError(null);
+        invalidateAll();
+      },
+      onError: (err) => {
+        setAiError(err.message);
+      },
+    })
+  );
+
+  const runAIAnalysis = () => {
+    if (!candidate) return;
+    setAiError(null);
+    // Compose a resume proxy from existing candidate data
+    const resumeParts = [
+      `Name: ${candidate.name}`,
+      candidate.school ? `Education: ${candidate.school}` : "",
+      candidate.role ? `Role: ${candidate.role}` : "",
+      strengths.length > 0 ? `Strengths: ${strengths.join(", ")}` : "",
+      gaps.length > 0 ? `Areas to develop: ${gaps.join(", ")}` : "",
+      candidate.summary ? `Summary: ${candidate.summary}` : "",
+    ].filter(Boolean).join("\n");
+
+    const jobDescription = candidate.role
+      ? `We are looking for a ${candidate.role}. Strong communication, technical depth, and team collaboration skills required.`
+      : "Software engineering role requiring strong technical skills and communication.";
+
+    scoreWithAI.mutate({
+      candidateId: id,
+      resume: resumeParts,
+      jobDescription,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -67,8 +161,8 @@ export default function CandidateDetailPage() {
     );
   }
 
+  const displayStage = optimisticStage ?? candidate.stage ?? "fair";
   const initials = getInitials(candidate.name);
-
   const strengths: string[] = (candidate.strengths as string[]) ?? [];
   const gaps: string[] = (candidate.gaps as string[]) ?? [];
   const score = candidate.fitScore ?? 0;
@@ -81,7 +175,7 @@ export default function CandidateDetailPage() {
   const codeEvidence = evidenceList.filter((e: any) => e.type === "code");
   const essayEvidence = evidenceList.filter((e: any) => e.type === "essay");
 
-  const currentStageIndex = STAGE_ORDER.indexOf((candidate.stage ?? "fair") as typeof STAGE_ORDER[number]);
+  const currentStageIndex = STAGE_ORDER.indexOf(displayStage as typeof STAGE_ORDER[number]);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
@@ -118,7 +212,6 @@ export default function CandidateDetailPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl font-bold text-foreground">{candidate.name}</h1>
-                  {/* Priority badge */}
                   <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                     <Star className="w-3 h-3" />
                     Priority
@@ -126,8 +219,7 @@ export default function CandidateDetailPage() {
                   <RiskBadge risk={(candidate.riskLevel as "low" | "medium" | "high") ?? "low"} />
                 </div>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {/* role name fallback */}
-                  Head of AWS Cloud · {candidate.school}
+                  {candidate.role ?? "Candidate"} · {candidate.school}
                 </p>
 
                 {/* Evidence tags */}
@@ -152,7 +244,6 @@ export default function CandidateDetailPage() {
                       <PenLine className="w-3 h-3" /> Essay
                     </span>
                   )}
-                  {/* Lane badge */}
                   {candidate.lane === "recruiter_now" && (
                     <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 font-medium">
                       Immediate
@@ -176,6 +267,11 @@ export default function CandidateDetailPage() {
                 }`}
               >
                 {tab.label}
+                {tab.key === "actions" && actions && actions.length > 0 && (
+                  <span className="ml-1.5 text-[10px] font-bold bg-primary/20 text-primary px-1 py-0.5 rounded-full">
+                    {actions.length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -187,10 +283,7 @@ export default function CandidateDetailPage() {
               <div className="bg-card border border-border rounded-xl shadow-sm p-5 flex flex-col items-center justify-center gap-3">
                 <div className="relative w-24 h-24">
                   <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90" role="img" aria-label={`Fit score: ${score} out of 100`}>
-                    <circle
-                      cx="50" cy="50" r="36"
-                      fill="none" stroke="#e5e7eb" strokeWidth="10"
-                    />
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#e5e7eb" strokeWidth="10" />
                     <circle
                       cx="50" cy="50" r="36"
                       fill="none" stroke="#2d6a4f" strokeWidth="10"
@@ -213,9 +306,7 @@ export default function CandidateDetailPage() {
 
               {/* Key Strengths */}
               <div className="bg-card border border-border rounded-xl shadow-sm p-5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                  Key Strengths
-                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">Key Strengths</p>
                 {strengths.length > 0 ? (
                   <ul className="space-y-2">
                     {strengths.slice(0, 4).map((s, i) => (
@@ -232,9 +323,7 @@ export default function CandidateDetailPage() {
 
               {/* Gaps */}
               <div className="bg-card border border-border rounded-xl shadow-sm p-5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                  Gaps
-                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">Gaps</p>
                 {gaps.length > 0 ? (
                   <ul className="space-y-2">
                     {gaps.slice(0, 4).map((g, i) => (
@@ -252,9 +341,7 @@ export default function CandidateDetailPage() {
               {/* Summary */}
               {candidate.summary && (
                 <div className="col-span-3 bg-card border border-border rounded-xl shadow-sm p-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                    AI Assessment
-                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">AI Assessment</p>
                   <p className="text-sm text-foreground leading-relaxed">{candidate.summary}</p>
                 </div>
               )}
@@ -263,7 +350,6 @@ export default function CandidateDetailPage() {
 
           {activeTab === "evidence" && (
             <div className="space-y-4">
-              {/* Resume Highlights */}
               {resumeEvidence.length > 0 && (
                 <div className="bg-card border border-border rounded-xl shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-3">
@@ -279,8 +365,6 @@ export default function CandidateDetailPage() {
                   </div>
                 </div>
               )}
-
-              {/* Micro-Screen Highlights */}
               {screenEvidence.length > 0 && (
                 <div className="bg-card border border-border rounded-xl shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-3">
@@ -296,8 +380,6 @@ export default function CandidateDetailPage() {
                   </div>
                 </div>
               )}
-
-              {/* Code Signals */}
               {codeEvidence.length > 0 && (
                 <div className="bg-card border border-border rounded-xl shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-3">
@@ -313,7 +395,6 @@ export default function CandidateDetailPage() {
                   </div>
                 </div>
               )}
-
               {evidenceList.length === 0 && (
                 <div className="bg-card border border-border rounded-xl shadow-sm p-8 text-center">
                   <p className="text-sm text-muted-foreground">No evidence uploaded yet</p>
@@ -325,39 +406,31 @@ export default function CandidateDetailPage() {
           {activeTab === "notes" && (
             <div className="bg-card border border-border rounded-xl shadow-sm p-5 space-y-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Strengths
-                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Strengths</p>
                 <div className="text-sm text-foreground px-3 py-2 bg-muted/50 rounded-lg border border-border">
                   {strengths.length > 0 ? strengths.join(", ") : "No strengths recorded"}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Concerns
-                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Concerns</p>
                 <div className="text-sm text-foreground px-3 py-2 bg-muted/50 rounded-lg border border-border">
                   {gaps.length > 0 ? gaps.join(", ") : "No concerns recorded"}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Next Step
-                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Next Step</p>
                 <div className="text-sm text-foreground px-3 py-2 bg-muted/50 rounded-lg border border-border">
-                  {candidate.stage === "offer"
+                  {displayStage === "offer"
                     ? "Prepare competitive offer"
-                    : candidate.stage === "interview"
+                    : displayStage === "interview"
                     ? "Schedule final round"
-                    : candidate.stage === "screen"
+                    : displayStage === "screen"
                     ? "Complete technical screen"
                     : "Register at fair booth"}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Add a Note
-                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Add a Note</p>
                 <textarea
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
@@ -387,6 +460,9 @@ export default function CandidateDetailPage() {
                       {action.notes && (
                         <p className="text-xs text-muted-foreground mt-0.5">{action.notes}</p>
                       )}
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {new Date(action.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </p>
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${
                       action.status === "success"
@@ -395,9 +471,9 @@ export default function CandidateDetailPage() {
                         ? "bg-red-50 text-red-700 border-red-200"
                         : action.status === "agent_active"
                         ? "bg-blue-50 text-blue-700 border-blue-200"
-                        : "bg-muted text-muted-foreground border-border"
+                        : "bg-amber-50 text-amber-700 border-amber-200"
                     }`}>
-                      {action.status}
+                      {action.status === "queued" ? "processing…" : action.status}
                     </span>
                   </div>
                 ))
@@ -415,61 +491,127 @@ export default function CandidateDetailPage() {
 
           {/* Actions */}
           <div className="bg-card border border-border rounded-xl shadow-sm p-4 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Actions
-            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Actions</p>
+
+            {/* AI Analysis */}
             <button
-              onClick={() =>
-                createAction.mutate({
-                  candidateId: id,
-                  actionType: "sync_to_ats",
-                })
-              }
-              className="w-full flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium py-2 px-3 rounded-lg hover:opacity-90 transition-opacity"
+              onClick={runAIAnalysis}
+              disabled={scoreWithAI.isPending}
+              className="w-full flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-all disabled:opacity-60"
+              style={{
+                background: scoreWithAI.isPending
+                  ? "#e8f5ee"
+                  : "linear-gradient(135deg, #0e3d27 0%, #1f6b43 100%)",
+                color: scoreWithAI.isPending ? "#0e3d27" : "#fff",
+              }}
+            >
+              {scoreWithAI.isPending ? (
+                <span className="w-3.5 h-3.5 border-2 border-[#0e3d27] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              {scoreWithAI.isPending ? "Analyzing…" : "Run AI Analysis"}
+            </button>
+
+            {aiError && (
+              <p className="text-[10px] text-red-600 leading-snug px-1">
+                {aiError.includes("LLM service") || aiError.includes("fetch")
+                  ? "LLM service offline — run: cd apps/llm && npm run dev"
+                  : aiError}
+              </p>
+            )}
+
+            <button
+              onClick={() => createAction.mutate({ candidateId: id, actionType: "sync_to_ats" })}
+              disabled={createAction.isPending}
+              className="w-full flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium py-2 px-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <Zap className="w-3.5 h-3.5" />
               Sync to ATS
             </button>
             <button
-              onClick={() =>
-                createAction.mutate({
-                  candidateId: id,
-                  actionType: "schedule_interview",
-                })
-              }
-              className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border"
+              onClick={() => createAction.mutate({ candidateId: id, actionType: "schedule_interview" })}
+              disabled={createAction.isPending}
+              className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border disabled:opacity-60"
             >
               <Calendar className="w-3.5 h-3.5" />
               Schedule Interview
             </button>
             <button
-              onClick={() =>
-                createAction.mutate({
-                  candidateId: id,
-                  actionType: "follow_up_email",
-                })
-              }
-              className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border"
+              onClick={() => createAction.mutate({ candidateId: id, actionType: "follow_up_email" })}
+              disabled={createAction.isPending}
+              className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border disabled:opacity-60"
             >
               <Send className="w-3.5 h-3.5" />
               Draft Follow-up
             </button>
-            <button className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border">
-              <RefreshCw className="w-3.5 h-3.5" />
-              Move Stage
-            </button>
+
+            {/* Move Stage — dropdown picker */}
+            <div className="relative">
+              <button
+                onClick={() => setShowStagePicker((v) => !v)}
+                disabled={updateStage.isPending}
+                className="w-full flex items-center justify-between gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border disabled:opacity-60"
+              >
+                <span className="flex items-center gap-2">
+                  <RefreshCw className={`w-3.5 h-3.5 ${updateStage.isPending ? "animate-spin" : ""}`} />
+                  Move Stage
+                </span>
+                <span className="text-[10px] text-muted-foreground font-normal flex items-center gap-0.5">
+                  {STAGE_LABELS[displayStage] ?? displayStage}
+                  <ChevronDown className="w-3 h-3" />
+                </span>
+              </button>
+
+              {showStagePicker && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                  {STAGE_ORDER.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => updateStage.mutate({ id, stage: s })}
+                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-muted transition-colors ${
+                        s === displayStage ? "bg-primary/5 text-primary font-semibold" : "text-foreground"
+                      }`}
+                    >
+                      {STAGE_LABELS[s]}
+                      {s === displayStage && (
+                        <span className="text-[9px] text-primary font-bold">CURRENT</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Approval Required */}
           <div className="bg-card border border-border rounded-xl shadow-sm p-4 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Approval Required
-            </p>
-            <button className="w-full flex items-center gap-2 bg-red-50 text-red-700 border border-red-200 text-sm font-medium py-2 px-3 rounded-lg hover:bg-red-100 transition-colors">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Approval Required</p>
+            <button
+              onClick={() =>
+                createAction.mutate({
+                  candidateId: id,
+                  actionType: "send_rejection",
+                  notes: "Rejection email queued for approval",
+                })
+              }
+              disabled={createAction.isPending}
+              className="w-full flex items-center gap-2 bg-red-50 text-red-700 border border-red-200 text-sm font-medium py-2 px-3 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-60"
+            >
               <AlertTriangle className="w-3.5 h-3.5" />
               Send Rejection
             </button>
-            <button className="w-full flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm font-medium py-2 px-3 rounded-lg hover:bg-emerald-100 transition-colors">
+            <button
+              onClick={() =>
+                createAction.mutate({
+                  candidateId: id,
+                  actionType: "send_offer_email",
+                  notes: "Offer email queued for approval",
+                })
+              }
+              disabled={createAction.isPending}
+              className="w-full flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm font-medium py-2 px-3 rounded-lg hover:bg-emerald-100 transition-colors disabled:opacity-60"
+            >
               <CheckCircle2 className="w-3.5 h-3.5" />
               Send Offer Email
             </button>
@@ -477,9 +619,7 @@ export default function CandidateDetailPage() {
 
           {/* Pipeline */}
           <div className="bg-card border border-border rounded-xl shadow-sm p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              Pipeline
-            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">Pipeline</p>
             <div className="flex gap-1 mb-2">
               {STAGE_ORDER.map((s, i) => (
                 <div
@@ -490,7 +630,9 @@ export default function CandidateDetailPage() {
                 />
               ))}
             </div>
-            <p className="text-xs text-muted-foreground capitalize">{candidate.stage}</p>
+            <p className="text-xs text-muted-foreground capitalize">
+              {STAGE_LABELS[displayStage] ?? displayStage}
+            </p>
           </div>
 
           {/* Identity & Risk Scan */}
@@ -500,7 +642,7 @@ export default function CandidateDetailPage() {
               <p className="text-sm font-semibold text-foreground">Identity & Risk Scan</p>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Search public profiles, detect red flags and surface inconsistencies versus resume and fair interactions. Only publicly available information is used.
+              Search public profiles, detect red flags and surface inconsistencies versus resume and fair interactions.
             </p>
             <button className="mt-3 w-full text-xs font-medium py-1.5 px-3 rounded-lg border border-border bg-muted text-foreground hover:bg-muted/70 transition-colors">
               Run Web Scan
@@ -508,6 +650,14 @@ export default function CandidateDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Close stage picker on outside click */}
+      {showStagePicker && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowStagePicker(false)}
+        />
+      )}
     </div>
   );
 }

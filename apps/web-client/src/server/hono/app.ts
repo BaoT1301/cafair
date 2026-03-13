@@ -14,7 +14,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { HTTPException } from "hono/http-exception";
 
-import { createTRPCContext } from "@/server/init";
+import { createHonoTRPCContext } from "@/server/init";
 import { appRouter } from "@/server/routers/app";
 import { clerk, requireAuth, type AuthEnv } from "./middleware";
 import usersRoutes from "./routes/users";
@@ -74,7 +74,7 @@ app.use(
   trpcServer({
     endpoint: "/api/trpc",
     router: appRouter,
-    createContext: async () => createTRPCContext(),
+    createContext: async () => createHonoTRPCContext(),
   }),
 );
 
