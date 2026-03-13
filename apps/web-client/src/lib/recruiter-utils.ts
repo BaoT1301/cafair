@@ -38,3 +38,6 @@ export const STAGE_ORDER = [
   "day1",
 ] as const;
 export type Stage = (typeof STAGE_ORDER)[number];
+
+/** Primary brand gradient — use this everywhere instead of inline style strings */
+export const PRIMARY_GRADIENT = "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)";

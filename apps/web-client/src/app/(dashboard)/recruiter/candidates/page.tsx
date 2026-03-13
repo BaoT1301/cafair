@@ -79,7 +79,7 @@ export default function CandidatesPage() {
 
   // ─── Filter state ────────────────────────────────────
   const [roleFilter, setRoleFilter] = useState("all");
-  const [riskFilter, setRiskFilter] = useState("all");
+  const [riskFilter, setRiskFilter] = useState(searchParams.get("risk") ?? "all");
 
   // ─── Search from URL ─────────────────────────────────
   const search = searchParams.get("search") ?? "";
@@ -155,6 +155,19 @@ export default function CandidatesPage() {
 
   return (
     <div className="max-w-[1200px]">
+      {/* Risk filter banner — shown when arriving from "Flagged issues" */}
+      {riskFilter === "high" && (
+        <div className="flex items-center gap-2 mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+          <span className="text-xs font-semibold text-red-700">Showing high-risk candidates only</span>
+          <button
+            onClick={() => setRiskFilter("all")}
+            className="ml-auto text-xs text-red-500 hover:text-red-700 font-medium"
+          >
+            Clear filter ×
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>

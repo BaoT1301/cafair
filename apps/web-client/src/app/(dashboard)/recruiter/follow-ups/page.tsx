@@ -157,31 +157,7 @@ export default function FollowUpsPage() {
         <div className="w-[300px] shrink-0">
           <div className="bg-card border border-border rounded-xl p-5 sticky top-20 shadow-sm">
             {selected ? (
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Follow-up Email Preview</h3>
-                <div className="space-y-3 text-xs text-muted-foreground">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">To</p>
-                    <p className="text-foreground">{selected.email || `${selected.name.toLowerCase().replace(/\s/g, ".")}@email.com`}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Subject</p>
-                    <p className="text-foreground">Following up — {selected.role} at Tech Talent Expo</p>
-                  </div>
-                  <div className="border-t border-border pt-3">
-                    <p className="text-foreground leading-relaxed">
-                      Hi {selected.name.split(" ")[0]},<br /><br />
-                      Thank you for stopping by our booth at Tech Talent Expo 2026. We were impressed by your background
-                      {selected.strengths && selected.strengths.length > 0 && `, especially your experience in ${selected.strengths[0]}`}.
-                      <br /><br />
-                      We&apos;d love to continue the conversation about the {selected.role} position. Would you be available for a follow-up call this week?
-                      <br /><br />
-                      Best regards,<br />
-                      The Recruiting Team
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <EmailPreview candidate={selected} />
             ) : (
               <div className="flex flex-col items-center justify-center py-10 text-center">
                 <Mail className="w-10 h-10 text-muted-foreground/30 mb-3" />
@@ -189,6 +165,89 @@ export default function FollowUpsPage() {
               </div>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Stage-aware Email Preview ───────────────────────────
+type CandidateRow = {
+  name: string;
+  email?: string | null;
+  role?: string | null;
+  stage?: string | null;
+  strengths?: string[] | null;
+};
+
+function getEmailTemplate(c: CandidateRow): { subject: string; body: string; stageBadge: string; badgeColor: string } {
+  const first = c.name.split(" ")[0];
+  const role = c.role ?? "the role";
+  const strength = c.strengths?.[0];
+  const strengthLine = strength ? `, particularly your experience in ${strength}` : "";
+
+  switch (c.stage) {
+    case "screen":
+      return {
+        stageBadge: "Shortlisted",
+        badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+        subject: `Next Steps — ${role} Screening`,
+        body: `Hi ${first},\n\nThank you for visiting our booth at Tech Talent Expo 2026. We were impressed by your background${strengthLine} and would love to move forward.\n\nWe'd like to schedule a quick 20-minute screening call to learn more about your experience. Please reply with your availability this week.\n\nBest regards,\nThe Recruiting Team`,
+      };
+    case "interview":
+      return {
+        stageBadge: "Interview",
+        badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
+        subject: `Interview Invitation — ${role}`,
+        body: `Hi ${first},\n\nFollowing your screening, we'd like to invite you to a technical interview for the ${role} position.\n\nThe interview will be 45–60 minutes covering technical skills${strengthLine ? ` (including ${strength})` : ""} and a short system design exercise. We'll send calendar details once we confirm timing.\n\nPlease reply to confirm your interest.\n\nBest regards,\nThe Recruiting Team`,
+      };
+    case "offer":
+      return {
+        stageBadge: "Offer",
+        badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        subject: `Offer Letter — ${role} at [Company]`,
+        body: `Hi ${first},\n\nCongratulations! We are thrilled to extend an official offer for the ${role} position.\n\nPlease find your formal offer letter attached. The offer includes compensation details, start date, and onboarding information. We are excited about the value you will bring${strengthLine ? `, especially your expertise in ${strength}` : ""}.\n\nKindly review and sign by the deadline noted in the letter. Feel free to reach out with any questions.\n\nWelcome to the team!\nThe Recruiting Team`,
+      };
+    case "day1":
+      return {
+        stageBadge: "Day 1",
+        badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
+        subject: `Welcome — Your First Day Details`,
+        body: `Hi ${first},\n\nWe are so excited to welcome you as our new ${role}! Here are your first-day details:\n\n📍 Office address and parking info will be sent separately\n🕘 Start time: 9:00 AM\n💻 Your equipment will be ready at your desk\n\nPlease bring a valid ID for building access. Your onboarding buddy will meet you at reception.\n\nSee you soon!\nThe Recruiting Team`,
+      };
+    default: // fair
+      return {
+        stageBadge: "In Queue",
+        badgeColor: "bg-gray-50 text-gray-600 border-gray-200",
+        subject: `Following up — ${role} at Tech Talent Expo`,
+        body: `Hi ${first},\n\nThank you for stopping by our booth at Tech Talent Expo 2026. We were impressed by your background${strengthLine}.\n\nWe'd love to continue the conversation about the ${role} position. Would you be available for a quick follow-up call this week?\n\nBest regards,\nThe Recruiting Team`,
+      };
+  }
+}
+
+function EmailPreview({ candidate }: { candidate: CandidateRow }) {
+  const email = candidate.email ?? `${candidate.name.toLowerCase().replace(/\s/g, ".")}@email.com`;
+  const { subject, body, stageBadge, badgeColor } = getEmailTemplate(candidate);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-foreground">Follow-up Email Preview</h3>
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeColor}`}>
+          {stageBadge}
+        </span>
+      </div>
+      <div className="space-y-3 text-xs text-muted-foreground">
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">To</p>
+          <p className="text-foreground">{email}</p>
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Subject</p>
+          <p className="text-foreground">{subject}</p>
+        </div>
+        <div className="border-t border-border pt-3">
+          <p className="text-foreground leading-relaxed whitespace-pre-line">{body}</p>
         </div>
       </div>
     </div>

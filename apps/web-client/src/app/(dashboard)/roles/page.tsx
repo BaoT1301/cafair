@@ -226,16 +226,26 @@ const MOCK_COUNTS: Record<string, { applied: number; screened: number; reviewing
 export default function RoleManagementPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data: roles }      = useQuery(trpc.recruiter.getRoles.queryOptions());
-  const { data: candidates } = useQuery(trpc.recruiter.getCandidates.queryOptions());
+  const { data: roles, isLoading: rolesLoading } = useQuery(trpc.recruiter.getRoles.queryOptions());
+  const { data: candidates }                      = useQuery(trpc.recruiter.getCandidates.queryOptions());
+
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const deleteMutation = useMutation(
     trpc.recruiter.deleteRole.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.recruiter.getRoles.queryOptions().queryKey });
       },
+      onError: (_err, vars) => {
+        setDeletedIds(prev => { const next = new Set(prev); next.delete(vars.id); return next; });
+      },
     }),
   );
+
+  function handleDelete(id: string) {
+    setDeletedIds(prev => new Set(prev).add(id));
+    setTimeout(() => deleteMutation.mutate({ id }), 350);
+  }
 
   const [search,       setSearch]       = useState("");
   const [deptFilter,   setDeptFilter]   = useState("all");
@@ -340,20 +350,49 @@ export default function RoleManagementPage() {
         </div>
 
         {/* Role cards */}
+        {rolesLoading ? (
+          <div className="grid grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-[16px] p-[25px] animate-pulse space-y-4">
+                <div className="h-5 bg-gray-100 rounded-lg w-2/3" />
+                <div className="h-3 bg-gray-100 rounded w-1/2" />
+                <div className="h-2 bg-gray-100 rounded-full w-full mt-4" />
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div className="h-8 bg-gray-100 rounded-lg" />
+                  <div className="h-8 bg-gray-100 rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="grid grid-cols-3 gap-6">
-          {displayRoles.map((role) => (
-            <RoleCard
-              key={role.id}
-              role={role}
-              candidateCounts={
-                isMock
-                  ? (MOCK_COUNTS[role.id] ?? { applied: 0, screened: 0, reviewing: 0, interview: 0 })
-                  : (countsByRole[role.id]  ?? { applied: 0, screened: 0, reviewing: 0, interview: 0 })
-              }
-              onDelete={isMock ? undefined : (id) => deleteMutation.mutate({ id })}
-            />
-          ))}
+          {displayRoles.map((role) => {
+            const isDeleting = deletedIds.has(role.id);
+            return (
+              <div
+                key={role.id}
+                style={{
+                  opacity: isDeleting ? 0 : 1,
+                  transform: isDeleting ? "scale(0.93) translateY(-8px)" : "scale(1) translateY(0)",
+                  transition: "opacity 350ms ease, transform 350ms cubic-bezier(0.4,0,0.2,1)",
+                  pointerEvents: isDeleting ? "none" : undefined,
+                  willChange: "opacity, transform",
+                }}
+              >
+                <RoleCard
+                  role={role}
+                  candidateCounts={
+                    isMock
+                      ? (MOCK_COUNTS[role.id] ?? { applied: 0, screened: 0, reviewing: 0, interview: 0 })
+                      : (countsByRole[role.id]  ?? { applied: 0, screened: 0, reviewing: 0, interview: 0 })
+                  }
+                  onDelete={isMock ? undefined : handleDelete}
+                />
+              </div>
+            );
+          })}
         </div>
+        )}
 
       </div>
     </div>

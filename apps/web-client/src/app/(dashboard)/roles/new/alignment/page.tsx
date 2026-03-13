@@ -1,7 +1,7 @@
 "use client";
 
 import { useTRPC } from "@/trpc/client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import {
@@ -49,8 +49,9 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 
 /* ─── Page ───────────────────────────────────────────────────── */
 export default function NewRoleAlignmentPage() {
-  const trpc   = useTRPC();
-  const router = useRouter();
+  const trpc        = useTRPC();
+  const router      = useRouter();
+  const queryClient = useQueryClient();
 
   /* ── Form state ── */
   const [title,          setTitle]          = useState("");
@@ -73,6 +74,7 @@ export default function NewRoleAlignmentPage() {
     trpc.recruiter.createRole.mutationOptions({
       onSuccess: () => {
         if (rounds[0]) localStorage.setItem("shortlist-limit", String(rounds[0].count));
+        queryClient.invalidateQueries({ queryKey: trpc.recruiter.getRoles.queryOptions().queryKey });
         router.push("/roles");
       },
     }),
