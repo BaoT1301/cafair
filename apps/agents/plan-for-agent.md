@@ -16,7 +16,7 @@
   to improve router, Cmd+A function to process prompt first, combine with screenshot where needed
   endpoint ready will be in agents/End-Point-BRock-Stalker-AI.md
 
-- [ ] Combine Bedrock + Nova Act  
+- [x] Combine Bedrock + Nova Act  in a loop
   Improve speed, automation, and decision accuracy by pairing reasoning with actions.
   
 - [x] Investigate OpenClaw integration possibility (10%)
