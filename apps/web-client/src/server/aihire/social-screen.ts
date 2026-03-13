@@ -5,18 +5,20 @@
 // the agent service.
 
 // Dynamic import so Vercel build succeeds without the agents package
-type RunSocialScreenService = typeof import("../../../../agents/src/services/socialScreenService").runSocialScreenService;
-let _runSocialScreenService: RunSocialScreenService | null = null;
-async function loadSocialScreenAgent(): Promise<RunSocialScreenService> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFn = (...args: any[]) => Promise<any>;
+let _runSocialScreenService: AnyFn | null = null;
+async function loadSocialScreenAgent(): Promise<AnyFn> {
   if (!_runSocialScreenService) {
     try {
-      const mod = await import("../../../../agents/src/services/socialScreenService");
+      const path = ["../../../../agents/src/services/socialScreenService"].join("");
+      const mod = await import(/* webpackIgnore: true */ path);
       _runSocialScreenService = mod.runSocialScreenService;
     } catch {
       throw new Error("Social screen agent package not available in this environment");
     }
   }
-  return _runSocialScreenService;
+  return _runSocialScreenService!;
 }
 
 export type SocialScreenServiceResult = Record<string, unknown>;

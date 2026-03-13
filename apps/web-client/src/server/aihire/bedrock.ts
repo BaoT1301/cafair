@@ -12,18 +12,21 @@
 //   { ok: false, error, details? }
 
 // Dynamic import so Vercel build succeeds without the agents package
-type RunBedrockCandidateScreen = typeof import("../../../../agents/src/agents/bedrockScreen").runBedrockCandidateScreen;
-let _runBedrockCandidateScreen: RunBedrockCandidateScreen | null = null;
-async function loadBedrockAgent(): Promise<RunBedrockCandidateScreen> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFn = (...args: any[]) => Promise<any>;
+let _runBedrockCandidateScreen: AnyFn | null = null;
+async function loadBedrockAgent(): Promise<AnyFn> {
   if (!_runBedrockCandidateScreen) {
     try {
-      const mod = await import("../../../../agents/src/agents/bedrockScreen");
+      // Use Function constructor to prevent static analysis by bundlers
+      const path = ["../../../../agents/src/agents/bedrockScreen"].join("");
+      const mod = await import(/* webpackIgnore: true */ path);
       _runBedrockCandidateScreen = mod.runBedrockCandidateScreen;
     } catch {
       throw new Error("Bedrock agent package not available in this environment");
     }
   }
-  return _runBedrockCandidateScreen;
+  return _runBedrockCandidateScreen!;
 }
 
 export interface GetBedrockScreenInput {
