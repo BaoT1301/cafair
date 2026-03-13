@@ -18,14 +18,14 @@ import {
   Pause,
   Sparkles,
   Send,
-  RotateCcw,
-  Users,
   TrendingUp,
   AlertCircle,
   ChevronRight,
   X,
   Check,
   Loader2,
+  RotateCcw,
+  Users,
 } from "lucide-react";
 import { getInitials } from "@/lib/recruiter-utils";
 
@@ -1006,10 +1006,10 @@ export default function PostCallReviewPage() {
       </div>
 
       {/* ── Main layout ── */}
-      <div className="flex gap-5 items-start">
+      <div className="flex gap-5" style={{ height: "calc(100vh - 330px)", minHeight: 400 }}>
 
         {/* ── Left: Candidate list ── */}
-        <div className="flex-1 min-w-0 bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+        <div className="flex-1 min-w-0 bg-card border border-border rounded-xl overflow-hidden shadow-sm flex flex-col">
 
           {/* Filter bar */}
           <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-muted/10">
@@ -1073,11 +1073,11 @@ export default function PostCallReviewPage() {
 
           {/* Rows */}
           {filtered.length === 0 ? (
-            <div className="py-16 text-center">
+            <div className="py-16 text-center flex-1">
               <p className="text-sm text-muted-foreground">No candidates match your filters</p>
             </div>
           ) : (
-            <div>
+            <div className="flex-1 overflow-y-auto">
               {filtered.map((c, listIdx) => {
                 const origIdx = candidates ? candidates.findIndex((x) => x.id === c.id) : listIdx;
                 return (
@@ -1111,8 +1111,8 @@ export default function PostCallReviewPage() {
         </div>
 
         {/* ── Right: Review panel ── */}
-        <div className="w-[300px] shrink-0 sticky top-4">
-          <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm" style={{ minHeight: 480 }}>
+        <div className="w-[300px] shrink-0 flex flex-col">
+          <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm flex flex-col flex-1">
             {selected ? (
               <ReviewPanel
                 candidate={selected}
@@ -1127,7 +1127,7 @@ export default function PostCallReviewPage() {
                 onScheduleOpen={() => setScheduleFor(selected.id)}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 px-6 text-center h-full" style={{ minHeight: 480 }}>
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center flex-1">
                 <div className="w-14 h-14 rounded-full bg-[#e8f5ee] flex items-center justify-center mb-4">
                   <Mail className="w-7 h-7 text-[#1f6b43]" />
                 </div>

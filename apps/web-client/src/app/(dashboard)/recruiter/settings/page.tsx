@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Link2, FileText, Scale, Shield,
   CheckCircle2, AlertTriangle, Zap,
@@ -60,17 +61,39 @@ function Toast({ message }: { message: string }) {
 
 // ─── Connect Tab ──────────────────────────────────────────
 function ConnectTab() {
-  const [integrationStates, setIntegrationStates] = useState(
-    Object.fromEntries(integrations.map(i => [i.id, i.status === "connected"]))
-  );
+  const searchParams = useSearchParams();
+  const gcalParam = searchParams.get("gcal"); // "connected" | "error" | null
+
+  const [integrationStates, setIntegrationStates] = useState(() => {
+    const base = Object.fromEntries(integrations.map(i => [i.id, i.status === "connected"]));
+    // If redirected back with gcal=connected, reflect that
+    if (gcalParam === "connected") base.gcal = true;
+    return base;
+  });
   const [permissionStates, setPermissionStates] = useState(
     Object.fromEntries(agentPermissions.map(p => [p.id, p.enabled]))
   );
   const [toast, setToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (gcalParam === "connected") showToast("Google Calendar connected!");
+    if (gcalParam === "error") showToast("Google Calendar connection failed — try again.");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gcalParam]);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleIntegrationToggle = (id: string, isConnected: boolean) => {
+    if (id === "gcal" && !isConnected) {
+      // Redirect to OAuth flow
+      window.location.href = "/api/google-calendar";
+      return;
+    }
+    setIntegrationStates(p => ({ ...p, [id]: !p[id] }));
+    showToast("Connection updated");
   };
 
   return (
@@ -101,13 +124,15 @@ function ConnectTab() {
                           Connected · Synced {integration.syncedAt}
                         </p>
                       ) : (
-                        <p className="text-xs text-[#9ca3af]">Not connected</p>
+                        <p className="text-xs text-[#9ca3af]">
+                          {integration.id === "gcal" ? "Click to connect via Google OAuth" : "Not connected"}
+                        </p>
                       )}
                     </div>
                   </div>
                   <Toggle
                     enabled={isConnected}
-                    onChange={() => { setIntegrationStates(p => ({ ...p, [integration.id]: !p[integration.id] })); showToast("Connection updated"); }}
+                    onChange={() => handleIntegrationToggle(integration.id, isConnected)}
                     label={`Toggle ${integration.label}`}
                   />
                 </div>
@@ -162,15 +187,26 @@ function ConnectTab() {
 }
 
 // ─── Roles Tab ────────────────────────────────────────────
+const INITIAL_ROLES = [
+  { id: 1, title: "SWE Intern",               department: "Engineering",     target: 3, status: "active" },
+  { id: 2, title: "ML Engineer",              department: "AI Research",     target: 2, status: "active" },
+  { id: 3, title: "Data Analyst Intern",      department: "Data",            target: 2, status: "active" },
+  { id: 4, title: "Product Design Intern",    department: "Design",          target: 1, status: "active" },
+  { id: 5, title: "DevOps Intern",            department: "Infrastructure",  target: 1, status: "paused" },
+  { id: 6, title: "Robotics Engineer Intern", department: "Hardware",        target: 2, status: "active" },
+];
+
 function RolesTab() {
-  const roles = [
-    { title: "SWE Intern",               department: "Engineering",     target: 3, status: "active" },
-    { title: "ML Engineer",              department: "AI Research",     target: 2, status: "active" },
-    { title: "Data Analyst Intern",      department: "Data",            target: 2, status: "active" },
-    { title: "Product Design Intern",    department: "Design",          target: 1, status: "active" },
-    { title: "DevOps Intern",            department: "Infrastructure",  target: 1, status: "paused" },
-    { title: "Robotics Engineer Intern", department: "Hardware",        target: 2, status: "active" },
-  ];
+  const [roles, setRoles] = useState(INITIAL_ROLES);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  function handleDelete(id: number) {
+    setDeletingId(id);
+    setTimeout(() => {
+      setRoles(prev => prev.filter(r => r.id !== id));
+      setDeletingId(null);
+    }, 400);
+  }
 
   return (
     <div>
@@ -183,25 +219,53 @@ function RolesTab() {
           + Add Role
         </button>
       </div>
-      <div className="space-y-2.5">
-        {roles.map((role, i) => (
-          <div key={i} className="flex items-center justify-between bg-card border border-[#e2e8e5] rounded-xl px-4 py-3.5 shadow-sm">
-            <div>
-              <p className="text-sm font-medium text-[#111827]">{role.title}</p>
-              <p className="text-xs text-[#6b7280]">{role.department} · {role.target} target hires</p>
-            </div>
-            <span
-              className="text-xs font-semibold px-2.5 py-0.5 rounded-full border"
-              style={
-                role.status === "active"
-                  ? { background: "#e8f5ee", color: "#0e3d27", borderColor: "#c5e4d1" }
-                  : { background: "#f3f4f6", color: "#6b7280", borderColor: "#e5e7eb" }
-              }
+      <div className="flex flex-col gap-2.5">
+        {roles.map((role) => {
+          const isDeleting = deletingId === role.id;
+          return (
+            <div
+              key={role.id}
+              style={{
+                maxHeight: isDeleting ? 0 : 80,
+                opacity: isDeleting ? 0 : 1,
+                transform: isDeleting ? "translateX(32px) scale(0.97)" : "translateX(0) scale(1)",
+                overflow: "hidden",
+                transition: "max-height 400ms cubic-bezier(0.4,0,0.2,1), opacity 300ms ease, transform 300ms cubic-bezier(0.4,0,0.2,1)",
+                marginBottom: isDeleting ? -10 : 0,
+                willChange: "opacity, transform, max-height",
+              }}
             >
-              {role.status}
-            </span>
-          </div>
-        ))}
+              <div className="flex items-center justify-between bg-card border border-[#e2e8e5] rounded-xl px-4 py-3.5 shadow-sm group">
+                <div>
+                  <p className="text-sm font-medium text-[#111827]">{role.title}</p>
+                  <p className="text-xs text-[#6b7280]">{role.department} · {role.target} target hires</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-xs font-semibold px-2.5 py-0.5 rounded-full border"
+                    style={
+                      role.status === "active"
+                        ? { background: "#e8f5ee", color: "#0e3d27", borderColor: "#c5e4d1" }
+                        : { background: "#f3f4f6", color: "#6b7280", borderColor: "#e5e7eb" }
+                    }
+                  >
+                    {role.status}
+                  </span>
+                  <button
+                    onClick={() => handleDelete(role.id)}
+                    disabled={deletingId !== null}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[#9ca3af] hover:text-red-500 p-1 rounded-md hover:bg-red-50 disabled:pointer-events-none"
+                    title="Delete role"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -210,11 +274,11 @@ function RolesTab() {
 // ─── Rubric Tab ───────────────────────────────────────────
 function RubricTab() {
   const criteria = [
-    { label: "Technical Skills",      weight: 40 },
-    { label: "Communication",         weight: 20 },
-    { label: "Culture Fit",           weight: 20 },
-    { label: "Leadership Potential",  weight: 10 },
-    { label: "Research / Projects",   weight: 10 },
+    { id: "technical",    label: "Technical Skills",      weight: 40 },
+    { id: "comm",         label: "Communication",         weight: 20 },
+    { id: "culture",      label: "Culture Fit",           weight: 20 },
+    { id: "leadership",   label: "Leadership Potential",  weight: 10 },
+    { id: "research",     label: "Research / Projects",   weight: 10 },
   ];
 
   return (
@@ -224,8 +288,8 @@ function RubricTab() {
         <span className="text-xs text-[#6b7280]">Weights must total 100%</span>
       </div>
       <div className="space-y-3">
-        {criteria.map((c, i) => (
-          <div key={i} className="bg-card border border-[#e2e8e5] rounded-xl px-4 py-3.5 shadow-sm">
+        {criteria.map((c) => (
+          <div key={c.id} className="bg-card border border-[#e2e8e5] rounded-xl px-4 py-3.5 shadow-sm">
             <div className="flex items-center justify-between mb-2.5">
               <p className="text-sm font-medium text-[#111827]">{c.label}</p>
               <span className="text-sm font-bold" style={{ color: "#0e3d27" }}>{c.weight}%</span>
@@ -246,10 +310,10 @@ function RubricTab() {
 // ─── Permissions Tab ──────────────────────────────────────
 function PermissionsTab() {
   const team = [
-    { name: "Jamie R.", role: "Senior Recruiter", access: "admin"  },
-    { name: "Sam T.",   role: "Recruiter",        access: "editor" },
-    { name: "Alex K.",  role: "Hiring Manager",   access: "viewer" },
-    { name: "Priya M.", role: "HR Lead",          access: "admin"  },
+    { id: "jamie",  name: "Jamie R.", role: "Senior Recruiter", access: "admin"  },
+    { id: "sam",    name: "Sam T.",   role: "Recruiter",        access: "editor" },
+    { id: "alex",   name: "Alex K.",  role: "Hiring Manager",   access: "viewer" },
+    { id: "priya",  name: "Priya M.", role: "HR Lead",          access: "admin"  },
   ];
 
   const accessStyle = (access: string) => {
@@ -270,8 +334,8 @@ function PermissionsTab() {
         </button>
       </div>
       <div className="space-y-2.5">
-        {team.map((member, i) => (
-          <div key={i} className="flex items-center justify-between bg-card border border-[#e2e8e5] rounded-xl px-4 py-3.5 shadow-sm">
+        {team.map((member) => (
+          <div key={member.id} className="flex items-center justify-between bg-card border border-[#e2e8e5] rounded-xl px-4 py-3.5 shadow-sm">
             <div className="flex items-center gap-3">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
@@ -339,7 +403,7 @@ export default function SettingsPage() {
 
       {/* Tab content */}
       <div>
-        {activeTab === "connect"     && <ConnectTab />}
+        {activeTab === "connect"     && <Suspense fallback={null}><ConnectTab /></Suspense>}
         {activeTab === "roles"       && <RolesTab />}
         {activeTab === "rubric"      && <RubricTab />}
         {activeTab === "permissions" && <PermissionsTab />}

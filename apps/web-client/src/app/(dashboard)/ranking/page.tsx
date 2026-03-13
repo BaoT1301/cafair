@@ -1,9 +1,9 @@
 "use client";
 
 import { useTRPC } from "@/trpc/client";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState, useMemo, type ComponentType } from "react";
+import { useState, useMemo, useEffect, type ComponentType } from "react";
 import {
   Search,
   ChevronDown,
@@ -18,6 +18,9 @@ import {
   X,
   Loader2,
   Link as LinkIcon,
+  ArrowRight,
+  Check,
+  Cpu,
 } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────── */
@@ -30,8 +33,7 @@ type Candidate = {
   fitScore: number | null;
   stage: string | null;
   riskLevel: string | null;
-  priority: boolean | null;
-  resumeHighlights: unknown;
+  strengths: string[] | null;
   avatarUrl: string | null;
 };
 
@@ -45,8 +47,8 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 function getSkills(c: Candidate): string[] {
-  const raw = c.resumeHighlights;
-  if (Array.isArray(raw)) return (raw as string[]).slice(0, 3);
+  const raw = c.strengths;
+  if (Array.isArray(raw)) return raw.slice(0, 3);
   return [];
 }
 
@@ -154,7 +156,7 @@ function RankedRow({
   rank: number;
   candidate: Candidate;
   isShortlisted: boolean;
-  onToggle: (id: string) => void;
+  onToggle: (candidate: Candidate) => void;
   onClick: (id: string) => void;
 }) {
   const score = candidate.fitScore ?? 0;
@@ -173,7 +175,7 @@ function RankedRow({
       <input
         type="checkbox"
         checked={isShortlisted}
-        onChange={() => onToggle(candidate.id)}
+        onChange={() => onToggle(candidate)}
         onClick={(e) => e.stopPropagation()}
         className="w-4 h-4 rounded border-border accent-[#0e3d27] shrink-0 cursor-pointer"
       />
@@ -190,7 +192,7 @@ function RankedRow({
           <span className="text-sm font-semibold text-foreground">{candidate.name}</span>
           {isShortlisted && (
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#e8f5ee] text-[#0e3d27] border border-[#c5e4d1] leading-none">
-              SHORTLISTED
+              SELECTED
             </span>
           )}
           {hasRisk && (
@@ -248,8 +250,8 @@ function TierSection({
   accentColor: string;
   candidates: Candidate[];
   startRank: number;
-  shortlisted: Set<string>;
-  onToggle: (id: string) => void;
+  shortlisted: Map<string, Candidate>;
+  onToggle: (candidate: Candidate) => void;
   onRowClick: (id: string) => void;
 }) {
   if (candidates.length === 0) return null;
@@ -358,6 +360,61 @@ function FinalistCard({
   );
 }
 
+/* ─── Shared processing step constants ──────────────────────── */
+const FINALIZE_STEPS = [
+  { label: "Locking in candidate selections", detail: "Reviewing fit scores and tier rankings" },
+  { label: "Running final fit analysis", detail: "Cross-referencing against role requirements" },
+  { label: "Syncing records to ATS", detail: "Queuing pipeline updates for each candidate" },
+  { label: "Finalizing shortlist", detail: "Preparing follow-up email drafts" },
+];
+
+const MOVE_STEPS = [
+  { label: "Verifying interview readiness", detail: "Checking screening scores and risk flags" },
+  { label: "Updating pipeline stages", detail: "Moving candidates to interview queue" },
+  { label: "Generating prep notes", detail: "Tailoring interview materials per role" },
+  { label: "Notifying recruiting team", detail: "Queuing calendar availability requests" },
+];
+
+function ProcessingStepList({
+  steps,
+  activeStep,
+}: {
+  steps: { label: string; detail: string }[];
+  activeStep: number; // 0..steps.length-1; steps < activeStep are done
+}) {
+  return (
+    <div className="space-y-3">
+      {steps.map((s, i) => {
+        const done = i < activeStep;
+        const active = i === activeStep;
+        return (
+          <div key={i} className="flex items-start gap-3">
+            <div className="mt-0.5 shrink-0">
+              {done ? (
+                <div className="w-5 h-5 rounded-full bg-[#0e3d27] flex items-center justify-center">
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+              ) : active ? (
+                <div className="w-5 h-5 rounded-full border-2 border-[#1f6b43] flex items-center justify-center">
+                  <Loader2 className="w-3 h-3 text-[#1f6b43] animate-spin" />
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-full border-2 border-[#d1d5db]" />
+              )}
+            </div>
+            <div className={`transition-opacity duration-300 ${active ? "opacity-100" : done ? "opacity-70" : "opacity-30"}`}>
+              <p className={`text-[13px] font-semibold ${active ? "text-[#0e3d27]" : "text-[#374151]"}`}>{s.label}</p>
+              {active && (
+                <p className="text-[11px] text-[#6b7280] mt-0.5 animate-pulse">{s.detail}</p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ─── Finalize Modal ─────────────────────────────────────────── */
 function FinalizeModal({
   candidates,
@@ -373,14 +430,28 @@ function FinalizeModal({
   isSuccess: boolean;
 }) {
   const sorted = [...candidates].sort((a, b) => (b.fitScore ?? 0) - (a.fitScore ?? 0));
+  // -1 = idle (confirm view), 0..2 = auto-advancing, 3 = last step (spins until isSuccess)
+  const [step, setStep] = useState(-1);
+
+  // Auto-advance steps 0→1→2 every 450ms; step 3 waits for isSuccess
+  useEffect(() => {
+    if (step < 0 || step >= FINALIZE_STEPS.length - 1) return;
+    const t = setTimeout(() => setStep((s) => s + 1), 450);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  const handleConfirm = () => {
+    setStep(0);
+    onConfirm();
+  };
 
   if (isSuccess) {
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+        style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
       >
-        <div className="bg-white rounded-[20px] shadow-2xl w-[440px] max-w-full flex flex-col overflow-hidden">
+        <div className="bg-white rounded-[20px] shadow-2xl w-[440px] max-w-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           <div className="px-8 py-10 flex flex-col items-center text-center gap-4">
             <div className="w-14 h-14 rounded-full bg-[#e8f5ee] flex items-center justify-center">
               <CheckCircle2 className="w-7 h-7 text-[#1f6b43]" />
@@ -404,6 +475,43 @@ function FinalizeModal({
     );
   }
 
+  // Processing view
+  if (step >= 0) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
+      >
+        <div className="bg-white rounded-[20px] shadow-2xl w-[440px] max-w-full overflow-hidden">
+          <div className="px-6 pt-6 pb-2 flex items-center gap-3 border-b border-[#e2e8e5]">
+            <div className="w-8 h-8 rounded-lg bg-[#e8f5ee] flex items-center justify-center shrink-0">
+              <Cpu className="w-4 h-4 text-[#0e3d27]" />
+            </div>
+            <div>
+              <h2 className="text-[15px] font-bold text-[#111827]">Processing Shortlist</h2>
+              <p className="text-[11px] text-[#6b7280]">Nova AI is analyzing and syncing candidate data</p>
+            </div>
+          </div>
+          <div className="px-6 py-5">
+            <ProcessingStepList steps={FINALIZE_STEPS} activeStep={step} />
+          </div>
+          <div className="px-6 pb-5">
+            <div className="h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#0e3d27] to-[#52b788] rounded-full transition-all duration-500"
+                style={{ width: `${Math.round(((step + 1) / FINALIZE_STEPS.length) * 100)}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-[#9ca3af] mt-1.5 text-right">
+              {Math.round(((step + 1) / FINALIZE_STEPS.length) * 100)}% complete
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default confirm view
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -415,7 +523,7 @@ function FinalizeModal({
           <div>
             <h2 className="text-[18px] font-bold text-[#111827] leading-7">Finalize Shortlist</h2>
             <p className="text-[13px] text-[#6b7280] mt-0.5">
-              {sorted.length} candidate{sorted.length !== 1 ? "s" : ""} will be synced to ATS and advanced to interview stage.
+              {sorted.length} candidate{sorted.length !== 1 ? "s" : ""} will be synced to ATS and moved to shortlisted.
             </p>
           </div>
           <button onClick={onClose} className="text-[#9ca3af] hover:text-[#111827] transition-colors mt-1">
@@ -447,10 +555,10 @@ function FinalizeModal({
               "ATS sync action queued for each candidate",
               "Candidates marked as shortlisted in your pipeline",
               "Follow-up emails drafted and ready to send",
-            ].map((step, i) => (
+            ].map((s, i) => (
               <div key={i} className="flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#1f6b43] shrink-0" />
-                <span className="text-[12px] text-[#4b5563]">{step}</span>
+                <span className="text-[12px] text-[#4b5563]">{s}</span>
               </div>
             ))}
           </div>
@@ -464,14 +572,98 @@ function FinalizeModal({
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={isPending}
             className="h-10 px-5 rounded-[12px] text-white text-[14px] font-medium flex items-center gap-2 disabled:opacity-50 transition-opacity"
             style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
           >
-            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
             Confirm &amp; Sync to ATS
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Move to Interview Processing Overlay ───────────────────── */
+function MoveProcessingOverlay({
+  count,
+  onDone,
+  isDone,
+}: {
+  count: number;
+  onDone: () => void;
+  isDone: boolean;
+}) {
+  const [step, setStep] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Auto-advance steps 0→1→2 every 500ms; step 3 waits for isDone
+  useEffect(() => {
+    if (step >= MOVE_STEPS.length - 1) return;
+    const t = setTimeout(() => setStep((s) => s + 1), 500);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  // When mutations complete and animation is on last step, show success briefly then close
+  useEffect(() => {
+    if (isDone && step >= MOVE_STEPS.length - 1 && !showSuccess) {
+      setShowSuccess(true);
+      setTimeout(onDone, 1200);
+    }
+  }, [isDone, step, showSuccess, onDone]);
+
+  if (showSuccess) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
+      >
+        <div className="bg-white rounded-[20px] shadow-2xl w-[400px] max-w-full overflow-hidden">
+          <div className="px-8 py-10 flex flex-col items-center text-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-[#e8f5ee] flex items-center justify-center">
+              <CheckCircle2 className="w-7 h-7 text-[#1f6b43]" />
+            </div>
+            <div>
+              <h2 className="text-[17px] font-bold text-[#111827]">Moved to Interview Ready</h2>
+              <p className="text-[13px] text-[#6b7280] mt-1">
+                {count} candidate{count !== 1 ? "s" : ""} are now in the interview pipeline.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
+    >
+      <div className="bg-white rounded-[20px] shadow-2xl w-[420px] max-w-full overflow-hidden">
+        <div className="px-6 pt-6 pb-2 flex items-center gap-3 border-b border-[#e2e8e5]">
+          <div className="w-8 h-8 rounded-lg bg-[#ede9fe] flex items-center justify-center shrink-0">
+            <Cpu className="w-4 h-4 text-[#6d28d9]" />
+          </div>
+          <div>
+            <h2 className="text-[15px] font-bold text-[#111827]">Preparing Interview Pipeline</h2>
+            <p className="text-[11px] text-[#6b7280]">Moving {count} candidate{count !== 1 ? "s" : ""} to interview ready</p>
+          </div>
+        </div>
+        <div className="px-6 py-5">
+          <ProcessingStepList steps={MOVE_STEPS} activeStep={step} />
+        </div>
+        <div className="px-6 pb-5">
+          <div className="h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#6d28d9] to-[#a78bfa] rounded-full transition-all duration-500"
+              style={{ width: `${Math.round(((step + 1) / MOVE_STEPS.length) * 100)}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-[#9ca3af] mt-1.5 text-right">
+            {Math.round(((step + 1) / MOVE_STEPS.length) * 100)}% complete
+          </p>
         </div>
       </div>
     </div>
@@ -484,6 +676,8 @@ function ShortlistPanel({
   topScore,
   onRemove,
   onFinalize,
+  onMoveToInterview,
+  isMoveToInterviewPending,
   onExport,
   onShare,
   shareSuccess,
@@ -492,6 +686,8 @@ function ShortlistPanel({
   topScore: number;
   onRemove: (id: string) => void;
   onFinalize: () => void;
+  onMoveToInterview: () => void;
+  isMoveToInterviewPending: boolean;
   onExport: () => void;
   onShare: () => void;
   shareSuccess: boolean;
@@ -515,7 +711,7 @@ function ShortlistPanel({
       <div className="px-4 py-3.5 border-b border-border">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">
-            Your Shortlist
+            Review Selection
           </span>
           <div className="flex items-center gap-1.5">
             {sorted.length > 0 && (
@@ -528,8 +724,8 @@ function ShortlistPanel({
         </div>
         <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
           {sorted.length === 0
-            ? "Check candidates from the ranked list to build your shortlist"
-            : `${sorted.length} finalist${sorted.length !== 1 ? "s" : ""} · score delta shown vs #1`}
+            ? "Check candidates from the ranked list to stage them for review"
+            : `${sorted.length} selected · finalize or move to interview when ready`}
         </p>
       </div>
 
@@ -581,6 +777,17 @@ function ShortlistPanel({
       {/* Actions */}
       <div className="px-4 py-3.5 border-t border-border flex flex-col gap-2">
         <button
+          onClick={onMoveToInterview}
+          disabled={sorted.length === 0 || isMoveToInterviewPending}
+          className="w-full h-10 rounded-[14px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed border"
+          style={{ borderColor: "#1f6b43", color: "#0e3d27", background: "#e8f5ee" }}
+        >
+          {isMoveToInterviewPending
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <ArrowRight className="w-3.5 h-3.5" />}
+          Move to Interview Ready
+        </button>
+        <button
           onClick={onFinalize}
           disabled={sorted.length === 0}
           className="w-full h-10 rounded-[14px] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
@@ -622,6 +829,7 @@ type View = (typeof VIEWS)[number];
 export default function RankingPage() {
   const trpc = useTRPC();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data: rawCandidates, isLoading, isError } = useQuery(
     trpc.recruiter.getCandidates.queryOptions()
@@ -631,19 +839,31 @@ export default function RankingPage() {
   const [view, setView]           = useState<View>("All Candidates");
   const [filterRole, setFilterRole] = useState("all");
   const [search, setSearch]         = useState("");
-  const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
+  const [shortlisted, setShortlisted] = useState<Map<string, Candidate>>(new Map());
   const [finalizeOpen, setFinalizeOpen]     = useState(false);
   const [finalizeSuccess, setFinalizeSuccess] = useState(false);
   const [shareSuccess, setShareSuccess]       = useState(false);
+  const [moveProcessing, setMoveProcessing]   = useState(false);
+  const [moveDone, setMoveDone]               = useState(false);
+  const [moveCount, setMoveCount]             = useState(0);
 
   const createAction = useMutation(trpc.recruiter.createAction.mutationOptions());
+  const updateStage  = useMutation(trpc.recruiter.updateCandidateStage.mutationOptions());
 
   const candidates = rawCandidates as Candidate[] | undefined;
 
-  const toggleShortlist = (id: string) => {
+  const toggleShortlist = (candidate: Candidate) => {
     setShortlisted((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      const next = new Map(prev);
+      next.has(candidate.id) ? next.delete(candidate.id) : next.set(candidate.id, candidate);
+      return next;
+    });
+  };
+
+  const removeFromShortlist = (id: string) => {
+    setShortlisted((prev) => {
+      const next = new Map(prev);
+      next.delete(id);
       return next;
     });
   };
@@ -665,7 +885,7 @@ export default function RankingPage() {
     if (filterRole !== "all")
       list = list.filter((c) => c.roleId === filterRole);
     if (view === "Shortlisted")
-      list = list.filter((c) => shortlisted.has(c.id));
+      list = list.filter((c) => c.stage === "screen");
     else if (view === "Interview Ready")
       list = list.filter((c) => c.stage === "interview" || c.stage === "offer");
     return list;
@@ -676,8 +896,8 @@ export default function RankingPage() {
   const tier3 = ranked.filter((c) => (c.fitScore ?? 0) < 70);
 
   const shortlistedCandidates = useMemo(
-    () => (candidates ?? []).filter((c) => shortlisted.has(c.id)),
-    [candidates, shortlisted]
+    () => Array.from(shortlisted.values()),
+    [shortlisted]
   );
 
   const topScore = allSorted[0]?.fitScore ?? 0;
@@ -731,12 +951,17 @@ export default function RankingPage() {
   /* ── Finalize ────────────────────────────────────────────────── */
   const handleFinalizeConfirm = async () => {
     for (const candidate of shortlistedCandidates) {
+      // Move to screen stage (shortlisted) in DB
+      await updateStage.mutateAsync({ id: candidate.id, stage: "screen" });
+      // Queue ATS sync action
       await createAction.mutateAsync({
         candidateId: candidate.id,
         actionType: "sync_to_ats",
         notes: `Finalized shortlist — candidate ranked #${shortlistedCandidates.indexOf(candidate) + 1}`,
       });
     }
+    await queryClient.invalidateQueries(trpc.recruiter.getCandidates.queryOptions());
+    setShortlisted(new Map());
     setFinalizeSuccess(true);
   };
 
@@ -744,9 +969,27 @@ export default function RankingPage() {
     const wasSuccess = finalizeSuccess;
     setFinalizeOpen(false);
     setFinalizeSuccess(false);
-    // After a successful finalize, switch to Shortlisted view so the
-    // recruiter immediately sees the finalized candidates in the ranked list.
     if (wasSuccess) setView("Shortlisted");
+  };
+
+  /* ── Move to Interview Ready ─────────────────────────────────── */
+  const handleMoveToInterview = async () => {
+    setMoveCount(shortlistedCandidates.length);
+    setMoveProcessing(true);
+    setMoveDone(false);
+    for (const candidate of shortlistedCandidates) {
+      await updateStage.mutateAsync({ id: candidate.id, stage: "interview" });
+    }
+    await queryClient.invalidateQueries(trpc.recruiter.getCandidates.queryOptions());
+    setShortlisted(new Map());
+    setMoveDone(true);
+    // overlay handles closing + view switch via onDone
+  };
+
+  const handleMoveProcessingDone = () => {
+    setMoveProcessing(false);
+    setMoveDone(false);
+    setView("Interview Ready");
   };
 
   if (isError) {
@@ -775,7 +1018,7 @@ export default function RankingPage() {
             Ranking &amp; Shortlist
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            AI-ranked candidates by fit score · check to build your shortlist
+            AI-ranked candidates by fit score · check candidates, finalize to shortlist, then move to interview
           </p>
         </div>
         <div className="flex items-center gap-2 pt-1">
@@ -812,9 +1055,9 @@ export default function RankingPage() {
         />
         <StatPill
           icon={Star}
-          label="Shortlisted"
+          label="Checked"
           value={shortlisted.size}
-          sub={`of ${allSorted.length}`}
+          sub="ready to finalize"
           highlight={shortlisted.size > 0}
         />
         <StatPill
@@ -961,8 +1204,10 @@ export default function RankingPage() {
         <ShortlistPanel
           shortlistedCandidates={shortlistedCandidates}
           topScore={topScore}
-          onRemove={toggleShortlist}
+          onRemove={removeFromShortlist}
           onFinalize={() => setFinalizeOpen(true)}
+          onMoveToInterview={handleMoveToInterview}
+          isMoveToInterviewPending={updateStage.isPending}
           onExport={handleExportShortlist}
           onShare={handleShare}
           shareSuccess={shareSuccess}
@@ -977,6 +1222,15 @@ export default function RankingPage() {
           onConfirm={handleFinalizeConfirm}
           isPending={createAction.isPending}
           isSuccess={finalizeSuccess}
+        />
+      )}
+
+      {/* ── Move to Interview Processing Overlay ── */}
+      {moveProcessing && (
+        <MoveProcessingOverlay
+          count={moveCount}
+          isDone={moveDone}
+          onDone={handleMoveProcessingDone}
         />
       )}
     </div>

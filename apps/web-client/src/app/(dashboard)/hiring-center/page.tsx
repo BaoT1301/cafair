@@ -21,14 +21,13 @@ import {
   Mail,
   AlertTriangle,
   CheckCircle2,
-  Upload,
   Database,
   Sparkles,
   MessageSquare,
   UserCheck,
   Zap,
-  RefreshCw,
   Filter,
+  Upload,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
@@ -253,6 +252,15 @@ const MOCK_ACTIVITY = [
 
 /* ─── Calendar Popover ───────────────────────────────────── */
 
+type GCalEvent = { id: string; title: string; start: string; end: string; htmlLink: string };
+
+function formatEventTime(iso: string) {
+  if (!iso) return "";
+  // all-day events are YYYY-MM-DD, not ISO
+  if (iso.length === 10) return "All day";
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
 function CalendarPopover({ onClose }: { onClose: () => void }) {
   const now = new Date();
   const year = now.getFullYear();
@@ -261,27 +269,40 @@ function CalendarPopover({ onClose }: { onClose: () => void }) {
 
   const [viewMonth, setViewMonth] = useState(month);
   const [viewYear, setViewYear] = useState(year);
+  const [selectedDay, setSelectedDay] = useState(today);
+
+  // Google Calendar state
+  const [gcalEvents, setGcalEvents] = useState<GCalEvent[]>([]);
+  const [gcalConnected, setGcalConnected] = useState<boolean | null>(null); // null = loading
+  const [eventsLoading, setEventsLoading] = useState(false);
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const monthName = new Date(viewYear, viewMonth, 1).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
+    month: "long", year: "numeric",
   });
 
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let i = 1; i <= daysInMonth; i++) cells.push(i);
 
-  const TODAY_EVENTS = [
-    { time: "9:00 AM", title: "Interview — Alex Kumar", color: "#1f6b43" },
-    { time: "11:30 AM", title: "Team standup", color: "#6b7280" },
-    { time: "2:00 PM", title: "Interview — Jordan Davis", color: "#1f6b43" },
-    { time: "4:00 PM", title: "Offer review — Sarah Chen", color: "#92400e" },
-  ];
+  const isSelected = (d: number) => d === selectedDay && viewMonth === month && viewYear === year;
+  const isToday = (d: number) => d === today && viewMonth === month && viewYear === year;
 
-  const isToday = (d: number) =>
-    d === today && viewMonth === month && viewYear === year;
+  // Fetch events whenever selected date changes
+  useEffect(() => {
+    const date = new Date(viewYear, viewMonth, selectedDay);
+    const dateStr = date.toISOString().split("T")[0];
+    setEventsLoading(true);
+    fetch(`/api/google-calendar/events?date=${dateStr}`)
+      .then(r => r.json())
+      .then((data: { connected: boolean; events: GCalEvent[] }) => {
+        setGcalConnected(data.connected);
+        setGcalEvents(data.events ?? []);
+      })
+      .catch(() => setGcalConnected(false))
+      .finally(() => setEventsLoading(false));
+  }, [selectedDay, viewMonth, viewYear]);
 
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -292,10 +313,13 @@ function CalendarPopover({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
+  const selectedLabel = new Date(viewYear, viewMonth, selectedDay)
+    .toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
   return (
     <div
       ref={ref}
-      className="absolute top-12 right-0 z-50 w-80 bg-white rounded-2xl border border-[#e2e8e5] p-4 flex flex-col gap-4"
+      className="absolute top-12 right-0 z-50 w-80 bg-white rounded-2xl border border-[#e2e8e5] p-4 flex flex-col gap-4 shadow-lg"
     >
       {/* Month nav */}
       <div className="flex items-center justify-between">
@@ -320,21 +344,21 @@ function CalendarPopover({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {/* Day headers */}
+      {/* Day grid */}
       <div className="grid grid-cols-7 gap-0">
         {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-          <div key={d} className="text-center text-[10px] font-semibold text-[#9ca3af] py-1">
-            {d}
-          </div>
+          <div key={d} className="text-center text-[10px] font-semibold text-[#9ca3af] py-1">{d}</div>
         ))}
         {cells.map((day, i) => (
           <div
             key={i}
-            className={`flex items-center justify-center h-8 rounded-full text-[12px] cursor-pointer transition-colors ${
+            onClick={() => day && setSelectedDay(day)}
+            className={`flex items-center justify-center h-8 rounded-full text-[12px] transition-colors ${
               day === null ? "" :
-              isToday(day)
-                ? "bg-[#1f6b43] text-white font-bold"
-                : "text-[#374151] hover:bg-[#f0faf4]"
+              isSelected(day) && isToday(day) ? "bg-[#0e3d27] text-white font-bold cursor-pointer" :
+              isSelected(day) ? "bg-[#e8f5ee] text-[#0e3d27] font-semibold cursor-pointer" :
+              isToday(day)    ? "bg-[#1f6b43] text-white font-bold cursor-pointer" :
+              "text-[#374151] hover:bg-[#f0faf4] cursor-pointer"
             }`}
           >
             {day ?? ""}
@@ -342,20 +366,54 @@ function CalendarPopover({ onClose }: { onClose: () => void }) {
         ))}
       </div>
 
-      {/* Today's schedule */}
+      {/* Events for selected day */}
       <div className="border-t border-[#f0f0f0] pt-3">
-        <p className="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-2">
-          Today&apos;s Schedule
-        </p>
-        <div className="flex flex-col gap-2">
-          {TODAY_EVENTS.map((ev, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: ev.color }} />
-              <span className="text-[11px] text-[#6b7280] w-14 shrink-0">{ev.time}</span>
-              <span className="text-[12px] text-[#111827] truncate">{ev.title}</span>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">
+            {selectedLabel}
+          </p>
+          {gcalConnected === false && (
+            <a
+              href="/api/google-calendar"
+              className="text-[10px] font-semibold text-[#0e3d27] hover:underline"
+            >
+              Connect Google Calendar
+            </a>
+          )}
         </div>
+
+        {eventsLoading ? (
+          <div className="flex items-center gap-2 py-2">
+            <div className="w-3.5 h-3.5 rounded-full border-2 border-[#0e3d27] border-t-transparent animate-spin" />
+            <span className="text-[11px] text-[#9ca3af]">Loading events…</span>
+          </div>
+        ) : gcalConnected && gcalEvents.length > 0 ? (
+          <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+            {gcalEvents.map((ev) => (
+              <a
+                key={ev.id}
+                href={ev.htmlLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:bg-[#f7f7f7] rounded-lg px-1 py-0.5 transition-colors group"
+              >
+                <div className="w-1.5 h-1.5 rounded-full shrink-0 bg-[#1f6b43]" />
+                <span className="text-[11px] text-[#6b7280] w-14 shrink-0 tabular-nums">
+                  {formatEventTime(ev.start)}
+                </span>
+                <span className="text-[12px] text-[#111827] truncate group-hover:text-[#0e3d27]">
+                  {ev.title}
+                </span>
+              </a>
+            ))}
+          </div>
+        ) : gcalConnected && gcalEvents.length === 0 ? (
+          <p className="text-[12px] text-[#9ca3af]">No events on this day.</p>
+        ) : (
+          <p className="text-[11px] text-[#9ca3af] leading-relaxed">
+            Connect Google Calendar to see your real schedule here.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -1637,7 +1695,7 @@ export default function HiringCenterPage() {
             label="Flagged issues"
             value={flagged}
             subtitle="Need attention"
-            onClick={() => router.push("/recruiter/candidates")}
+            onClick={() => router.push("/recruiter/candidates?risk=high")}
           />
           <StatCard
             label="Offer drafted"

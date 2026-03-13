@@ -3,7 +3,8 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
-import { useState } from "react";
+import { SocialScreenModal } from "@/components/recruiter/SocialScreenModal";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -22,6 +23,9 @@ import {
   StopCircle,
   ThumbsDown,
   ThumbsUp,
+  Check,
+  Cpu,
+  Globe,
 } from "lucide-react";
 
 /* ─── Stage ordering ─────────────────────────────────────────── */
@@ -35,6 +39,173 @@ const STAGE_LABELS: Record<StageKey, string> = {
   offer: "Offer",
   day1: "Day 1",
 };
+
+/* ─── Stage transition step definitions ──────────────────── */
+const STAGE_MOVE_STEPS: Record<string, { label: string; detail: string }[]> = {
+  screen: [
+    { label: "Evaluating fit score", detail: "Comparing against role benchmarks" },
+    { label: "Flagging risk indicators", detail: "Scanning resume for inconsistencies" },
+    { label: "Generating screening checklist", detail: "Tailoring questions to candidate strengths" },
+    { label: "Moving to Phone Screen", detail: "Pipeline stage updated" },
+  ],
+  interview: [
+    { label: "Reviewing screening results", detail: "Validating communication and depth scores" },
+    { label: "Checking calendar availability", detail: "Matching open interviewer windows" },
+    { label: "Generating interview prep notes", detail: "Highlighting skills to probe" },
+    { label: "Moving to Interview", detail: "Pipeline stage updated" },
+  ],
+  offer: [
+    { label: "Analyzing interview performance", detail: "Reviewing panel feedback signals" },
+    { label: "Benchmarking compensation", detail: "Aligning offer to role tier" },
+    { label: "Preparing offer package", detail: "Drafting offer letter and terms" },
+    { label: "Moving to Offer", detail: "Pipeline stage updated" },
+  ],
+  day1: [
+    { label: "Confirming offer acceptance", detail: "Validating signed documents" },
+    { label: "Provisioning system access", detail: "Setting up accounts and tools" },
+    { label: "Notifying onboarding team", detail: "Sending first-day logistics" },
+    { label: "Welcome aboard!", detail: "Day 1 preparations complete" },
+  ],
+  fair: [
+    { label: "Resetting pipeline stage", detail: "Moving back to active queue" },
+    { label: "Restoring recruiter visibility", detail: "Re-adding to fair board" },
+    { label: "Stage reset", detail: "Candidate returned to queue" },
+  ],
+};
+
+const STAGE_DISPLAY: Record<string, string> = {
+  fair: "In Queue", screen: "Phone Screen", interview: "Interview", offer: "Offer", day1: "Day 1",
+};
+
+function ProcessingStepList({
+  steps,
+  activeStep,
+  accent,
+}: {
+  steps: { label: string; detail: string }[];
+  activeStep: number;
+  accent: string;
+}) {
+  return (
+    <div className="space-y-3">
+      {steps.map((s, i) => {
+        const done = i < activeStep;
+        const active = i === activeStep;
+        return (
+          <div key={i} className="flex items-start gap-3">
+            <div className="mt-0.5 shrink-0">
+              {done ? (
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: accent }}>
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+              ) : active ? (
+                <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{ borderColor: accent }}>
+                  <Loader2 className="w-3 h-3 animate-spin" style={{ color: accent }} />
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-full border-2 border-[#d1d5db]" />
+              )}
+            </div>
+            <div className={`transition-opacity duration-300 ${active ? "opacity-100" : done ? "opacity-60" : "opacity-25"}`}>
+              <p className="text-[13px] font-semibold text-[#111827]">{s.label}</p>
+              {active && <p className="text-[11px] text-[#6b7280] mt-0.5 animate-pulse">{s.detail}</p>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StageTransitionOverlay({
+  targetStage,
+  isDone,
+  onClose,
+}: {
+  targetStage: string;
+  isDone: boolean;
+  onClose: () => void;
+}) {
+  const steps = STAGE_MOVE_STEPS[targetStage] ?? STAGE_MOVE_STEPS.fair;
+  const [step, setStep] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(() => {
+    if (step >= steps.length - 1) return;
+    const t = setTimeout(() => setStep((s) => s + 1), 520);
+    return () => clearTimeout(t);
+  }, [step, steps.length]);
+
+  useEffect(() => {
+    if (isDone && step >= steps.length - 1 && !showSuccess) {
+      setShowSuccess(true);
+      setTimeout(onClose, 900);
+    }
+  }, [isDone, step, steps.length, showSuccess, onClose]);
+
+  const isOffer = targetStage === "offer";
+  const isDay1  = targetStage === "day1";
+  const accent  = isOffer ? "#b45309" : isDay1 ? "#0d6873" : "#0e3d27";
+  const bgLight = isOffer ? "#fffbeb" : isDay1 ? "#f0fdfa" : "#f0fdf4";
+
+  if (showSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="bg-white rounded-[20px] shadow-2xl w-[380px] max-w-full overflow-hidden">
+          <div className="px-8 py-10 flex flex-col items-center text-center gap-3">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: bgLight }}>
+              <CheckCircle2 className="w-7 h-7" style={{ color: accent }} />
+            </div>
+            <div>
+              <h2 className="text-[17px] font-bold text-[#111827]">
+                Moved to {STAGE_DISPLAY[targetStage] ?? targetStage}
+              </h2>
+              <p className="text-[13px] text-[#6b7280] mt-1">Pipeline stage updated successfully.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+      <div className="bg-white rounded-[20px] shadow-2xl w-[420px] max-w-full overflow-hidden">
+        <div className="px-6 pt-6 pb-3 flex items-center gap-3 border-b border-[#e2e8e5]">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: bgLight }}>
+            <Cpu className="w-4 h-4" style={{ color: accent }} />
+          </div>
+          <div>
+            <h2 className="text-[15px] font-bold text-[#111827]">Nova AI Processing</h2>
+            <p className="text-[11px] text-[#6b7280]">
+              Analyzing candidate data for{" "}
+              <span className="font-semibold" style={{ color: accent }}>
+                {STAGE_DISPLAY[targetStage] ?? targetStage}
+              </span>
+            </p>
+          </div>
+        </div>
+        <div className="px-6 py-5">
+          <ProcessingStepList steps={steps} activeStep={step} accent={accent} />
+        </div>
+        <div className="px-6 pb-5">
+          <div className="h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${Math.round(((step + 1) / steps.length) * 100)}%`,
+                background: `linear-gradient(90deg, ${accent}, ${accent}99)`,
+              }}
+            />
+          </div>
+          <p className="text-[10px] text-[#9ca3af] mt-1.5 text-right">
+            {Math.round(((step + 1) / steps.length) * 100)}% complete
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function nextStage(current: string): StageKey | null {
   const idx = STAGE_ORDER.indexOf(current as StageKey);
@@ -107,9 +278,11 @@ function CandidateHeader({
   id,
   onSchedule,
   onAddNote,
-  updateStage,
+  onMoveStage,
+  isStagePending,
   moveStageOpen,
   setMoveStageOpen,
+  onSocialScreen,
 }: {
   candidate: any;
   dbStage: string;
@@ -117,15 +290,17 @@ function CandidateHeader({
   id: string;
   onSchedule: () => void;
   onAddNote: () => void;
-  updateStage: any;
+  onMoveStage: (stage: StageKey) => void;
+  isStagePending: boolean;
   moveStageOpen: boolean;
   setMoveStageOpen: (v: boolean) => void;
+  onSocialScreen: () => void;
 }) {
   const router = useRouter();
 
   const handleMoveStage = (s: StageKey) => {
-    updateStage.mutate({ id, stage: s });
     setMoveStageOpen(false);
+    onMoveStage(s);
   };
 
   const handleStartInterview = () => {
@@ -205,6 +380,20 @@ function CandidateHeader({
           </button>
         )}
 
+        {/* Social Screen — only relevant before/during screening phase */}
+        {(dbStage === "fair" || dbStage === "screen") && (
+          <button
+            onClick={onSocialScreen}
+            className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[14px] border text-[14px] font-normal transition-colors"
+            style={{ borderColor: "#0e3d27", color: "#0e3d27", background: "#e8f5ee" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#d2eadc"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#e8f5ee"; }}
+          >
+            <Globe className="w-4 h-4" />
+            Social Screen
+          </button>
+        )}
+
         <button
           onClick={onSchedule}
           className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[14px] border border-[#e2e8e5] bg-white text-[14px] font-normal text-[#111827] hover:bg-[#f7f7f7] transition-colors"
@@ -224,11 +413,11 @@ function CandidateHeader({
         <div className="relative">
           <button
             onClick={() => setMoveStageOpen(!moveStageOpen)}
-            disabled={updateStage.isPending}
+            disabled={isStagePending}
             className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[14px] text-white text-[14px] font-normal disabled:opacity-60 transition-opacity"
             style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
           >
-            {updateStage.isPending ? (
+            {isStagePending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : null}
             Move Stage
@@ -436,15 +625,25 @@ function OverrideModal({
 }
 
 /* ─── Schedule Interview Modal ───────────────────────────────── */
+type SchedulePayload = {
+  date: string;
+  time: string;
+  type: string;
+  notes: string;
+  candidateEmail?: string | null;
+};
+
 function ScheduleModal({
   candidateName,
+  candidateEmail,
   onClose,
   onConfirm,
   isPending,
 }: {
   candidateName: string;
+  candidateEmail?: string | null;
   onClose: () => void;
-  onConfirm: (notes: string) => void;
+  onConfirm: (payload: SchedulePayload) => void;
   isPending: boolean;
 }) {
   const today = new Date().toISOString().split("T")[0];
@@ -452,7 +651,34 @@ function ScheduleModal({
   const [time, setTime]   = useState("10:00");
   const [type, setType]   = useState("Phone Screen");
   const [notes, setNotes] = useState("");
+  const [gcalStatus, setGcalStatus] = useState<"idle" | "creating" | "done" | "no_auth">("idle");
   const canSubmit = date && time;
+
+  const handleConfirm = async () => {
+    if (!canSubmit) return;
+    // Fire Google Calendar event creation (best-effort — doesn't block the action)
+    setGcalStatus("creating");
+    try {
+      const startDT = new Date(`${date}T${time}:00`);
+      const endDT   = new Date(startDT.getTime() + 60 * 60 * 1000); // +1 hour
+      const res = await fetch("/api/google-calendar/create-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${type} — ${candidateName}`,
+          description: notes || undefined,
+          startDateTime: startDT.toISOString(),
+          endDateTime:   endDT.toISOString(),
+          attendeeEmails: candidateEmail ? [candidateEmail] : [],
+        }),
+      });
+      const data = await res.json();
+      setGcalStatus(data.error === "not_connected" ? "no_auth" : "done");
+    } catch {
+      setGcalStatus("no_auth");
+    }
+    onConfirm({ date, time, type, notes, candidateEmail });
+  };
 
   return (
     <div
@@ -464,20 +690,21 @@ function ScheduleModal({
         <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-[#e2e8e5]">
           <div>
             <h2 className="text-[18px] font-bold text-[#111827] leading-7">Schedule Interview</h2>
-            <p className="text-[13px] text-[#6b7280] mt-0.5">with <span className="font-semibold text-[#111827]">{candidateName}</span></p>
+            <p className="text-[13px] text-[#6b7280] mt-0.5">
+              with <span className="font-semibold text-[#111827]">{candidateName}</span>
+            </p>
           </div>
           <button onClick={onClose} className="text-[#9ca3af] hover:text-[#111827] transition-colors mt-1">
             <X className="w-5 h-5" />
           </button>
         </div>
+
         <div className="px-6 py-5 flex flex-col gap-4">
           <div className="flex gap-3">
             <div className="flex-1 flex flex-col gap-1.5">
               <label className="text-[12px] font-semibold text-[#4b5563]">Date</label>
               <input
-                type="date"
-                value={date}
-                min={today}
+                type="date" value={date} min={today}
                 onChange={(e) => setDate(e.target.value)}
                 className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43]"
               />
@@ -485,18 +712,17 @@ function ScheduleModal({
             <div className="flex-1 flex flex-col gap-1.5">
               <label className="text-[12px] font-semibold text-[#4b5563]">Time</label>
               <input
-                type="time"
-                value={time}
+                type="time" value={time}
                 onChange={(e) => setTime(e.target.value)}
                 className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43]"
               />
             </div>
           </div>
+
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-semibold text-[#4b5563]">Interview Type</label>
             <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
+              value={type} onChange={(e) => setType(e.target.value)}
               className="h-10 px-3 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#1f6b43] bg-white"
             >
               <option>Phone Screen</option>
@@ -505,17 +731,34 @@ function ScheduleModal({
               <option>Culture Fit</option>
             </select>
           </div>
+
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-semibold text-[#4b5563]">Notes (optional)</label>
             <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              value={notes} onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any notes for the interviewer..."
               rows={3}
               className="px-3 py-2 rounded-[10px] border border-[#e2e8e5] text-[14px] text-[#111827] placeholder:text-[#9ca3af] focus:outline-none focus:ring-1 focus:ring-[#1f6b43] resize-none"
             />
           </div>
+
+          {/* Google Calendar status */}
+          {gcalStatus === "no_auth" && (
+            <div className="flex items-center justify-between rounded-[10px] bg-amber-50 border border-amber-200 px-3 py-2">
+              <p className="text-[12px] text-amber-700">Google Calendar not connected.</p>
+              <a href="/api/google-calendar" className="text-[12px] font-semibold text-amber-700 hover:underline">
+                Connect →
+              </a>
+            </div>
+          )}
+          {gcalStatus === "done" && (
+            <div className="flex items-center gap-2 rounded-[10px] bg-[#e8f5ee] border border-[#bbf7d0] px-3 py-2">
+              <Check className="w-3.5 h-3.5 text-[#1f6b43]" />
+              <p className="text-[12px] text-[#1f6b43] font-medium">Added to Google Calendar</p>
+            </div>
+          )}
         </div>
+
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e2e8e5] bg-[#f7f7f7]">
           <button
             onClick={onClose}
@@ -524,12 +767,12 @@ function ScheduleModal({
             Cancel
           </button>
           <button
-            onClick={() => canSubmit && onConfirm(`${type} on ${date} at ${time}${notes ? " — " + notes : ""}`)}
-            disabled={!canSubmit || isPending}
+            onClick={handleConfirm}
+            disabled={!canSubmit || isPending || gcalStatus === "creating"}
             className="h-10 px-5 rounded-[12px] text-white text-[14px] font-medium flex items-center gap-2 disabled:opacity-40 transition-opacity"
             style={{ background: "linear-gradient(171deg, #0e3d27 16.3%, #1f6b43 71.8%)" }}
           >
-            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            {(isPending || gcalStatus === "creating") && <Loader2 className="w-4 h-4 animate-spin" />}
             Confirm Schedule
           </button>
         </div>
@@ -735,10 +978,14 @@ function DebateSummary({
   const strengths: string[] = (candidate.strengths as string[]) ?? [];
   const gaps: string[] = (candidate.gaps as string[]) ?? [];
 
-  const recommendedNext =
-    score >= 85 ? (dbStage === "interview" ? "Offer" : "Technical Interview")
-    : score >= 70 ? (dbStage === "interview" ? "Hold" : "Phone Screen")
-    : "Pass";
+  const recommendedNext = (() => {
+    if (dbStage === "offer")     return "Confirm Start Date";
+    if (dbStage === "day1")      return "Onboarding";
+    if (dbStage === "interview") return score >= 70 ? "Extend Offer" : "Do Not Advance";
+    if (dbStage === "screen")    return score >= 85 ? "Technical Interview" : score >= 70 ? "Phone Screen" : "Pass";
+    // fair
+    return score >= 70 ? "Phone Screen" : "Pass";
+  })();
 
   const reasons = strengths.length >= 2
     ? [
@@ -842,7 +1089,13 @@ function DebateSummary({
           <p className="text-[14px] font-normal text-[#e8f5ee] text-center leading-[22.75px] flex-1">
             {isRejected
               ? `Recruiter override: "${override!.reason}"`
-              : (candidate.summary ?? "Technical skills are excellent match. Address compensation and employment gap concerns in next interview round.")
+              : (candidate.summary ?? (
+                  dbStage === "offer"     ? "Offer extended. Awaiting candidate signature and confirmed start date." :
+                  dbStage === "day1"      ? "Candidate has accepted and is preparing for onboarding." :
+                  dbStage === "interview" ? "Technical skills are excellent match. Address compensation and employment gap concerns before extending offer." :
+                  dbStage === "screen"    ? "Initial screen complete. Strong technical signal — recommend advancing to technical interview." :
+                  "Promising candidate at fair. Schedule a phone screen to validate technical depth."
+                ))
             }
           </p>
           {/* Buttons */}
@@ -921,21 +1174,41 @@ function DebateSummary({
 function DraftCards({ candidate, dbStage }: { candidate: any; dbStage: string }) {
   const [emailState, setEmailState] = useState<"default" | "approved" | "dismissed">("default");
 
-  const isPhoneScreen = dbStage === "screen" || dbStage === "fair";
   const firstName = candidate.name?.split(" ")[0] ?? "there";
   const roleTitle = candidate.role ?? "Software Engineer";
+  const strength = candidate.strengths?.[0] ?? null;
 
-  const emailSubject = isPhoneScreen
-    ? `Subject: Follow-Up — ${roleTitle} at TechCorp`
-    : `Subject: Next Steps — ${roleTitle} at TechCorp`;
+  type DraftContent = { emailSubject: string; emailBody: string; atsNote: string };
 
-  const emailBody = isPhoneScreen
-    ? `Hi ${firstName}, Thank you for speaking with us today. We were impressed with your background and would like to move you to a phone screen. Please use the link below to schedule a time...`
-    : `Hi ${firstName}, Great speaking with you today. Based on our conversation, I'd like to move you forward to a technical interview...`;
+  const drafts: Record<string, DraftContent> = {
+    fair: {
+      emailSubject: `Subject: Follow-Up — ${roleTitle} at TechCorp`,
+      emailBody: `Hi ${firstName}, Thank you for stopping by our booth at Tech Talent Expo. We were impressed with your background${strength ? `, especially your experience in ${strength}` : ""}. We'd love to continue the conversation — would you be available for a quick call this week?`,
+      atsNote: `Candidate visited booth at career fair. Initial impression positive. Recommend scheduling an introductory call to assess fit for ${roleTitle}.`,
+    },
+    screen: {
+      emailSubject: `Subject: Follow-Up — ${roleTitle} at TechCorp`,
+      emailBody: `Hi ${firstName}, Thank you for speaking with us today. We were impressed with your background and would like to move you to a phone screen. Please use the link below to schedule a time...`,
+      atsNote: `Strong candidate with relevant technical background. Initial resume review shows good alignment with ${roleTitle} requirements. Recommend proceeding to phone screen to validate technical depth and culture fit.`,
+    },
+    interview: {
+      emailSubject: `Subject: Next Steps — ${roleTitle} at TechCorp`,
+      emailBody: `Hi ${firstName}, Great speaking with you today. Based on our conversation, I'd like to move you forward to a technical interview for the ${roleTitle} position. The interview will be 45–60 minutes covering technical skills and system design. I'll send a calendar invite shortly.`,
+      atsNote: `Strong technical candidate with deep Python and distributed systems experience. System design answers were specific and well-structured. Leadership evidence is limited — has influenced technical direction informally but has not managed direct reports. Kubernetes exposure remains unverified; should be probed in technical round. No red flags on cultural fit. Recommend advancing to technical interview.`,
+    },
+    offer: {
+      emailSubject: `Subject: Offer Letter — ${roleTitle} at TechCorp`,
+      emailBody: `Hi ${firstName}, Congratulations! We are thrilled to extend an official offer for the ${roleTitle} position at TechCorp.\n\nPlease find your formal offer letter attached. It includes compensation details, start date, and onboarding information${strength ? `. We're excited about the value you'll bring, especially your expertise in ${strength}` : ""}.\n\nKindly review and sign by the deadline noted in the letter. Feel free to reach out with any questions.\n\nWelcome to the team!`,
+      atsNote: `Candidate has completed all interview rounds and received a passing assessment. Extending formal offer for ${roleTitle}. Awaiting candidate signature. No blockers identified.`,
+    },
+    day1: {
+      emailSubject: `Subject: Welcome — Your First Day Details`,
+      emailBody: `Hi ${firstName}, We are so excited to welcome you as our new ${roleTitle}!\n\nHere are your first-day details:\n📍 Office address and parking info will be sent separately\n🕘 Start time: 9:00 AM\n💻 Your equipment will be ready at your desk\n\nPlease bring a valid ID for building access. Your onboarding buddy will meet you at reception.\n\nSee you soon!`,
+      atsNote: `Offer accepted. Candidate onboarding in progress for ${roleTitle}. Equipment and system access being provisioned. Day 1 logistics confirmed.`,
+    },
+  };
 
-  const atsNote = isPhoneScreen
-    ? `Strong candidate with relevant technical background. Initial resume review shows good alignment with ${roleTitle} requirements. Recommend proceeding to phone screen to validate technical depth and culture fit.`
-    : `Strong technical candidate with deep Python and distributed systems experience. System design answers were specific and well-structured. Leadership evidence is limited — has influenced technical direction informally but has not managed direct reports. Kubernetes exposure remains unverified; should be probed in technical round. No red flags on cultural fit. Recommend advancing to technical interview.`;
+  const { emailSubject, emailBody, atsNote } = drafts[dbStage] ?? drafts.fair;
 
   return (
     <div className="flex gap-6">
@@ -1022,20 +1295,26 @@ const MOCK_SCREEN_QA = [
   {
     question: "Tell me about your experience with your primary technical stack.",
     quality: "Strong Answer", confidence: 92,
-    answer: '"I\'ve been building distributed systems for several years, focusing on scalable architectures and performance optimization. I led migrations to microservices and handled 10M+ transactions daily."',
-    tags: ["Technical depth", "Relevant experience", "Scale experience"],
+    answer: '"I\'ve spent the last four years building distributed backend systems in Python and Go, mostly around event-driven architectures using Kafka and SQS. At my current company I led the decomposition of a monolith into about a dozen microservices — we went from 45-minute deploys to independent per-service CI/CD under 8 minutes. We were processing around 10–12 million transactions a day at peak, so reliability was non-negotiable. I got comfortable with things like circuit breakers, graceful degradation, and distributed tracing early on because we needed them to stay on-call sane."',
+    tags: ["Technical depth", "Relevant experience", "Scale experience", "Systems design"],
   },
   {
     question: "Why are you interested in leaving your current role?",
     quality: "Adequate Answer", confidence: 68,
-    answer: '"I\'m looking for more ownership and direct impact on product direction. I want to see the results of my work more closely and contribute to something with broader scope."',
-    tags: ["Career motivation", "Culture fit"],
+    answer: '"Honestly it\'s a mix of things. The technical work is still interesting but the org has grown a lot and decision-making has slowed. I\'ve been in the same scope for about two years now — I want to be somewhere where I can see the direct product impact of what I\'m building. I\'m also genuinely excited about the ML-infrastructure intersection, which is more front-and-center here than where I am now. I\'m not in a rush, but I\'ve been intentional about looking at companies where the engineering culture pushes you rather than holds you."',
+    tags: ["Career motivation", "Culture fit", "Self-awareness"],
   },
   {
     question: "Describe a challenging technical problem you've solved recently.",
     quality: "Strong Answer", confidence: 88,
-    answer: '"We had a critical latency issue during peak traffic. I led the investigation, identified N+1 query patterns, implemented caching with Redis, and reduced latency by over 60%."',
-    tags: ["Problem solving", "Technical depth", "Leadership"],
+    answer: '"We started seeing p99 latency spikes on our order lookup service — intermittent, only under load, really hard to repro locally. I set up distributed tracing across the call chain and eventually isolated it to a specific DB query that was doing a sequential scan on a join when the query planner was choosing the wrong index under high concurrency. Short-term fix was a query hint; long-term we redesigned the query and added a covering index. Latency dropped from around 800ms p99 to about 90ms. The bigger lesson was building better observability tooling into our review process so we catch this class of issue in staging before it hits prod."',
+    tags: ["Problem solving", "Debugging", "Observability", "Performance"],
+  },
+  {
+    question: "How do you approach working with stakeholders who have competing priorities?",
+    quality: "Adequate Answer", confidence: 74,
+    answer: '"I try to get everyone into the same room early and make the tradeoffs explicit — not just the technical cost but the business cost of deferring things. I\'ve found that most conflict comes from people not having visibility into what the other side is actually dealing with. I\'ve had to push back on product timelines a few times when the ask would have created serious tech debt, and framing it around risk rather than engineering preference usually lands better."',
+    tags: ["Collaboration", "Communication", "Stakeholder management"],
   },
 ];
 
@@ -1043,14 +1322,20 @@ const MOCK_INTERVIEW_QA = [
   {
     question: "Walk me through your system design approach for a high-scale service.",
     quality: "Strong Answer", confidence: 90,
-    answer: '"I start with the requirements — read vs write heavy, consistency needs. Then I sketch out the data model, pick the right storage engine, think about sharding and caching layers before moving to API design."',
-    tags: ["System design", "Architecture", "Technical depth"],
+    answer: '"I start by clarifying the constraints — read-heavy vs write-heavy, strict consistency vs eventual, expected QPS, data volume over 5 years. From there I work top-down: sketch the high-level components, then drill into the data model and storage choice. For something read-heavy I\'d lean on a CDN layer plus read replicas; for write-heavy you\'re thinking about partitioning strategies early. I\'ll usually identify the single most likely bottleneck and design around that first rather than trying to over-engineer everything upfront. I\'ve done this exercise for real a few times — one was a notification fanout system that needed to deliver to 2M users in under 5 seconds, which forced me to think carefully about async processing and pre-computing user subscriptions."',
+    tags: ["System design", "Architecture", "Technical depth", "Scalability"],
   },
   {
-    question: "Describe a time you led a cross-functional project.",
+    question: "Describe a time you led a cross-functional project under pressure.",
     quality: "Strong Answer", confidence: 85,
-    answer: '"I led a data platform migration involving 4 teams over 6 months. The key was establishing a clear RACI early and having weekly syncs with each team\'s lead to catch blockers before they escalated."',
-    tags: ["Leadership", "Communication", "Project management"],
+    answer: '"We had a regulatory deadline — 90 days to implement audit logging across our entire data platform, touching storage, APIs, and the frontend. I was the tech lead coordinating four teams. My first move was building a shared timeline with explicit dependencies so each team could see where they were blocking others. I ran a 20-minute standup every other day just for cross-team dependency checks, kept a shared risk log visible to everyone, and escalated early when we hit a scope creep issue in week five that would have pushed us past the deadline. We shipped on time with two days to spare. The thing I\'d do differently is get a dedicated PM involved earlier — I was doing a lot of coordination overhead that probably didn\'t need to be mine."',
+    tags: ["Leadership", "Cross-functional", "Project management", "Communication"],
+  },
+  {
+    question: "How do you evaluate technical tradeoffs when there's no clearly right answer?",
+    quality: "Adequate Answer", confidence: 79,
+    answer: '"I usually try to make the tradeoffs legible first — write them down so everyone is looking at the same thing. Then I\'ll look at reversibility: can we try option A and course correct later, or is this a one-way door? For one-way doors I want more confidence before committing. I also try to ask who is best positioned to absorb the downside of each option — sometimes what looks like a toss-up technically is actually obvious when you think about operational burden on the on-call team. I lean toward boring technology unless there\'s a compelling reason not to."',
+    tags: ["Decision making", "Technical judgment", "Engineering culture"],
   },
 ];
 
@@ -1415,6 +1700,12 @@ export default function CandidateDetailPage() {
   const [scheduleOpen,     setScheduleOpen]     = useState(false);
   const [noteOpen,         setNoteOpen]         = useState(false);
   const [escalateOpen,     setEscalateOpen]     = useState(false);
+  const [socialScreenOpen, setSocialScreenOpen] = useState(
+    () => searchParams.get("social") === "1"
+  );
+  // Stage transition overlay
+  const [transitionTarget, setTransitionTarget] = useState<string | null>(null);
+  const [transitionDone,   setTransitionDone]   = useState(false);
 
   const { data: candidate, isLoading } = useQuery(
     trpc.recruiter.getCandidateWithEvidence.queryOptions({ id })
@@ -1480,7 +1771,7 @@ export default function CandidateDetailPage() {
         // the Clerk middleware chain).
         console.error("[updateCandidateStage] mutation failed:", (err as { data?: { code?: string } })?.data?.code, err);
       },
-      onSuccess: () => { invalidateAll(); setMoveStageOpen(false); },
+      onSuccess: () => { invalidateAll(); setMoveStageOpen(false); setTransitionDone(true); },
     })
   );
 
@@ -1503,16 +1794,10 @@ export default function CandidateDetailPage() {
       // Advance the stage first, then log the override note
       const next = nextStage(dbStage);
       if (!next) return;
-      updateStage.mutate(
-        { id, stage: next },
-        {
-          onSuccess: () => {
-            createAction.mutate({ candidateId: id, actionType: "move_stage", notes: `OVERRIDE ADVANCE: ${decision.reason}` });
-            setOverride(decision);
-            setOverrideOpen(false);
-          },
-        }
-      );
+      setOverride(decision);
+      setOverrideOpen(false);
+      handleStageMove(next);
+      createAction.mutate({ candidateId: id, actionType: "move_stage", notes: `OVERRIDE ADVANCE: ${decision.reason}` });
     }
   };
 
@@ -1535,16 +1820,28 @@ export default function CandidateDetailPage() {
   const dbStage = (candidate.stage ?? "screen") as string;
   const isLive  = searchParams.get("live") === "true";
 
+  const handleStageMove = (stage: string) => {
+    setTransitionTarget(stage);
+    setTransitionDone(false);
+    updateStage.mutate({ id, stage: stage as "fair" | "screen" | "interview" | "offer" | "day1" });
+  };
+
+  const handleTransitionClose = () => {
+    setTransitionTarget(null);
+    setTransitionDone(false);
+  };
+
   const handleAccept = () => {
     const next = nextStage(dbStage);
-    if (next) updateStage.mutate({ id, stage: next });
+    if (next) handleStageMove(next);
   };
 
   const handleReview = () => {
     setScheduleOpen(true);
   };
 
-  const handleScheduleConfirm = (notes: string) => {
+  const handleScheduleConfirm = (payload: SchedulePayload) => {
+    const notes = `Interview scheduled: ${payload.date} at ${payload.time} (${payload.type})${payload.notes ? ` — ${payload.notes}` : ""}`;
     createAction.mutate(
       { candidateId: id, actionType: "schedule_interview", notes },
       { onSuccess: () => setScheduleOpen(false) }
@@ -1605,9 +1902,11 @@ export default function CandidateDetailPage() {
         id={id}
         onSchedule={() => setScheduleOpen(true)}
         onAddNote={() => setNoteOpen(true)}
-        updateStage={updateStage}
+        onMoveStage={handleStageMove}
+        isStagePending={updateStage.isPending}
         moveStageOpen={moveStageOpen}
         setMoveStageOpen={setMoveStageOpen}
+        onSocialScreen={() => setSocialScreenOpen(true)}
       />
 
       {isLive ? (
@@ -1654,6 +1953,23 @@ export default function CandidateDetailPage() {
         <div className="fixed inset-0 z-20" onClick={() => setMoveStageOpen(false)} />
       )}
 
+      {/* Social Screen Modal */}
+      {socialScreenOpen && candidate && (
+        <SocialScreenModal
+          candidateName={candidate.name}
+          onClose={() => setSocialScreenOpen(false)}
+        />
+      )}
+
+      {/* Stage transition overlay */}
+      {transitionTarget && (
+        <StageTransitionOverlay
+          targetStage={transitionTarget}
+          isDone={transitionDone}
+          onClose={handleTransitionClose}
+        />
+      )}
+
       {/* Override Modal */}
       {overrideOpen && candidate && (
         <OverrideModal
@@ -1670,6 +1986,7 @@ export default function CandidateDetailPage() {
       {scheduleOpen && candidate && (
         <ScheduleModal
           candidateName={candidate.name}
+          candidateEmail={candidate.email}
           onClose={() => setScheduleOpen(false)}
           onConfirm={handleScheduleConfirm}
           isPending={createAction.isPending}
