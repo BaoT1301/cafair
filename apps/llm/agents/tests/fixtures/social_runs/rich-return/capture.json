@@ -1,0 +1,61 @@
+{
+  "inputs": {
+    "candidateName": "Nguyen Phan Nguyen",
+    "linkedinUrl": "https://www.linkedin.com/in/nguyenpn1/",
+    "githubUrl": "https://github.com/ngstephen1",
+    "portfolioUrl": "https://lamanhtruong.com",
+    "webQueries": []
+  },
+  "outputs": {
+    "stageStatus": {
+      "linkedin": { "requested": true, "completed": true, "status": "partial" },
+      "github": { "requested": true, "completed": true, "status": "partial" },
+      "portfolio": { "requested": true, "completed": true, "status": "partial" },
+      "web": { "requested": false, "completed": false, "status": "skipped" }
+    },
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "status": "partial",
+      "evidence": ["LinkedIn page reviewed with visible headline and current role."],
+      "missing": ["LinkedIn full structured payload was incomplete."]
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1",
+      "status": "partial",
+      "username": "ngstephen1",
+      "evidence": ["GitHub profile reviewed with visible pinned repositories."],
+      "missing": ["GitHub full structured payload was incomplete."]
+    },
+    "portfolio": {
+      "url": "https://lamanhtruong.com",
+      "status": "partial",
+      "ownerName": "Lam Anh Truong",
+      "candidateLabel": "Nguyen Phan Nguyen",
+      "mismatchFlag": true,
+      "evidence": [
+        "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+        "Portfolio landing and projects were reviewed."
+      ],
+      "projectHighlights": [
+        "Reviewed a project card with TypeScript and portfolio UI work."
+      ],
+      "warnings": [
+        "Identity mismatch: visible portfolio owner name differs from the candidate label."
+      ]
+    },
+    "web": {
+      "status": "skipped",
+      "queries": [],
+      "results": [],
+      "evidence": ["Web stage disabled in the local portfolio flow."]
+    },
+    "flags": ["IDENTITY_MISMATCH_WEBSITE_OWNER"],
+    "finalSummaryText": "Structured capture summary."
+  },
+  "artifacts": {
+    "nova": {
+      "sessionId": "sess_rich_001",
+      "actId": "act_rich_001"
+    }
+  }
+}

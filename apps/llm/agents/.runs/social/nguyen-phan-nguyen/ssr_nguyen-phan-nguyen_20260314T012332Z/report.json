@@ -1,0 +1,68 @@
+{
+  "candidateId": "cand_np_001",
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "socialScore": 72,
+  "risk": "high",
+  "recommendation": "REJECT",
+  "verifiedFindings": [
+    {
+      "text": "No structured portfolio payload was captured.",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "No structured portfolio payload was captured.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T012332Z/evidence_packet.json"
+        }
+      ]
+    }
+  ],
+  "concerns": [
+    {
+      "text": "Portfolio appears owned by a different person.",
+      "severity": "critical",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T012332Z/evidence_packet.json"
+        }
+      ]
+    }
+  ],
+  "nextSteps": [
+    "Verify portfolio ownership directly with the candidate.",
+    "Request candidate confirmation for any external portfolio links."
+  ],
+  "citations": [
+    {
+      "source": "portfolio",
+      "url": "https://lamanhtruong.com",
+      "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T012332Z/evidence_packet.json"
+    }
+  ],
+  "flags": [],
+  "stageStatus": {
+    "linkedin": "skipped",
+    "github": "skipped",
+    "portfolio": "skipped",
+    "web": "skipped"
+  },
+  "provider": "bedrock-converse",
+  "modelId": "amazon.nova-lite-v1:0",
+  "parseOk": true,
+  "validationOk": true,
+  "usedFallback": false,
+  "degraded": false,
+  "metrics": {
+    "latencyMs": 3426,
+    "attempts": 1,
+    "inputTokensEstimated": 2872,
+    "outputTokensEstimated": 735,
+    "timestampISO": "2026-03-14T01:27:04.294Z",
+    "requestId": "8f0f3189-4e61-4c7e-8377-f3705474beed"
+  }
+}

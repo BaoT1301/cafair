@@ -1,0 +1,261 @@
+{
+  "artifactVersion": "social_capture_v1",
+  "ok": true,
+  "run": {
+    "startedAtISO": null,
+    "endedAtISO": null,
+    "durationSeconds": 439.757,
+    "mode": "local-browser",
+    "modelId": "nova-act-preview"
+  },
+  "nova": {
+    "sessionId": "019ce814-0b63-735b-82e6-5dac8ff80048",
+    "actId": "019ce818-2b2f-7d07-ad2b-19aedb043c5e",
+    "logsDirTemp": "/var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmptapj_hsb_nova_act_logs/019ce814-0b63-735b-82e6-5dac8ff80048",
+    "replayHtmlTemp": "/var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmptapj_hsb_nova_act_logs/019ce814-0b63-735b-82e6-5dac8ff80048/act_019ce818-2b2f-7d07-ad2b-19aedb043c5e_You_are_performing_a_recruiter.html",
+    "logsDir": "/var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmptapj_hsb_nova_act_logs/019ce814-0b63-735b-82e6-5dac8ff80048",
+    "htmlReplayPath": "/var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmptapj_hsb_nova_act_logs/019ce814-0b63-735b-82e6-5dac8ff80048/act_019ce818-2b2f-7d07-ad2b-19aedb043c5e_You_are_performing_a_recruiter.html",
+    "numStepsExecuted": 58,
+    "logsDirLocal": "nova_logs",
+    "replayHtmlLocal": "replay.html",
+    "htmlReplayPathLocal": "replay.html",
+    "screenshots": [],
+    "warnings": []
+  },
+  "inputs": {
+    "candidateName": "Nguyen Phan Nguyen",
+    "linkedinUrl": "https://www.linkedin.com/in/nguyenpn1/",
+    "githubUrl": "https://github.com/ngstephen1",
+    "portfolioUrl": "https://lamanhtruong.com",
+    "webQueries": []
+  },
+  "outputs": {
+    "stageStatus": {
+      "linkedin": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      },
+      "github": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      },
+      "portfolio": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      }
+    },
+    "finalSummaryText": "LINKEDIN_STATUS: partial\nLINKEDIN_EVIDENCE:\n- Linkedin stage status: partial.\nGITHUB_STATUS: partial\nGITHUB_EVIDENCE:\n- Github stage status: partial.\nPORTFOLIO_STATUS: partial\nPORTFOLIO_URL: https://lamanhtruong.com\nPORTFOLIO_OWNER_NAME: Lam Anh Truong\nCANDIDATE_LABEL: Nguyen Phan Nguyen\nMISMATCH_FLAG: yes\nPORTFOLIO_EVIDENCE:\n- Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.\n- Portfolio stage status: partial.\nPROJECTS_REVIEWED: 0\nPROJECT_HIGHLIGHTS:\n- No project highlights captured.\nRESUME_FOUND: no\nGITHUB_LINK_FOUND: no\nGITHUB_LINK_MATCHES_EXPECTED: unknown\nRETRO_FOUND: no\nPORTFOLIO_WARNINGS:\n- Portfolio stage completed without an explicit summary payload.\n- Identity mismatch: visible portfolio owner name differs from the candidate label.\n- Portfolio stage completed without an explicit summary payload.\nFLAGS:\n- IDENTITY_MISMATCH_WEBSITE_OWNER\nMISSING:\n- Linkedin stage completed without an explicit summary payload.\n- Github stage completed without an explicit summary payload.",
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "found": true,
+      "status": "partial",
+      "profileName": null,
+      "headline": null,
+      "location": null,
+      "currentCompany": null,
+      "school": null,
+      "topLinks": [],
+      "skills": [],
+      "evidence": [
+        "Linkedin stage status: partial."
+      ],
+      "missing": [
+        "Linkedin stage completed without an explicit summary payload."
+      ],
+      "experienceCount": 0,
+      "notes": "LINKEDIN_STATUS: partial\nLINKEDIN_EVIDENCE:\n- Linkedin stage status: partial.\nMISSING:\n- Linkedin stage completed without an explicit summary payload."
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1",
+      "found": true,
+      "status": "partial",
+      "username": "ngstephen1",
+      "displayName": null,
+      "bio": null,
+      "followers": null,
+      "following": null,
+      "contributionsLastYear": null,
+      "topLanguages": [],
+      "pinnedRepoCount": 0,
+      "pinnedRepos": [],
+      "evidence": [
+        "Github stage status: partial."
+      ],
+      "missing": [
+        "Github stage completed without an explicit summary payload."
+      ],
+      "notes": "GITHUB_STATUS: partial\nGITHUB_EVIDENCE:\n- Github stage status: partial.\nMISSING:\n- Github stage completed without an explicit summary payload."
+    },
+    "portfolio": {
+      "url": "https://lamanhtruong.com",
+      "found": true,
+      "status": "partial",
+      "ownerName": "Lam Anh Truong",
+      "candidateLabel": "Nguyen Phan Nguyen",
+      "mismatchFlag": true,
+      "evidence": [
+        "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+        "Portfolio stage status: partial."
+      ],
+      "projectsReviewed": 0,
+      "projectHighlights": [
+        "No project highlights captured."
+      ],
+      "resumeFound": false,
+      "githubLinkFound": false,
+      "githubLinkMatchesExpected": "unknown",
+      "retroFound": false,
+      "warnings": [
+        "Portfolio stage completed without an explicit summary payload.",
+        "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+        "Portfolio stage completed without an explicit summary payload."
+      ],
+      "notes": "Portfolio stage parsed from the Nova Act structured return block."
+    },
+    "web": {
+      "status": "skipped",
+      "queries": [],
+      "results": [],
+      "evidence": [
+        "Web stage disabled in the local portfolio flow."
+      ]
+    },
+    "flags": [
+      "IDENTITY_MISMATCH_WEBSITE_OWNER"
+    ],
+    "structured": {
+      "linkedin": {
+        "url": "https://www.linkedin.com/in/nguyenpn1/",
+        "found": true,
+        "status": "partial",
+        "profileName": null,
+        "headline": null,
+        "location": null,
+        "currentCompany": null,
+        "school": null,
+        "topLinks": [],
+        "skills": [],
+        "evidence": [
+          "Linkedin stage status: partial."
+        ],
+        "missing": [
+          "Linkedin stage completed without an explicit summary payload."
+        ],
+        "experienceCount": 0,
+        "notes": "LINKEDIN_STATUS: partial\nLINKEDIN_EVIDENCE:\n- Linkedin stage status: partial.\nMISSING:\n- Linkedin stage completed without an explicit summary payload."
+      },
+      "github": {
+        "url": "https://github.com/ngstephen1",
+        "found": true,
+        "status": "partial",
+        "username": "ngstephen1",
+        "displayName": null,
+        "bio": null,
+        "followers": null,
+        "following": null,
+        "contributionsLastYear": null,
+        "topLanguages": [],
+        "pinnedRepoCount": 0,
+        "pinnedRepos": [],
+        "evidence": [
+          "Github stage status: partial."
+        ],
+        "missing": [
+          "Github stage completed without an explicit summary payload."
+        ],
+        "notes": "GITHUB_STATUS: partial\nGITHUB_EVIDENCE:\n- Github stage status: partial.\nMISSING:\n- Github stage completed without an explicit summary payload."
+      },
+      "portfolio": {
+        "url": "https://lamanhtruong.com",
+        "found": true,
+        "status": "partial",
+        "ownerName": "Lam Anh Truong",
+        "candidateLabel": "Nguyen Phan Nguyen",
+        "mismatchFlag": true,
+        "evidence": [
+          "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+          "Portfolio stage status: partial."
+        ],
+        "projectsReviewed": 0,
+        "projectHighlights": [
+          "No project highlights captured."
+        ],
+        "resumeFound": false,
+        "githubLinkFound": false,
+        "githubLinkMatchesExpected": "unknown",
+        "retroFound": false,
+        "warnings": [
+          "Portfolio stage completed without an explicit summary payload.",
+          "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+          "Portfolio stage completed without an explicit summary payload."
+        ],
+        "notes": "Portfolio stage parsed from the Nova Act structured return block."
+      },
+      "web": {
+        "status": "skipped",
+        "queries": [],
+        "results": [],
+        "evidence": [
+          "Web stage disabled in the local portfolio flow."
+        ]
+      },
+      "summarySignals": [
+        "Linkedin stage status: partial",
+        "Github stage status: partial",
+        "Visible portfolio owner name appears to be 'Lam Anh Truong'",
+        "which does not match candidate label 'Nguyen Phan Nguyen'",
+        "Portfolio stage status: partial",
+        "PROJECTS_REVIEWED: 0",
+        "PROJECT_HIGHLIGHTS",
+        "No project highlights captured",
+        "RESUME_FOUND: no",
+        "GITHUB_LINK_FOUND: no",
+        "GITHUB_LINK_MATCHES_EXPECTED: unknown",
+        "RETRO_FOUND: no"
+      ],
+      "summaryMissing": [
+        "Linkedin stage completed without an explicit summary payload",
+        "Github stage completed without an explicit summary payload"
+      ],
+      "summaryWarnings": [
+        "Portfolio stage completed without an explicit summary payload",
+        "Identity mismatch: visible portfolio owner name differs from the candidate label",
+        "Portfolio stage completed without an explicit summary payload",
+        "FLAGS",
+        "IDENTITY_MISMATCH_WEBSITE_OWNER",
+        "MISSING",
+        "Linkedin stage completed without an explicit summary payload",
+        "Github stage completed without an explicit summary payload"
+      ]
+    }
+  },
+  "raw": {
+    "instruction": "You are a recruiter-style browser evidence collector.\nCandidate label: Nguyen Phan Nguyen.\nCore goals:\n- LinkedIn: 30-step evidence checklist.\n- GitHub: 30-step evidence checklist.\n- Portfolio: interactive recruiter-style portfolio review stage.\nHard constraints:\n- Treat steps as checklist items, not infinite actions.\n- LinkedIn action budget: at most 18 actions total.\n- GitHub action budget: at most 18 actions total.\n- Portfolio action budget: at most 25 actions total.\n- Max 2 consecutive scrolls. If the target section is still not visible, stop scrolling, try a different method, or mark it missing.\n- If the footer is visible, stop scrolling immediately; you reached the end.\n- LinkedIn deep opens: at most 1 Show all experiences action and 1 Featured item open.\n- GitHub deep opens: at most 2 repos total, prefer pinned repos first.\n- Portfolio deep opens: open at most 8 project cards, 1 resume page, 1 GitHub link, and 1 Retro section.\n- Do not contact anyone. Do not send messages. Do not make personal judgments. Visible facts only.\nDeterministic final report format:\nLINKEDIN_STATUS: ok|partial|blocked\nLINKEDIN_EVIDENCE:\n- bullets\nGITHUB_STATUS: ok|partial\nGITHUB_EVIDENCE:\n- bullets\nPORTFOLIO_STATUS: ok|partial|blocked\nPORTFOLIO_EVIDENCE:\n- bullets\nMISSING:\n- bullets\nBefore return(), confirm LinkedIn, GitHub, and Portfolio stages were attempted if requested.\nIgnore any legacy web query inputs in this local-browser portfolio flow.\n\nLINKEDIN STAGE INSTRUCTION\nYou are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nYou must end with a strict machine-readable return block.\nDo not return narrative prose by itself.\nReturn exactly one BEGIN_CAPTURE_JSON line, then one valid JSON object, then one END_CAPTURE_JSON line.\nLINKEDIN STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE CHECKLIST STEPS\nLinkedIn hard limits:\n- At most 18 actions total in this stage.\n- Max 2 consecutive scrolls.\n- Open at most 1 Featured item and at most 1 Show all experiences view.\n- Do not click Show all skills.\nL1. The human operator already signed in manually before this stage starts.\nL2. Click the LinkedIn global search bar.\nL3. Search this exact query in LinkedIn: Nguyen Phan Nguyen Virginia Tech\nL4. If a People filter is visible, click it once.\nL5. Open the most relevant visible result for Nguyen Phan Nguyen. If the provided profile is already open, stay on it.\nL6. Confirm whether the profile page is visible.\nL7. If redirected to login, authwall, or 'Sign in to see more', set LINKEDIN_STATUS: blocked and stop this stage.\nL8. Capture the visible profile URL and visible profile name exactly as shown.\nL9. Capture the headline exactly as shown.\nL10. Capture the location exactly as shown.\nL11. Capture the current role or company from the top card if visible.\nL12. Capture the visible education summary from the top card if visible.\nL13. Check for Contact info or visible links and capture any website, portfolio, or public profile links shown.\nL14. If About, Experience, Education, or Skills anchors are visible, prefer clicking an anchor instead of scrolling.\nL15. If About text is visible, capture 1 or 2 key phrases only.\nL16. If About is not visible, use at most 2 scrolls to try to reveal it; if still not visible, record About missing and continue.\nL17. If Featured is visible, capture the visible featured item titles.\nL18. Open at most 1 Featured item only if it looks relevant and clearly visible.\nL19. If you opened a Featured item, capture its title, type, and one visible fact, then return to the profile.\nL20. Move to Experience using an anchor if visible; otherwise use at most 2 scrolls.\nL21. Capture the latest visible role title, company, and dates.\nL22. Capture one additional visible role, internship, or research position if present.\nL23. If Show all experiences is visible and needed, open it once only.\nL24. If you opened Show all experiences, capture at most one additional role and then return to the main profile.\nL25. Capture one visible impact statement, technology, or responsibility only if explicitly written.\nL26. Move to Education using an anchor if visible; otherwise use at most 2 scrolls.\nL27. Capture school name, degree or field, and dates if visible.\nL28. Capture honors, societies, or organizations only if visibly attached to education or nearby sections.\nL29. Move to Skills using an anchor if visible; otherwise use at most 2 scrolls. Capture up to 8 top visible skills exactly as labeled on the current page.\nL30. Record factual missing pieces such as hidden sections, authwall blocks, or sections not visible within the action budget, then stop LinkedIn immediately after you have 6 to 10 evidence bullets or you reach the action budget.\nFINAL REPORT:\nF1. Call return() immediately after the LinkedIn stage is complete.\nF2. Use LINKEDIN_STATUS: ok if the profile was reviewed with multiple sections captured.\nF3. Use LINKEDIN_STATUS: partial if only the top card or a subset of sections were captured before limits or page issues.\nF4. Use LINKEDIN_STATUS: blocked if LinkedIn authwall or login blocking prevented visible profile review.\nF5. The final return() must contain a single machine-readable block with no extra prose:\nF6. BEGIN_CAPTURE_JSON\nF7. {\"stageStatus\":{\"linkedin\":\"ok|partial|blocked\"},\"linkedin\":{\"profileUrl\":\"...\",\"profileName\":\"...\",\"headline\":\"...\",\"location\":\"...\",\"currentCompany\":\"...\",\"school\":\"...\",\"topLinks\":[\"...\"],\"skills\":[\"...\"],\"evidence\":[\"...\"],\"missing\":[\"...\"]},\"github\":null,\"portfolio\":null,\"finalSummaryText\":\"short recruiter-style LinkedIn summary\"}\nF8. END_CAPTURE_JSON\nF9. Ensure the JSON is valid and compact.\nF10. Replace every placeholder example value with actual visible values, null, [], or a factual missing note.\nF11. If a field is not visible, use null, [], or a factual missing note instead of omitting the key.\nF12. Do not include GitHub or Portfolio facts in this stage return.\n\nGITHUB STAGE INSTRUCTION\nYou are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nYou must end with a strict machine-readable return block.\nDo not return narrative prose by itself.\nReturn exactly one BEGIN_CAPTURE_JSON line, then one valid JSON object, then one END_CAPTURE_JSON line.\nGITHUB STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE CHECKLIST STEPS\nGitHub hard limits:\n- At most 18 actions total in this stage.\n- Max 2 consecutive scrolls.\n- Open at most 2 repos total, prefer pinned repos first.\n- Do not open Issues, Pull Requests, Actions, or Security tabs in this stage.\nG1. Navigate directly to this GitHub URL: https://github.com/ngstephen1\nG2. Wait for the profile page to load.\nG3. Confirm whether the profile is visible. If the page fails to load properly, use GITHUB_STATUS: partial and continue with whatever is visible.\nG4. Capture the visible profile URL and username.\nG5. Capture the display name if shown.\nG6. Capture the bio or tagline if shown.\nG7. Capture location, organization, website, or employer links if shown.\nG8. Capture followers and following counts if visible.\nG9. Capture contribution count or contribution summary if visible.\nG10. Capture all visible pinned repository names.\nG11. Capture visible pinned repo languages and stars if shown.\nG12. Capture visible topics, highlights, organizations, or achievements if shown.\nG13. If pinned repos are not enough, click Repositories once to surface visible facts.\nG14. Capture total public repository count if visible.\nG15. Identify the strongest visible repository based on visible description, stars, and relevance.\nG16. Open the first strongest repository.\nG17. Capture repo name, description, language, stars, and last updated if visible.\nG18. Capture first-screen README quality signals such as install, run, demo, or badges.\nG19. Capture whether the visible file tree suggests organized structure.\nG20. Capture whether tests, CI config, Docker, notebooks, or build files are visibly present.\nG21. If there is a clear demo link on the first screen, capture its text only.\nG22. Return to the GitHub profile.\nG23. Decide whether a second repo is meaningfully different. If not, do not open a second repo.\nG24. If a second repo is worth opening, open only one more repo total.\nG25. Capture the second repo name, purpose, language, stars, and README quality quickly.\nG26. Return to the GitHub profile after the second repo if you opened it.\nG27. Record overall technical themes across the visible profile and repos such as ML, full-stack, data, systems, music tech, or hackathon work.\nG28. Record factual risk or weakness signals only if visible, such as missing README, no visible recent activity, or minimal repo descriptions.\nG29. Stop GitHub after 6 to 10 evidence bullets or after opening 2 repos total.\nG30. End the GitHub stage immediately and proceed no further in GitHub.\nFINAL REPORT:\nF1. Call return() immediately after the GitHub stage is complete.\nF2. Use GITHUB_STATUS: ok if the profile and at least one repo were reviewed.\nF3. Use GITHUB_STATUS: partial if only the profile or incomplete repo evidence was captured.\nF4. The final return() must contain a single machine-readable block with no extra prose:\nF5. BEGIN_CAPTURE_JSON\nF6. {\"stageStatus\":{\"github\":\"ok|partial\"},\"linkedin\":null,\"github\":{\"profileUrl\":\"...\",\"username\":\"...\",\"displayName\":\"...\",\"bio\":\"...\",\"followers\":null,\"following\":null,\"contributionsLastYear\":null,\"topLanguages\":[\"...\"],\"pinnedRepos\":[{\"name\":\"...\",\"language\":\"...\",\"stars\":null}],\"evidence\":[\"...\"],\"missing\":[\"...\"]},\"portfolio\":null,\"finalSummaryText\":\"short recruiter-style GitHub summary\"}\nF7. END_CAPTURE_JSON\nF8. Ensure the JSON is valid and compact.\nF9. Replace every placeholder example value with actual visible values, null, [], or a factual missing note.\nF10. If a field is not visible, use null, [], or a factual missing note instead of omitting the key.\nF11. Do not include LinkedIn or Portfolio facts in this stage return.\n\nPORTFOLIO STAGE INSTRUCTION\nYou are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nYou must end with a strict machine-readable return block.\nDo not return narrative prose by itself.\nReturn exactly one BEGIN_CAPTURE_JSON line, then one valid JSON object, then one END_CAPTURE_JSON line.\nPORTFOLIO STAGE: COMPLETE THIS RECRUITER-STYLE INTERACTIVE PORTFOLIO REVIEW\nPortfolio hard limits:\n- At most 25 actions total in this stage.\n- Max 2 consecutive scrolls; after that, use navigation, anchors, or mark the section missing.\n- Prefer visible navigation such as Projects, Resume, GitHub, Retro, About, Experience, or headings before scrolling.\n- Open at most 8 project cards total, but stop earlier once strong evidence is gathered.\n- Open at most 1 Resume target, 1 GitHub target from the portfolio, and 1 Retro entry.\nP1. Navigate directly to the portfolio URL: https://lamanhtruong.com\nP2. Confirm the site is visible. If the page is blocked or fails to load, set PORTFOLIO_STATUS: blocked and stop.\nP3. Capture the visible landing-page title, hero name, and title or role text exactly as shown.\nP4. Capture the first visible owner name from the hero, header, or top navigation.\nP5. Compare the visible owner name to the candidate label 'Nguyen Phan Nguyen'. If the visible owner looks like a different person, record that clearly.\nP6. Bias toward flagging a mismatch if 'Lam Anh Truong' appears prominently in the hero, header, title, or repeated branding.\nP7. Capture the visible top navigation labels and recruiter-relevant links.\nP8. Navigate to Projects using a visible Projects tab, button, anchor, or heading if available.\nP9. Capture the visible project section heading and count how many project cards are visible before opening anything.\nP10. Open the strongest visible project card.\nP11. Capture the project name, the problem or theme, and one visible engineering fact such as stack, demo, or README-style description.\nP12. Return to the project list or portfolio landing after the first project review.\nP13. Open a second clearly different project card if available.\nP14. Capture the second project's name, theme, and one visible engineering fact, then return.\nP15. If more strong projects are clearly visible and action budget remains, open up to 2 more project cards total; never exceed 8.\nP16. Open Resume using a visible Resume link, button, or section if present.\nP17. Capture whether a resume page or downloadable resume was found and 2 or 3 visible facts from it.\nP18. If Resume opened in a new browser tab, close that tab by clicking the tab x or close-tab control first. Do not spend more than 2 actions trying to close it.\nP19. If Resume opened in the same tab, use the browser Back control once; if that fails, navigate directly back to the portfolio URL instead of interacting with PDF viewer menus.\nP20. If you still cannot get back after 2 close/back attempts, reopen the portfolio URL directly and continue from there.\nP21. Open the GitHub link from the portfolio if visible.\nP22. Compare the opened GitHub destination to the expected GitHub URL 'https://github.com/ngstephen1'.\nP23. After GitHub capture, return to the portfolio. If GitHub opened in a new tab, close that tab first. If that fails, navigate directly back to the portfolio URL.\nP24. Click Retro if a Retro section, button, or nav item is visible.\nP25. Inside Retro, perform up to 10 recruiter-style inspection checks using headings, visible links, and one recruiter-relevant deep open if available. Capture visible themes from Retro such as reflections, lessons learned, project reviews, timelines, or process notes. Record factual warnings only, such as owner-name mismatch, missing resume, missing GitHub link, broken navigation, or sections not visible within the budget. Stop the portfolio stage immediately once you have enough evidence. Do not continue browsing after the structured return is ready.\nFINAL REPORT:\nF1. Call return() immediately after the portfolio stage is complete.\nF2. The final return() must contain a single machine-readable block with no extra prose:\nF3. BEGIN_CAPTURE_JSON\nF4. {\"stageStatus\":{\"portfolio\":\"ok|partial|blocked\",\"web\":\"skipped\"},\"linkedin\":null,\"github\":null,\"portfolio\":{\"url\":\"https://lamanhtruong.com\",\"ownerName\":\"...\",\"candidateLabel\":\"Nguyen Phan Nguyen\",\"mismatchFlag\":true,\"evidence\":[\"...\"],\"projectsReviewed\":0,\"projectHighlights\":[\"...\"],\"resumeFound\":false,\"githubLinkFound\":false,\"githubLinkMatchesExpected\":\"yes|no|unknown\",\"retroFound\":false,\"warnings\":[\"...\"],\"missing\":[\"...\"]},\"web\":{\"status\":\"skipped\",\"queries\":[],\"results\":[],\"evidence\":[\"Web stage disabled in portfolio flow.\"]},\"flags\":[\"IDENTITY_MISMATCH_WEBSITE_OWNER\"],\"finalSummaryText\":\"short recruiter-style portfolio summary\"}\nF5. END_CAPTURE_JSON\nF6. If a visible owner looks like Lam Anh Truong and differs from the candidate label, set mismatchFlag to true and mention the visible text in evidence.\nF7. Replace every placeholder example value with actual visible values, null, [], or a factual missing note.\nF8. Ensure the JSON is valid and compact.\nF9. If a field is not visible, use null, [], or a factual missing note instead of omitting the key.\nF10. Only record visible facts. Do not contact anyone. Do not make personal judgments.",
+    "actResultPath": "raw_act_result.json",
+    "stageSummaries": {
+      "linkedin": "LINKEDIN_STATUS: partial\nLINKEDIN_EVIDENCE:\n- Linkedin stage status: partial.\nMISSING:\n- Linkedin stage completed without an explicit summary payload.",
+      "github": "GITHUB_STATUS: partial\nGITHUB_EVIDENCE:\n- Github stage status: partial.\nMISSING:\n- Github stage completed without an explicit summary payload.",
+      "portfolio": "PORTFOLIO_STATUS: partial\nPORTFOLIO_URL: https://lamanhtruong.com\nPORTFOLIO_OWNER_NAME: unknown\nCANDIDATE_LABEL: Nguyen Phan Nguyen\nMISMATCH_FLAG: no\nEVIDENCE:\n- Portfolio stage status: partial.\nPROJECTS_REVIEWED: 0\nPROJECT_HIGHLIGHTS:\n- No project highlights captured.\nRESUME_FOUND: no\nGITHUB_LINK_FOUND: no\nGITHUB_LINK_MATCHES_EXPECTED: unknown\nRETRO_FOUND: no\nWARNINGS:\n- Portfolio stage completed without an explicit summary payload.\nMISSING:\n- Portfolio stage completed without an explicit summary payload."
+    },
+    "portfolioCapturePath": "portfolio_capture.json",
+    "portfolioStageSummaryPath": "portfolio_stage_summary.json"
+  },
+  "warnings": [
+    "Local visible browser mode was used.",
+    "This mode is best for debugging because you can see the browser and Nova Act actions directly.",
+    "If manual LinkedIn login mode is enabled, the agent resumes only after you sign in manually on LinkedIn.",
+    "The local instruction now uses a shorter guardrails-safe evidence capture flow with provided URLs only.",
+    "Structured extraction is still placeholder-based for LinkedIn and GitHub in this mode until deeper page parsing is added.",
+    "If NOVA_ACT_PREFER_CHROME is enabled, the script prefers launching NovaAct itself in Chrome/Chromium.",
+    "If --manual-linkedin-login is enabled, local mode starts on the LinkedIn login page and waits for human sign-in before Nova Act continues.",
+    "Without --manual-linkedin-login, local mode opens the provided LinkedIn URL directly and stops if LinkedIn shows an authwall or login block.",
+    "This SDK path currently launches an isolated Playwright browser context, so it will not reuse your already signed-in Chrome profile.",
+    "Do not set a Chrome user-data-dir for this script unless NovaAct adds persistent-context profile support in a future SDK version.",
+    "Local browser mode now runs LinkedIn, GitHub, and portfolio review as separate sequential Nova acts in the same browser session.",
+    "Legacy web query inputs are recorded but intentionally ignored in this portfolio flow."
+  ],
+  "error": null
+}

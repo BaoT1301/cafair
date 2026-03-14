@@ -1,0 +1,238 @@
+{
+  "artifactVersion": "social_capture_v1",
+  "ok": true,
+  "run": {
+    "startedAtISO": null,
+    "endedAtISO": null,
+    "durationSeconds": null,
+    "mode": "workflow",
+    "modelId": "nova-act-preview"
+  },
+  "nova": {
+    "sessionId": null,
+    "actId": null,
+    "logsDirTemp": null,
+    "replayHtmlTemp": null,
+    "logsDir": null,
+    "htmlReplayPath": null,
+    "numStepsExecuted": null,
+    "logsDirLocal": null,
+    "replayHtmlLocal": null,
+    "htmlReplayPathLocal": null,
+    "screenshots": [],
+    "warnings": []
+  },
+  "inputs": {
+    "candidateName": "Nguyen Phan Nguyen",
+    "linkedinUrl": "https://www.linkedin.com/in/nguyenpn1/",
+    "githubUrl": "https://github.com/ngstephen1",
+    "portfolioUrl": "https://lamanhtruong.com",
+    "webQueries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ]
+  },
+  "outputs": {
+    "stageStatus": {
+      "linkedin": {
+        "requested": true,
+        "completed": false,
+        "status": "pending"
+      },
+      "github": {
+        "requested": true,
+        "completed": false,
+        "status": "pending"
+      },
+      "portfolio": {
+        "requested": true,
+        "completed": false,
+        "status": "pending"
+      }
+    },
+    "finalSummaryText": null,
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "found": true,
+      "status": "skipped",
+      "profileName": null,
+      "headline": null,
+      "location": null,
+      "currentCompany": null,
+      "school": null,
+      "topLinks": [],
+      "skills": [],
+      "evidence": [],
+      "missing": [],
+      "experienceCount": 0,
+      "notes": "No structured LinkedIn extraction found in workflow output yet."
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1",
+      "found": true,
+      "status": "skipped",
+      "username": "ngstephen1",
+      "displayName": null,
+      "bio": null,
+      "followers": null,
+      "following": null,
+      "contributionsLastYear": null,
+      "topLanguages": [],
+      "pinnedRepoCount": 0,
+      "pinnedRepos": [],
+      "evidence": [],
+      "missing": [],
+      "notes": "No structured GitHub extraction found in workflow output yet."
+    },
+    "portfolio": {
+      "url": "https://lamanhtruong.com",
+      "found": false,
+      "status": "partial",
+      "ownerName": null,
+      "candidateLabel": "Nguyen Phan Nguyen",
+      "mismatchFlag": false,
+      "evidence": [
+        "missing structured block"
+      ],
+      "projectsReviewed": 0,
+      "projectHighlights": [],
+      "resumeFound": null,
+      "githubLinkFound": null,
+      "githubLinkMatchesExpected": "unknown",
+      "retroFound": null,
+      "warnings": [
+        "No structured portfolio payload was captured."
+      ],
+      "notes": "Portfolio stage payload missing; using placeholder object."
+    },
+    "web": {
+      "queries": [
+        "Nguyen Phan Nguyen Virginia Tech"
+      ],
+      "resultCount": 0,
+      "results": []
+    },
+    "flags": [],
+    "structured": {
+      "linkedin": {
+        "url": "https://www.linkedin.com/in/nguyenpn1/",
+        "found": true,
+        "status": "skipped",
+        "profileName": null,
+        "headline": null,
+        "location": null,
+        "currentCompany": null,
+        "school": null,
+        "topLinks": [],
+        "skills": [],
+        "evidence": [],
+        "missing": [],
+        "experienceCount": 0,
+        "notes": "No structured LinkedIn extraction found in workflow output yet."
+      },
+      "github": {
+        "url": "https://github.com/ngstephen1",
+        "found": true,
+        "status": "skipped",
+        "username": "ngstephen1",
+        "displayName": null,
+        "bio": null,
+        "followers": null,
+        "following": null,
+        "contributionsLastYear": null,
+        "topLanguages": [],
+        "pinnedRepoCount": 0,
+        "pinnedRepos": [],
+        "evidence": [],
+        "missing": [],
+        "notes": "No structured GitHub extraction found in workflow output yet."
+      },
+      "portfolio": {
+        "url": "https://lamanhtruong.com",
+        "found": false,
+        "status": "partial",
+        "ownerName": null,
+        "candidateLabel": "Nguyen Phan Nguyen",
+        "mismatchFlag": false,
+        "evidence": [
+          "missing structured block"
+        ],
+        "projectsReviewed": 0,
+        "projectHighlights": [],
+        "resumeFound": null,
+        "githubLinkFound": null,
+        "githubLinkMatchesExpected": "unknown",
+        "retroFound": null,
+        "warnings": [
+          "No structured portfolio payload was captured."
+        ],
+        "notes": "Portfolio stage payload missing; using placeholder object."
+      },
+      "web": {
+        "queries": [
+          "Nguyen Phan Nguyen Virginia Tech"
+        ],
+        "resultCount": 0,
+        "results": []
+      },
+      "summarySignals": [],
+      "summaryMissing": [],
+      "summaryWarnings": []
+    }
+  },
+  "raw": {
+    "instruction": null,
+    "actResultPath": null,
+    "stageSummaries": null
+  },
+  "artifacts": {
+    "nova": {
+      "sessionId": null,
+      "actId": null,
+      "logsDir": null,
+      "logsDirLocal": null,
+      "actHtmlPath": null,
+      "actHtmlPathLocal": null,
+      "replayHtmlLocal": null,
+      "stageArtifacts": null
+    },
+    "trace": {
+      "saved": true,
+      "format": "text",
+      "path": "nova_trace.txt",
+      "rawPath": null,
+      "redacted": true,
+      "redactMode": "partial",
+      "containsThinkLines": false,
+      "containsActionLines": false,
+      "containsReturnLines": false,
+      "source": "none",
+      "diagnostics": [
+        "Tee raw trace not found: nova_trace_raw.txt"
+      ]
+    },
+    "returnBlock": {
+      "saved": true,
+      "path": "nova_return_block.txt",
+      "redacted": true,
+      "redactMode": "partial"
+    },
+    "evidencePacket": {
+      "saved": true,
+      "path": "evidence_packet.json"
+    },
+    "evidencePacketMarkdown": {
+      "saved": true,
+      "path": "evidence_packet.md"
+    }
+  },
+  "warnings": [
+    "Workflow is still RUNNING after the timeout window.",
+    "Increase --timeout-seconds, or inspect the run in Nova using workflowRunId.",
+    "No structured output is available yet because the workflow has not completed.",
+    "LinkedIn extraction not fully mapped yet.",
+    "GitHub extraction not fully mapped yet.",
+    "Web extraction not fully mapped yet.",
+    "Workflow did not complete before timeout and is still RUNNING remotely; rerun with a larger timeout or inspect the remote run."
+  ],
+  "error": null
+}

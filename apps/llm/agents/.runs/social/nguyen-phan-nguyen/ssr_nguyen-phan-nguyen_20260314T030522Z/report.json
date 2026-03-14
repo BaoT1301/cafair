@@ -1,0 +1,71 @@
+{
+  "candidateId": "cand_np_001",
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "socialScore": 72,
+  "risk": "high",
+  "recommendation": "REVIEW",
+  "verifiedFindings": [
+    {
+      "text": "GitHub profile is visible but partial.",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "github",
+          "url": "https://github.com/ngstephen1",
+          "quote": "Github stage status: partial.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T030522Z/evidence_packet.json"
+        }
+      ]
+    }
+  ],
+  "concerns": [
+    {
+      "text": "Portfolio appears owned by a different person.",
+      "severity": "critical",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "Visible owner text does not match the candidate label.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T030522Z/evidence_packet.json"
+        }
+      ]
+    }
+  ],
+  "nextSteps": [
+    "Verify portfolio ownership directly with the candidate.",
+    "Request candidate confirmation for any external portfolio links.",
+    "Confirm portfolio ownership before using portfolio signals."
+  ],
+  "citations": [
+    {
+      "source": "portfolio",
+      "url": "https://lamanhtruong.com",
+      "quote": "Visible owner text does not match the candidate label.",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T030522Z/evidence_packet.json"
+    }
+  ],
+  "flags": [
+    "IDENTITY_MISMATCH_WEBSITE_OWNER"
+  ],
+  "stageStatus": {
+    "linkedin": "blocked",
+    "github": "partial",
+    "portfolio": "partial",
+    "web": "partial"
+  },
+  "provider": "bedrock-converse",
+  "modelId": "amazon.nova-lite-v1:0",
+  "parseOk": true,
+  "validationOk": true,
+  "usedFallback": false,
+  "degraded": false,
+  "metrics": {
+    "latencyMs": 3155,
+    "attempts": 1,
+    "inputTokensEstimated": 4659,
+    "outputTokensEstimated": 708,
+    "timestampISO": "2026-03-14T03:05:31.696Z",
+    "requestId": "deb805b3-689a-4d8b-afef-78e10a980c53"
+  }
+}

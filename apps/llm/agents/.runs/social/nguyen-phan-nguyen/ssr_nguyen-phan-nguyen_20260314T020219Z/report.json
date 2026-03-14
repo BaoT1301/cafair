@@ -1,0 +1,69 @@
+{
+  "candidateId": "cand_np_001",
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "socialScore": 84,
+  "risk": "low",
+  "recommendation": "PROCEED",
+  "verifiedFindings": [
+    {
+      "text": "missing structured block",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "missing structured block",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T020219Z/evidence_packet.json"
+        }
+      ]
+    },
+    {
+      "text": "No structured portfolio payload was captured.",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "No structured portfolio payload was captured.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T020219Z/evidence_packet.json"
+        }
+      ]
+    }
+  ],
+  "concerns": [],
+  "nextSteps": [
+    "Proceed with normal recruiter review using the captured social evidence."
+  ],
+  "citations": [
+    {
+      "source": "portfolio",
+      "url": "https://lamanhtruong.com",
+      "quote": "missing structured block",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T020219Z/evidence_packet.json"
+    },
+    {
+      "source": "portfolio",
+      "url": "https://lamanhtruong.com",
+      "quote": "No structured portfolio payload was captured.",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T020219Z/evidence_packet.json"
+    }
+  ],
+  "flags": [],
+  "stageStatus": {
+    "linkedin": "skipped",
+    "github": "skipped",
+    "portfolio": "skipped",
+    "web": "skipped"
+  },
+  "provider": "deterministic-fallback",
+  "modelId": "amazon.nova-lite-v1:0",
+  "parseOk": false,
+  "validationOk": true,
+  "usedFallback": true,
+  "degraded": true,
+  "metrics": {
+    "inputTokensEstimated": 90,
+    "timestampISO": "2026-03-14T02:05:52.117Z",
+    "requestId": "[\n  {\n    \"code\": \"invalid_value\",\n    \"values\": [\n      \"linkedin\",\n      \"github\",\n      \"portfolio\",\n      \"web\",\n      \"system\"\n    ],\n    \"path\": [\n      \"verifiedFindings\",\n      0,\n      \"citations\",\n      0,\n      \"source\"\n    ],\n    \"message\": \"Invalid option: expected one of \\\"linkedin\\\"|\\\"github\\\"|\\\"portfolio\\\"|\\\"web\\\"|\\\"system\\\"\"\n  }\n]"
+  }
+}

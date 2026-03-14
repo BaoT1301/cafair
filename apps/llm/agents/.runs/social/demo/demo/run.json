@@ -1,0 +1,26 @@
+{
+  "runId": "demo",
+  "candidateId": "demo",
+  "candidateLabel": "Demo Candidate",
+  "candidateSlug": "demo",
+  "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo",
+  "status": "completed",
+  "startedAtISO": "2026-03-14T02:57:52.457Z",
+  "updatedAtISO": "2026-03-14T02:57:52.457Z",
+  "finishedAtISO": "2026-03-14T02:57:52.457Z",
+  "stageStatus": {
+    "linkedin": "partial",
+    "github": "partial",
+    "portfolio": "partial",
+    "web": "partial"
+  },
+  "paths": {
+    "runJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/run.json",
+    "eventsJsonl": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/events.jsonl",
+    "captureJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/capture.json",
+    "evidencePacketJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.json",
+    "evidencePacketMarkdown": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.md",
+    "reportJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/report.json"
+  },
+  "errors": []
+}

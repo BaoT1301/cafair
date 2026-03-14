@@ -1,0 +1,204 @@
+{
+  "ok": true,
+  "packetVersion": "v1",
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "run": {
+    "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T211631Z",
+    "createdAtISO": "2026-03-13T21:16:33.872Z",
+    "sessionId": "019ce907-e4a0-7f4a-952c-e4f98d1789bc",
+    "actId": "019ce90a-9d9e-7433-9ca9-0bfaa4825919"
+  },
+  "sources": {
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/"
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1"
+    },
+    "portfolio": {
+      "url": "https://lamanhtruong.com"
+    },
+    "web": {
+      "queries": []
+    }
+  },
+  "stageStatus": {
+    "linkedin": "partial",
+    "github": "partial",
+    "portfolio": "partial",
+    "web": "skipped"
+  },
+  "flags": [
+    "IDENTITY_MISMATCH_WEBSITE_OWNER"
+  ],
+  "metrics": {
+    "thinkCount": 0,
+    "actionCounts": {
+      "agentClick": 0,
+      "agentType": 0,
+      "agentScroll": 0,
+      "goToUrl": 0
+    },
+    "timeline": [],
+    "actedUrls": []
+  },
+  "claims": [
+    {
+      "id": "claim_1145301ce41a",
+      "category": "other",
+      "claim": "Linkedin stage status: partial.",
+      "evidence": [
+        {
+          "source": "linkedin",
+          "snippet": "Linkedin stage status: partial.",
+          "url": "https://www.linkedin.com/in/nguyenpn1/"
+        }
+      ],
+      "confidence": "medium",
+      "severity": "info"
+    },
+    {
+      "id": "claim_5d7ca3fc6de1",
+      "category": "risk",
+      "claim": "Linkedin stage completed without an explicit summary payload.",
+      "evidence": [
+        {
+          "source": "linkedin",
+          "snippet": "Linkedin stage completed without an explicit summary payload.",
+          "url": "https://www.linkedin.com/in/nguyenpn1/"
+        }
+      ],
+      "confidence": "medium",
+      "severity": "warning"
+    },
+    {
+      "id": "claim_17f372edbd4b",
+      "category": "projects",
+      "claim": "Github stage status: partial.",
+      "evidence": [
+        {
+          "source": "github",
+          "snippet": "Github stage status: partial.",
+          "url": "https://github.com/ngstephen1"
+        }
+      ],
+      "confidence": "medium",
+      "severity": "info"
+    },
+    {
+      "id": "claim_13aa3f50a27c",
+      "category": "risk",
+      "claim": "Github stage completed without an explicit summary payload.",
+      "evidence": [
+        {
+          "source": "github",
+          "snippet": "Github stage completed without an explicit summary payload.",
+          "url": "https://github.com/ngstephen1"
+        }
+      ],
+      "confidence": "medium",
+      "severity": "warning"
+    },
+    {
+      "id": "claim_cfabc928b896",
+      "category": "identity",
+      "claim": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "snippet": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+          "url": "https://lamanhtruong.com"
+        }
+      ],
+      "confidence": "medium",
+      "severity": "critical"
+    },
+    {
+      "id": "claim_de95480b86fc",
+      "category": "projects",
+      "claim": "Portfolio stage status: partial.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "snippet": "Portfolio stage status: partial.",
+          "url": "https://lamanhtruong.com"
+        }
+      ],
+      "confidence": "medium",
+      "severity": "info"
+    },
+    {
+      "id": "claim_c9ac7d3ce0d9",
+      "category": "risk",
+      "claim": "Nova Act failed during the portfolio stage: ActExceededMaxStepsError(",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "snippet": "Nova Act failed during the portfolio stage: ActExceededMaxStepsError(",
+          "url": "https://lamanhtruong.com"
+        }
+      ],
+      "confidence": "medium",
+      "severity": "warning"
+    },
+    {
+      "id": "claim_d6257e0cbcf1",
+      "category": "risk",
+      "claim": "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "snippet": "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+          "url": "https://lamanhtruong.com"
+        }
+      ],
+      "confidence": "medium",
+      "severity": "warning"
+    },
+    {
+      "id": "claim_d0289b82e7a9",
+      "category": "identity",
+      "claim": "Portfolio owner 'Lam Anh Truong' does not match candidate label 'Nguyen Phan Nguyen'.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "snippet": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+          "url": "https://lamanhtruong.com"
+        }
+      ],
+      "confidence": "high",
+      "severity": "critical"
+    }
+  ],
+  "highlights": {
+    "positives": [
+      "Linkedin stage status: partial.",
+      "Github stage status: partial.",
+      "Portfolio stage status: partial."
+    ],
+    "concerns": [
+      "Linkedin stage completed without an explicit summary payload.",
+      "Github stage completed without an explicit summary payload.",
+      "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+      "Nova Act failed during the portfolio stage: ActExceededMaxStepsError(",
+      "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+      "Portfolio owner 'Lam Anh Truong' does not match candidate label 'Nguyen Phan Nguyen'."
+    ],
+    "missing": [
+      "Linkedin stage completed without an explicit summary payload.",
+      "Github stage completed without an explicit summary payload.",
+      "Nova Act failed during the portfolio stage: ActExceededMaxStepsError(",
+      "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+      "linkedin stage status: partial.",
+      "github stage status: partial.",
+      "portfolio stage status: partial.",
+      "web stage status: skipped."
+    ]
+  },
+  "rawRefs": {
+    "captureJsonPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T211631Z/capture.json",
+    "tracePath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T211631Z/nova_trace.txt",
+    "returnBlockPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T211631Z/nova_return_block.txt",
+    "replayHtmlPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T211631Z/replay.html"
+  }
+}

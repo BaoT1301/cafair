@@ -1,0 +1,26 @@
+{
+  "url": "https://lamanhtruong.com",
+  "found": true,
+  "status": "partial",
+  "ownerName": "Lam Anh Truong",
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "mismatchFlag": true,
+  "evidence": [
+    "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+    "Portfolio stage status: partial."
+  ],
+  "projectsReviewed": 0,
+  "projectHighlights": [
+    "No project highlights captured."
+  ],
+  "resumeFound": false,
+  "githubLinkFound": false,
+  "githubLinkMatchesExpected": "unknown",
+  "retroFound": false,
+  "warnings": [
+    "Portfolio stage completed without an explicit summary payload.",
+    "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+    "Portfolio stage completed without an explicit summary payload."
+  ],
+  "notes": "Portfolio stage parsed from the Nova Act structured return block."
+}

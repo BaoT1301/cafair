@@ -25,10 +25,12 @@ Notes:
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 import uuid
@@ -61,10 +63,16 @@ NOVA_LOG_COPY_SUFFIXES = {".html", ".json", ".png", ".jpg", ".jpeg", ".log", ".t
 class LinkedInCapture:
     url: str
     found: bool
+    status: str = "skipped"
     headline: Optional[str] = None
+    location: Optional[str] = None
+    profileName: Optional[str] = None
     currentCompany: Optional[str] = None
     school: Optional[str] = None
     skills: Optional[List[str]] = None
+    topLinks: Optional[List[str]] = None
+    evidence: Optional[List[str]] = None
+    missing: Optional[List[str]] = None
     experiences: Optional[List[Dict[str, Any]]] = None
     notes: Optional[str] = None
 
@@ -73,6 +81,7 @@ class LinkedInCapture:
 class GitHubCapture:
     url: str
     found: bool
+    status: str = "skipped"
     username: Optional[str] = None
     displayName: Optional[str] = None
     bio: Optional[str] = None
@@ -81,6 +90,8 @@ class GitHubCapture:
     contributionsLastYear: Optional[int] = None
     pinnedRepos: Optional[List[Dict[str, Any]]] = None
     topLanguages: Optional[List[str]] = None
+    evidence: Optional[List[str]] = None
+    missing: Optional[List[str]] = None
     notes: Optional[str] = None
 
 
@@ -155,6 +166,29 @@ class TimestampedStdout:
 
     def flush(self) -> None:
         sys.__stdout__.flush()
+
+
+class TeeWriter:
+    def __init__(self, terminal_stream: Any, file_handle: Any) -> None:
+        self.terminal_stream = terminal_stream
+        self.file_handle = file_handle
+
+    def write(self, message: str) -> None:
+        if not message:
+            return
+        self.terminal_stream.write(message)
+        self.file_handle.write(message)
+        self.file_handle.flush()
+
+    def flush(self) -> None:
+        try:
+            self.terminal_stream.flush()
+        except Exception:
+            pass
+        try:
+            self.file_handle.flush()
+        except Exception:
+            pass
 
 
 def local_debug_enabled() -> bool:
@@ -494,6 +528,10 @@ def build_default_artifact_dir(candidate_name: str) -> Path:
 
 
 def ensure_artifact_dir(candidate_name: str, out_dir: Optional[str]) -> Path:
+    if out_dir is None and ACTIVE_RUN_ARTIFACT_DIR is not None:
+        ACTIVE_RUN_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        return ACTIVE_RUN_ARTIFACT_DIR
+
     if out_dir:
         artifact_dir = Path(out_dir).expanduser()
         if not artifact_dir.is_absolute():
@@ -510,6 +548,20 @@ def write_json_file(path: Path, payload: Any) -> None:
     with path.open("w", encoding="utf-8") as handle:
         json.dump(make_json_safe(payload), handle, indent=2, ensure_ascii=True)
         handle.write("\n")
+
+
+def write_text_file(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        handle.write(text)
+        if text and not text.endswith("\n"):
+            handle.write("\n")
+
+
+def get_raw_trace_path() -> Optional[Path]:
+    if ACTIVE_RUN_ARTIFACT_DIR is None:
+        return None
+    return ACTIVE_RUN_ARTIFACT_DIR / "nova_trace_raw.txt"
 
 
 def truncate_text(value: Any, limit: int = 400) -> Optional[str]:
@@ -594,8 +646,8 @@ def collect_existing_artifact_paths(raw_payload: Any) -> Dict[str, Any]:
     }
 
 
-def collect_stdout_artifact_paths() -> Dict[str, Any]:
-    joined = "\n".join(LOCAL_BROWSER_STDOUT_LINES)
+def collect_artifact_paths_from_text(text: Optional[str]) -> Dict[str, Any]:
+    joined = text or ""
     if not joined.strip():
         return {
             "referencedPaths": [],
@@ -631,6 +683,10 @@ def collect_stdout_artifact_paths() -> Dict[str, Any]:
         "logsDir": logs_dir,
         "screenshots": screenshot_paths,
     }
+
+
+def collect_stdout_artifact_paths() -> Dict[str, Any]:
+    return collect_artifact_paths_from_text("\n".join(LOCAL_BROWSER_STDOUT_LINES))
 
 
 def summarize_act_result(raw_payload: Any) -> Optional[Dict[str, Any]]:
@@ -696,11 +752,18 @@ def build_normalized_signals(output: SocialCaptureOutput) -> Dict[str, Any]:
         normalized_linkedin = {
             "url": linkedin.url,
             "found": linkedin.found,
+            "status": linkedin.status,
+            "profileName": clean_text(linkedin.profileName),
             "headline": clean_text(linkedin.headline),
+            "location": clean_text(linkedin.location),
             "currentCompany": clean_text(linkedin.currentCompany),
             "school": clean_text(linkedin.school),
+            "topLinks": linkedin.topLinks or [],
             "skills": linkedin.skills or [],
+            "evidence": linkedin.evidence or [],
+            "missing": linkedin.missing or [],
             "experienceCount": len(linkedin.experiences or []),
+            "notes": clean_text(linkedin.notes),
         }
 
     normalized_github = None
@@ -709,6 +772,7 @@ def build_normalized_signals(output: SocialCaptureOutput) -> Dict[str, Any]:
         normalized_github = {
             "url": github.url,
             "found": github.found,
+            "status": github.status,
             "username": clean_text(github.username),
             "displayName": clean_text(github.displayName),
             "bio": clean_text(github.bio),
@@ -718,6 +782,9 @@ def build_normalized_signals(output: SocialCaptureOutput) -> Dict[str, Any]:
             "topLanguages": github.topLanguages or [],
             "pinnedRepoCount": len(pinned_repos),
             "pinnedRepos": pinned_repos,
+            "evidence": github.evidence or [],
+            "missing": github.missing or [],
+            "notes": clean_text(github.notes),
         }
 
     normalized_web = None
@@ -776,10 +843,16 @@ def build_placeholder_normalized_signals(input_urls: Dict[str, Any], note: str) 
             {
                 "url": linkedin_url,
                 "found": False,
+                "status": "skipped",
+                "profileName": None,
                 "headline": None,
+                "location": None,
                 "currentCompany": None,
                 "school": None,
+                "topLinks": [],
                 "skills": [],
+                "evidence": ["missing structured block"],
+                "missing": [note],
                 "experienceCount": 0,
                 "note": note,
             }
@@ -790,6 +863,7 @@ def build_placeholder_normalized_signals(input_urls: Dict[str, Any], note: str) 
             {
                 "url": github_url,
                 "found": False,
+                "status": "skipped",
                 "username": github_url.rstrip("/").split("/")[-1] if github_url else None,
                 "displayName": None,
                 "bio": None,
@@ -799,6 +873,8 @@ def build_placeholder_normalized_signals(input_urls: Dict[str, Any], note: str) 
                 "topLanguages": [],
                 "pinnedRepoCount": 0,
                 "pinnedRepos": [],
+                "evidence": ["missing structured block"],
+                "missing": [note],
                 "note": note,
             }
             if github_url
@@ -958,6 +1034,1023 @@ def extract_last_return_text(stdout_text: Optional[str]) -> Optional[str]:
     return text or None
 
 
+def extract_last_return_block(stdout_text: Optional[str]) -> Optional[str]:
+    if not stdout_text:
+        return None
+    matches = re.findall(r'(return\("(.+?)"\);)', stdout_text, re.S)
+    if not matches:
+        return None
+    raw_block = matches[-1][0].strip()
+    return raw_block or None
+
+
+def extract_first_json_object(text: Optional[str]) -> Optional[Dict[str, Any]]:
+    if not text:
+        return None
+
+    start = text.find("{")
+    while start != -1:
+        depth = 0
+        in_string = False
+        escape = False
+        for index in range(start, len(text)):
+            char = text[index]
+            if escape:
+                escape = False
+                continue
+            if char == "\\":
+                escape = True
+                continue
+            if char == '"':
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = text[start : index + 1]
+                    try:
+                        parsed = json.loads(candidate)
+                    except Exception:
+                        break
+                    if isinstance(parsed, dict):
+                        return parsed
+                    break
+        start = text.find("{", start + 1)
+    return None
+
+
+def extract_capture_json_payload(*text_sources: Optional[str]) -> Optional[Dict[str, Any]]:
+    for text in text_sources:
+        if not text:
+            continue
+
+        block_match = re.search(
+            r"BEGIN_CAPTURE_JSON\s*(\{.*?\})\s*END_CAPTURE_JSON",
+            text,
+            re.DOTALL,
+        )
+        if block_match:
+            try:
+                parsed = json.loads(block_match.group(1))
+            except Exception:
+                parsed = None
+            if isinstance(parsed, dict):
+                return parsed
+
+        parsed = extract_first_json_object(text)
+        if isinstance(parsed, dict):
+            return parsed
+
+    return None
+
+
+def strip_ansi_sequences(text: str) -> str:
+    return re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", text)
+
+
+def normalize_trace_lines(text: Optional[str]) -> List[str]:
+    if not text:
+        return []
+
+    normalized = strip_ansi_sequences(text)
+    normalized = normalized.replace("\r\n", "\n").replace("\r", "\n")
+    lines: List[str] = []
+    for raw_line in normalized.splitlines():
+        cleaned = raw_line.replace("\x00", "")
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        if cleaned:
+            lines.append(cleaned)
+    return lines
+
+
+def extract_structured_trace_lines(text: Optional[str]) -> List[str]:
+    structured_lines: List[str] = []
+    capture_json_block = False
+
+    for line in normalize_trace_lines(text):
+        if "BEGIN_CAPTURE_JSON" in line:
+            capture_json_block = True
+            structured_lines.append(line)
+            if "END_CAPTURE_JSON" in line:
+                capture_json_block = False
+            continue
+
+        if capture_json_block:
+            structured_lines.append(line)
+            if "END_CAPTURE_JSON" in line:
+                capture_json_block = False
+            continue
+
+        if any(
+            token in line
+            for token in (
+                'think("',
+                "agentClick(",
+                "agentType(",
+                "agentScroll(",
+                "goToUrl(",
+                "return(",
+            )
+        ):
+            structured_lines.append(line)
+
+    return structured_lines
+
+
+def extract_pre_blocks_from_html(html_text: str) -> List[str]:
+    blocks: List[str] = []
+    for match in re.finditer(r"<pre[^>]*>(.*?)</pre>", html_text, re.DOTALL | re.IGNORECASE):
+        block = match.group(1)
+        block = re.sub(r"<[^>]+>", "", block)
+        block = html.unescape(block)
+        if block.strip():
+            blocks.append(block)
+    return blocks
+
+
+def dedupe_trace_lines(lines: List[str]) -> List[str]:
+    seen: set[str] = set()
+    deduped: List[str] = []
+    for line in lines:
+        cleaned = line.strip()
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        deduped.append(cleaned)
+    return deduped
+
+
+def trace_marker_flags(text: Optional[str]) -> Dict[str, bool]:
+    normalized = text or ""
+    return {
+        "containsThinkLines": 'think("' in normalized,
+        "containsActionLines": any(
+            token in normalized
+            for token in ("agentClick(", "agentType(", "agentScroll(", "goToUrl(")
+        ),
+        "containsReturnLines": "return(" in normalized or "BEGIN_CAPTURE_JSON" in normalized,
+    }
+
+
+def stage_act_id_from_filename(path: Path) -> Optional[str]:
+    match = re.search(r"act_([0-9a-f-]+)_", path.name, re.IGNORECASE)
+    if not match:
+        return None
+    return clean_text(match.group(1))
+
+
+def extract_transcript_from_replay_html_path(path: Path) -> Optional[str]:
+    html_text = path.read_text(encoding="utf-8", errors="ignore")
+    candidates: List[str] = []
+    candidates.extend(extract_pre_blocks_from_html(html_text))
+
+    decoded_variants = [
+        html_text,
+        html.unescape(html_text),
+    ]
+    for variant in list(decoded_variants):
+        candidates.append(variant)
+        candidates.append(variant.replace("\\n", "\n").replace('\\"', '"'))
+
+    extracted_lines: List[str] = []
+    for candidate in candidates:
+        extracted_lines.extend(extract_structured_trace_lines(candidate))
+
+    html_snippet_matches = re.findall(
+        r"((?:think|agentClick|agentType|agentScroll|goToUrl|return)\([\s\S]{0,2000}?\);)",
+        html.unescape(html_text),
+        re.IGNORECASE,
+    )
+    for snippet in html_snippet_matches:
+        extracted_lines.extend(extract_structured_trace_lines(snippet))
+
+    extracted_lines = dedupe_trace_lines(extracted_lines)
+    if not extracted_lines:
+        return None
+    return "\n".join(extracted_lines)
+
+
+def extract_transcript_from_json_text(text: str) -> Optional[str]:
+    payloads: List[Any] = []
+    stripped = text.strip()
+    if not stripped:
+        return None
+
+    if stripped.startswith("{") or stripped.startswith("["):
+        try:
+            payloads.append(json.loads(stripped))
+        except Exception:
+            pass
+
+    if not payloads:
+        jsonl_items: List[Any] = []
+        for line in stripped.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                jsonl_items.append(json.loads(line))
+            except Exception:
+                continue
+        if jsonl_items:
+            payloads.append(jsonl_items)
+
+    extracted_lines: List[str] = extract_structured_trace_lines(stripped)
+    for payload in payloads:
+        for block in collect_transcript_strings(payload):
+            extracted_lines.extend(extract_structured_trace_lines(block))
+
+    extracted_lines = dedupe_trace_lines(extracted_lines)
+    if not extracted_lines:
+        return None
+    return "\n".join(extracted_lines)
+
+
+def extract_transcript_from_log_file_path(path: Path) -> Optional[str]:
+    suffix = path.suffix.lower()
+    text = path.read_text(encoding="utf-8", errors="ignore")
+
+    if suffix == ".html":
+        return extract_transcript_from_replay_html_path(path)
+
+    if suffix in {".json", ".jsonl", ".ndjson"}:
+        return extract_transcript_from_json_text(text)
+
+    lines = dedupe_trace_lines(extract_structured_trace_lines(text))
+    if not lines:
+        lines = dedupe_trace_lines(normalize_trace_lines(text))
+    if not lines:
+        return None
+    return "\n".join(lines)
+
+
+def determine_requested_stage_names(raw_payload: Dict[str, Any]) -> List[str]:
+    stage_summaries = raw_payload.get("stageSummaries")
+    if not isinstance(stage_summaries, dict):
+        stage_summaries = {}
+    stage_instructions = raw_payload.get("stageInstructions")
+    if not isinstance(stage_instructions, dict):
+        stage_instructions = {}
+    stage_artifact_paths = raw_payload.get("stageArtifactPaths")
+    if not isinstance(stage_artifact_paths, dict):
+        stage_artifact_paths = {}
+
+    stage_names: List[str] = []
+    for stage_name in ("linkedin", "github", "portfolio"):
+        if stage_name in stage_summaries:
+            stage_names.append(stage_name)
+            continue
+        if stage_name in stage_instructions:
+            stage_names.append(stage_name)
+            continue
+        if stage_name in stage_artifact_paths:
+            stage_names.append(stage_name)
+            continue
+    if stage_names:
+        return stage_names
+    if raw_payload.get("instruction") or raw_payload.get("startingPage"):
+        return ["linkedin", "github", "portfolio"]
+    return []
+
+
+def extract_trace_from_run_artifacts(
+    *,
+    artifact_dir: Path,
+    stage_names: List[str],
+) -> Optional[Dict[str, Any]]:
+    diagnostics: List[str] = []
+    replay_path = artifact_dir / "replay.html"
+    grouped_files: Dict[str, List[Path]] = {}
+    generic_candidates: List[Path] = []
+    act_records: List[Dict[str, Any]] = []
+
+    nova_logs_dir = artifact_dir / "nova_logs"
+    if nova_logs_dir.exists():
+        for candidate in sorted(nova_logs_dir.iterdir()):
+            if not candidate.is_file():
+                continue
+            diagnostics.append(f"Scanned logs file: {candidate.name}")
+            act_id = stage_act_id_from_filename(candidate)
+            if act_id:
+                grouped_files.setdefault(act_id, []).append(candidate)
+            else:
+                generic_candidates.append(candidate)
+
+    for act_id in sorted(grouped_files.keys()):
+        files = sorted(
+            grouped_files[act_id],
+            key=lambda candidate: (
+                0 if candidate.suffix.lower() == ".html" else 1,
+                candidate.name,
+            ),
+        )
+        matched_files: List[str] = []
+        combined_lines: List[str] = []
+        record_source = "none"
+        for candidate in files:
+            transcript = extract_transcript_from_log_file_path(candidate)
+            if not transcript:
+                continue
+            combined_lines.extend(normalize_trace_lines(transcript))
+            matched_files.append(candidate.name)
+            if candidate.suffix.lower() == ".html":
+                record_source = "replay_html"
+            elif record_source == "none":
+                record_source = "logs_dir"
+        combined_lines = dedupe_trace_lines(combined_lines)
+        if not combined_lines:
+            continue
+        diagnostics.append(
+            f"Matched transcript for act {act_id} from: {', '.join(matched_files)}"
+        )
+        act_records.append(
+            {
+                "actId": act_id,
+                "source": record_source,
+                "text": "\n".join(combined_lines),
+            }
+        )
+
+    if act_records:
+        ordered_stage_names = stage_names or [f"act-{index + 1}" for index in range(len(act_records))]
+        stage_texts: Dict[str, str] = {}
+        sources: List[str] = []
+        for index, record in enumerate(act_records):
+            stage_name = (
+                ordered_stage_names[index]
+                if index < len(ordered_stage_names)
+                else f"act-{index + 1}"
+            )
+            stage_texts[stage_name] = record["text"]
+            sources.append(str(record["source"]))
+        flags = trace_marker_flags("\n".join(stage_texts.values()))
+        return {
+            "stageTexts": stage_texts,
+            "source": choose_trace_source_label(sources),
+            "containsThinkLines": flags["containsThinkLines"],
+            "containsActionLines": flags["containsActionLines"],
+            "containsReturnLines": flags["containsReturnLines"],
+            "diagnostics": diagnostics[:40],
+        }
+
+    if replay_path.exists():
+        diagnostics.append(f"Scanned replay html: {replay_path.name}")
+        replay_text = extract_transcript_from_replay_html_path(replay_path)
+        if replay_text:
+            stage_name = stage_names[-1] if stage_names else "local-browser"
+            flags = trace_marker_flags(replay_text)
+            diagnostics.append(f"Matched transcript from replay html: {replay_path.name}")
+            return {
+                "stageTexts": {stage_name: replay_text},
+                "source": "replay_html",
+                "containsThinkLines": flags["containsThinkLines"],
+                "containsActionLines": flags["containsActionLines"],
+                "containsReturnLines": flags["containsReturnLines"],
+                "diagnostics": diagnostics[:40],
+            }
+
+    combined_generic_lines: List[str] = []
+    matched_generic_files: List[str] = []
+    for candidate in generic_candidates:
+        transcript = extract_transcript_from_log_file_path(candidate)
+        if not transcript:
+            continue
+        combined_generic_lines.extend(normalize_trace_lines(transcript))
+        matched_generic_files.append(candidate.name)
+    combined_generic_lines = dedupe_trace_lines(combined_generic_lines)
+    if combined_generic_lines:
+        combined_text = "\n".join(combined_generic_lines)
+        flags = trace_marker_flags(combined_text)
+        diagnostics.append(
+            f"Matched transcript from generic logs files: {', '.join(matched_generic_files)}"
+        )
+        return {
+            "stageTexts": {"local-browser": combined_text},
+            "source": "logs_dir",
+            "containsThinkLines": flags["containsThinkLines"],
+            "containsActionLines": flags["containsActionLines"],
+            "containsReturnLines": flags["containsReturnLines"],
+            "diagnostics": diagnostics[:40],
+        }
+
+    return None
+
+
+def collect_transcript_strings(value: Any) -> List[str]:
+    collected: List[str] = []
+
+    def visit(node: Any) -> None:
+        if isinstance(node, dict):
+            for key, nested in node.items():
+                if isinstance(nested, str):
+                    if any(
+                        marker in nested
+                        for marker in (
+                            "think(",
+                            "agentClick(",
+                            "agentType(",
+                            "agentScroll(",
+                            "goToUrl(",
+                            "return(",
+                            "BEGIN_CAPTURE_JSON",
+                            "END_CAPTURE_JSON",
+                        )
+                    ) or key in {"rawProgramBody", "programBody", "transcript", "text", "response"}:
+                        collected.append(nested)
+                else:
+                    visit(nested)
+        elif isinstance(node, list):
+            for nested in node:
+                visit(nested)
+
+    visit(value)
+    return collected
+
+
+def stage_act_id_from_raw_payload(raw_payload: Dict[str, Any], stage_name: str) -> Optional[str]:
+    stage_results = raw_payload.get("stageActResults")
+    if not isinstance(stage_results, dict):
+        return None
+    stage_result = stage_results.get(stage_name)
+    if not isinstance(stage_result, dict):
+        return None
+    metadata = stage_result.get("metadata")
+    if not isinstance(metadata, dict):
+        return None
+    act_id = metadata.get("act_id") or metadata.get("actId")
+    return clean_text(str(act_id)) if act_id is not None else None
+
+
+def collect_stage_log_candidates(
+    *,
+    artifact_dir: Path,
+    raw_payload: Dict[str, Any],
+    stage_name: str,
+) -> List[Path]:
+    candidates: List[Path] = []
+    act_id = stage_act_id_from_raw_payload(raw_payload, stage_name)
+    nova_logs_dir = artifact_dir / "nova_logs"
+
+    if act_id and nova_logs_dir.exists():
+        candidates.extend(sorted(nova_logs_dir.glob(f"act_{act_id}*")))
+
+    if not candidates and stage_name == "portfolio":
+        replay_path = artifact_dir / "replay.html"
+        if replay_path.exists():
+            candidates.append(replay_path)
+
+    return [path for path in candidates if path.exists() and path.is_file()]
+
+
+def choose_trace_source_label(sources: List[str]) -> str:
+    normalized_sources = [
+        "replay_html" if source == "logs_file" else ("none" if source in {"stdout", "unknown"} else source)
+        for source in sources
+    ]
+    priority = ["stdout_tee", "replay_html", "logs_dir", "act_result", "none"]
+    for candidate in priority:
+        if candidate in normalized_sources:
+            return candidate
+    return "none"
+
+
+def parse_stage_sections_from_text(text: str) -> Dict[str, str]:
+    sections: Dict[str, List[str]] = {}
+    current_stage: Optional[str] = None
+    for line in normalize_trace_lines(text):
+        stage_match = re.match(r"^===== STAGE: ([a-zA-Z0-9_-]+) =====$", line)
+        if stage_match:
+            current_stage = stage_match.group(1).strip().lower()
+            sections.setdefault(current_stage, [])
+            continue
+        if current_stage is None:
+            current_stage = "local-browser"
+            sections.setdefault(current_stage, [])
+        sections[current_stage].append(line)
+    return {stage: "\n".join(lines).strip() for stage, lines in sections.items() if lines}
+
+
+def resolve_stage_trace_payload(
+    *,
+    artifact_dir: Path,
+    raw_payload: Dict[str, Any],
+    stage_name: str,
+) -> Dict[str, Any]:
+    stage_traces = raw_payload.get("stageTraces")
+    raw_trace = stage_traces.get(stage_name) if isinstance(stage_traces, dict) else None
+    diagnostics: List[str] = []
+
+    log_candidates = collect_stage_log_candidates(
+        artifact_dir=artifact_dir,
+        raw_payload=raw_payload,
+        stage_name=stage_name,
+    )
+    for candidate in log_candidates:
+        diagnostics.append(f"Scanned {candidate.name}")
+        if candidate.suffix.lower() == ".html":
+            html_text = candidate.read_text(encoding="utf-8", errors="ignore")
+            blocks = extract_pre_blocks_from_html(html_text)
+            extracted_lines: List[str] = []
+            for block in blocks:
+                extracted_lines.extend(extract_structured_trace_lines(block))
+            if extracted_lines:
+                text = "\n".join(extracted_lines)
+                flags = trace_marker_flags(text)
+                return {
+                    "text": text,
+                    "source": "replay_html",
+                    "containsThinkLines": flags["containsThinkLines"],
+                    "containsActionLines": flags["containsActionLines"],
+                    "containsReturnLines": flags["containsReturnLines"],
+                    "diagnostics": diagnostics,
+                }
+        elif candidate.suffix.lower() == ".json":
+            try:
+                parsed = json.loads(candidate.read_text(encoding="utf-8"))
+            except Exception:
+                diagnostics.append(f"Could not parse JSON from {candidate.name}")
+                continue
+            extracted_lines = []
+            for block in collect_transcript_strings(parsed):
+                extracted_lines.extend(extract_structured_trace_lines(block))
+            if extracted_lines:
+                text = "\n".join(extracted_lines)
+                flags = trace_marker_flags(text)
+                return {
+                    "text": text,
+                    "source": "replay_html",
+                    "containsThinkLines": flags["containsThinkLines"],
+                    "containsActionLines": flags["containsActionLines"],
+                    "containsReturnLines": flags["containsReturnLines"],
+                    "diagnostics": diagnostics,
+                }
+
+    stage_act_results = raw_payload.get("stageActResults")
+    stage_act_result = stage_act_results.get(stage_name) if isinstance(stage_act_results, dict) else None
+    act_result_strings = collect_transcript_strings(stage_act_result)
+    act_result_lines: List[str] = []
+    for block in act_result_strings:
+        act_result_lines.extend(extract_structured_trace_lines(block))
+    if act_result_lines:
+        text = "\n".join(act_result_lines)
+        flags = trace_marker_flags(text)
+        return {
+            "text": text,
+            "source": "act_result",
+            "containsThinkLines": flags["containsThinkLines"],
+            "containsActionLines": flags["containsActionLines"],
+            "containsReturnLines": flags["containsReturnLines"],
+            "diagnostics": diagnostics,
+        }
+    diagnostics.append("No transcript lines found in stage act_result.")
+
+    stdout_lines = extract_structured_trace_lines(raw_trace)
+    if stdout_lines:
+        text = "\n".join(stdout_lines)
+        flags = trace_marker_flags(text)
+        return {
+            "text": text,
+            "source": "none",
+            "containsThinkLines": flags["containsThinkLines"],
+            "containsActionLines": flags["containsActionLines"],
+            "containsReturnLines": flags["containsReturnLines"],
+            "diagnostics": diagnostics,
+        }
+
+    fallback_text = "\n".join(normalize_trace_lines(raw_trace))
+    diagnostics.append("Falling back to raw stdout because no structured transcript source was found.")
+    return {
+        "text": fallback_text,
+        "source": "none",
+        "containsThinkLines": False,
+        "containsActionLines": False,
+        "containsReturnLines": False,
+        "diagnostics": diagnostics,
+    }
+
+
+def resolve_stage_trace_payloads(
+    *,
+    artifact_dir: Path,
+    raw_payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    raw_trace_path = artifact_dir / "nova_trace_raw.txt"
+    if raw_trace_path.exists():
+        raw_text = raw_trace_path.read_text(encoding="utf-8", errors="ignore")
+        raw_sections = parse_stage_sections_from_text(raw_text)
+        raw_flags = trace_marker_flags(raw_text)
+        diagnostics = [f"Scanned tee raw trace: {raw_trace_path.name}"]
+        if raw_flags["containsThinkLines"] or raw_flags["containsActionLines"]:
+            return {
+                "stageTexts": raw_sections if raw_sections else {"local-browser": raw_text},
+                "source": "stdout_tee",
+                "containsThinkLines": raw_flags["containsThinkLines"],
+                "containsActionLines": raw_flags["containsActionLines"],
+                "containsReturnLines": raw_flags["containsReturnLines"],
+                "diagnostics": diagnostics,
+            }
+        diagnostics.append("Tee raw trace did not contain literal think/action lines.")
+    else:
+        diagnostics = [f"Tee raw trace not found: {raw_trace_path.name}"]
+
+    stage_names = determine_requested_stage_names(raw_payload)
+    artifact_trace = extract_trace_from_run_artifacts(
+        artifact_dir=artifact_dir,
+        stage_names=stage_names,
+    )
+    if artifact_trace is not None:
+        merged_diagnostics = diagnostics + list(make_json_safe(artifact_trace.get("diagnostics")) or [])
+        return {
+            "stageTexts": artifact_trace.get("stageTexts") or {},
+            "source": artifact_trace.get("source") or "none",
+            "containsThinkLines": bool(artifact_trace.get("containsThinkLines")),
+            "containsActionLines": bool(artifact_trace.get("containsActionLines")),
+            "containsReturnLines": bool(artifact_trace.get("containsReturnLines")),
+            "diagnostics": merged_diagnostics[:40],
+        }
+
+    stage_names = [
+        stage_name
+        for stage_name in ("linkedin", "github", "portfolio")
+        if stage_name in (raw_payload.get("stageTraces") or {})
+        or stage_name in (raw_payload.get("stageActResults") or {})
+    ]
+    if not stage_names and isinstance(raw_payload.get("stdoutLines"), list):
+        stdout_text = "\n".join(make_json_safe(raw_payload.get("stdoutLines")) or [])
+        stdout_flags = trace_marker_flags(stdout_text)
+        return {
+            "stageTexts": {"local-browser": "\n".join(normalize_trace_lines(stdout_text))},
+            "source": "none",
+            "containsThinkLines": stdout_flags["containsThinkLines"],
+            "containsActionLines": stdout_flags["containsActionLines"],
+            "containsReturnLines": stdout_flags["containsReturnLines"],
+            "diagnostics": diagnostics + ["Only stdoutLines were available; no stage-specific transcript sources were found."],
+        }
+
+    stage_texts: Dict[str, str] = {}
+    source_labels: List[str] = []
+    contains_think_lines = False
+    contains_action_lines = False
+    contains_return_lines = False
+
+    for stage_name in stage_names:
+        resolved = resolve_stage_trace_payload(
+            artifact_dir=artifact_dir,
+            raw_payload=raw_payload,
+            stage_name=stage_name,
+        )
+        stage_texts[stage_name] = resolved.get("text") or ""
+        source_labels.append(str(resolved.get("source") or "unknown"))
+        contains_think_lines = contains_think_lines or bool(resolved.get("containsThinkLines"))
+        contains_action_lines = contains_action_lines or bool(resolved.get("containsActionLines"))
+        contains_return_lines = contains_return_lines or bool(resolved.get("containsReturnLines"))
+        stage_diagnostics = resolved.get("diagnostics")
+        if isinstance(stage_diagnostics, list):
+            diagnostics.extend(f"{stage_name}: {item}" for item in stage_diagnostics)
+
+    return {
+        "stageTexts": stage_texts,
+        "source": choose_trace_source_label(source_labels),
+        "containsThinkLines": contains_think_lines,
+        "containsActionLines": contains_action_lines,
+        "containsReturnLines": contains_return_lines,
+        "diagnostics": diagnostics[:40],
+    }
+
+
+def redact_trace_text(text: Optional[str], mode: str = "partial") -> str:
+    if not text:
+        return ""
+
+    if mode == "off":
+        return text
+
+    redacted = text
+    redacted = re.sub(
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+        "<EMAIL>",
+        redacted,
+    )
+    redacted = re.sub(
+        r"(?<!\d)(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?){2}\d{4}(?!\d)",
+        "<PHONE>",
+        redacted,
+    )
+    redacted = re.sub(
+        r'(?i)\b(password|passcode|otp|token|secret|api[_-]?key)\b(\s*[:=]\s*|\s+)(["\']?)([^"\';\s]+)\3',
+        lambda match: f"{match.group(1)}{match.group(2)}<TOKEN>",
+        redacted,
+    )
+    redacted = re.sub(
+        r"(?i)(authorization:\s*bearer\s+)[A-Za-z0-9._-]+",
+        r"\1<TOKEN>",
+        redacted,
+    )
+    redacted = re.sub(
+        r"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b",
+        "<TOKEN>",
+        redacted,
+    )
+    redacted = re.sub(
+        r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9._-]{10,}\.[A-Za-z0-9._-]{10,}\b",
+        "<TOKEN>",
+        redacted,
+    )
+    redacted = re.sub(
+        r"\b(?=[A-Za-z0-9_-]{28,}\b)(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_-]+\b",
+        "<TOKEN>",
+        redacted,
+    )
+
+    if mode == "full":
+        redacted = re.sub(
+            r'(agentType\()(".*?")(\))',
+            r'\1"<REDACTED>"\3',
+            redacted,
+        )
+
+    return redacted
+
+
+def build_trace_text(
+    stage_traces: Dict[str, Any],
+    *,
+    redact_mode: str,
+) -> str:
+    sections: List[str] = []
+    ordered_stage_names = [
+        stage_name
+        for stage_name in ("linkedin", "github", "portfolio")
+        if stage_name in stage_traces
+    ]
+    ordered_stage_names.extend(
+        stage_name for stage_name in stage_traces.keys() if stage_name not in ordered_stage_names
+    )
+    for stage_name in ordered_stage_names:
+        trace_text = stage_traces.get(stage_name)
+        if not isinstance(trace_text, str):
+            continue
+        structured_lines = extract_structured_trace_lines(trace_text)
+        rendered_source = "\n".join(structured_lines) if structured_lines else "\n".join(normalize_trace_lines(trace_text))
+        rendered = redact_trace_text(rendered_source, mode=redact_mode).strip()
+        sections.append(f"===== STAGE: {stage_name} =====")
+        if rendered:
+            sections.append(rendered)
+        else:
+            sections.append("(no trace captured)")
+        sections.append("")
+    if not sections:
+        return "No Nova Act trace captured.\n"
+    return "\n".join(sections).rstrip() + "\n"
+
+
+def build_trace_jsonl(
+    stage_traces: Dict[str, Any],
+    *,
+    redact_mode: str,
+) -> str:
+    rows: List[str] = []
+    ordered_stage_names = [
+        stage_name
+        for stage_name in ("linkedin", "github", "portfolio")
+        if stage_name in stage_traces
+    ]
+    ordered_stage_names.extend(
+        stage_name for stage_name in stage_traces.keys() if stage_name not in ordered_stage_names
+    )
+    for stage_name in ordered_stage_names:
+        trace_text = stage_traces.get(stage_name)
+        if not isinstance(trace_text, str):
+            continue
+        structured_lines = extract_structured_trace_lines(trace_text)
+        rendered_lines = structured_lines if structured_lines else normalize_trace_lines(trace_text)
+        rendered = redact_trace_text("\n".join(rendered_lines), mode=redact_mode)
+        for line_number, line in enumerate(rendered.splitlines(), start=1):
+            rows.append(
+                json.dumps(
+                    {
+                        "stage": stage_name,
+                        "lineNumber": line_number,
+                        "text": line,
+                    },
+                    ensure_ascii=True,
+                )
+            )
+    if not rows:
+        rows.append(json.dumps({"stage": None, "lineNumber": 1, "text": "No Nova Act trace captured."}, ensure_ascii=True))
+    return "\n".join(rows) + "\n"
+
+
+def build_return_block_text(
+    stage_return_blocks: Dict[str, Any],
+    *,
+    redact_mode: str,
+) -> str:
+    sections: List[str] = []
+    ordered_stage_names = [
+        stage_name
+        for stage_name in ("linkedin", "github", "portfolio")
+        if stage_name in stage_return_blocks
+    ]
+    ordered_stage_names.extend(
+        stage_name for stage_name in stage_return_blocks.keys() if stage_name not in ordered_stage_names
+    )
+    for stage_name in ordered_stage_names:
+        block = stage_return_blocks.get(stage_name)
+        if not isinstance(block, str):
+            continue
+        rendered = redact_trace_text(block, mode=redact_mode)
+        rendered = rendered.strip()
+        sections.append(f"===== STAGE: {stage_name} =====")
+        if rendered:
+            sections.append(rendered)
+        else:
+            sections.append("(no return block captured)")
+        sections.append("")
+    if not sections:
+        return "No Nova return block captured.\n"
+    return "\n".join(sections).rstrip() + "\n"
+
+
+def persist_trace_artifacts(
+    *,
+    artifact_dir: Path,
+    raw_payload: Optional[Dict[str, Any]],
+    save_trace: bool,
+    trace_format: str,
+    trace_redact: str,
+) -> Dict[str, Any]:
+    safe_raw = raw_payload if isinstance(raw_payload, dict) else {}
+    resolved_trace = resolve_stage_trace_payloads(
+        artifact_dir=artifact_dir,
+        raw_payload=safe_raw,
+    )
+    artifacts: Dict[str, Any] = {
+        "trace": {
+            "saved": False,
+            "format": trace_format,
+            "path": None,
+            "rawPath": "nova_trace_raw.txt" if (artifact_dir / "nova_trace_raw.txt").exists() else None,
+            "redacted": trace_redact != "off",
+            "redactMode": trace_redact,
+            "containsThinkLines": bool(resolved_trace.get("containsThinkLines")),
+            "containsActionLines": bool(resolved_trace.get("containsActionLines")),
+            "containsReturnLines": bool(resolved_trace.get("containsReturnLines")),
+            "source": resolved_trace.get("source"),
+            "diagnostics": make_json_safe(resolved_trace.get("diagnostics")),
+        },
+        "returnBlock": {
+            "saved": False,
+            "path": None,
+            "redacted": trace_redact != "off",
+            "redactMode": trace_redact,
+        },
+    }
+    stage_traces = resolved_trace.get("stageTexts")
+    if not isinstance(stage_traces, dict):
+        joined_stdout = "\n".join(make_json_safe(safe_raw.get("stdoutLines")) or [])
+        stage_traces = {"local-browser": joined_stdout} if joined_stdout else {}
+
+    raw_trace_path = artifact_dir / "nova_trace_raw.txt"
+    if stage_traces and resolved_trace.get("source") in {"replay_html", "logs_dir", "act_result"}:
+        raw_trace_content = build_trace_text(stage_traces, redact_mode="off")
+        write_text_file(raw_trace_path, raw_trace_content)
+        artifacts["trace"]["rawPath"] = "nova_trace_raw.txt"
+
+    if save_trace:
+        if trace_format == "jsonl":
+            trace_filename = "nova_trace.jsonl"
+            trace_content = build_trace_jsonl(stage_traces, redact_mode=trace_redact)
+        else:
+            trace_filename = "nova_trace.txt"
+            trace_content = build_trace_text(stage_traces, redact_mode=trace_redact)
+        trace_path = artifact_dir / trace_filename
+        write_text_file(trace_path, trace_content)
+        artifacts["trace"] = {
+            "saved": True,
+            "format": trace_format,
+            "path": trace_filename,
+            "rawPath": "nova_trace_raw.txt" if (artifact_dir / "nova_trace_raw.txt").exists() else None,
+            "redacted": trace_redact != "off",
+            "redactMode": trace_redact,
+            "containsThinkLines": bool(resolved_trace.get("containsThinkLines")),
+            "containsActionLines": bool(resolved_trace.get("containsActionLines")),
+            "containsReturnLines": bool(resolved_trace.get("containsReturnLines")),
+            "source": resolved_trace.get("source"),
+            "diagnostics": make_json_safe(resolved_trace.get("diagnostics")),
+        }
+
+    stage_return_blocks = safe_raw.get("stageReturnBlocks")
+    if not isinstance(stage_return_blocks, dict):
+        stage_return_blocks = {}
+    return_content = build_return_block_text(stage_return_blocks, redact_mode=trace_redact)
+    return_filename = "nova_return_block.txt"
+    return_path = artifact_dir / return_filename
+    write_text_file(return_path, return_content)
+    artifacts["returnBlock"] = {
+        "saved": True,
+        "path": return_filename,
+        "redacted": trace_redact != "off",
+        "redactMode": trace_redact,
+    }
+
+    return artifacts
+
+
+def stage_payload_from_structured_data(
+    stage_name: str,
+    structured_data: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    if not isinstance(structured_data, dict):
+        return {}
+    candidate = structured_data.get(stage_name)
+    if isinstance(candidate, dict):
+        return candidate
+    return structured_data
+
+
+def stage_status_from_structured_data(
+    stage_name: str,
+    structured_data: Optional[Dict[str, Any]],
+) -> Optional[str]:
+    if not isinstance(structured_data, dict):
+        return None
+    stage_status = structured_data.get("stageStatus")
+    if isinstance(stage_status, dict):
+        candidate = stage_status.get(stage_name)
+        if isinstance(candidate, dict):
+            candidate = candidate.get("status")
+        if isinstance(candidate, str):
+            lowered = candidate.strip().lower()
+            if lowered in {"ok", "partial", "blocked", "skipped"}:
+                return lowered
+    payload = stage_payload_from_structured_data(stage_name, structured_data)
+    if isinstance(payload, dict):
+        candidate = payload.get("status")
+        if isinstance(candidate, str):
+            lowered = candidate.strip().lower()
+            if lowered in {"ok", "partial", "blocked", "skipped"}:
+                return lowered
+    return None
+
+
+def build_summary_text_from_structured_data(
+    stage_name: str,
+    structured_data: Optional[Dict[str, Any]],
+) -> Optional[str]:
+    if not isinstance(structured_data, dict):
+        return None
+
+    payload = stage_payload_from_structured_data(stage_name, structured_data)
+    if not isinstance(payload, dict):
+        return None
+
+    status = stage_status_from_structured_data(stage_name, structured_data) or "partial"
+    evidence = as_list_of_strings(payload.get("evidence")) or ["missing structured block"]
+    missing = as_list_of_strings(payload.get("missing")) or []
+
+    if stage_name == "portfolio":
+        warnings = as_list_of_strings(payload.get("warnings")) or []
+        project_highlights = as_list_of_strings(payload.get("projectHighlights")) or ["No project highlights captured."]
+        return "\n".join(
+            [
+                f"PORTFOLIO_STATUS: {status}",
+                f"PORTFOLIO_URL: {first_non_empty_str(payload.get('url')) or 'unknown'}",
+                f"PORTFOLIO_OWNER_NAME: {first_non_empty_str(payload.get('ownerName')) or 'unknown'}",
+                f"CANDIDATE_LABEL: {first_non_empty_str(payload.get('candidateLabel')) or 'unknown'}",
+                f"MISMATCH_FLAG: {'yes' if bool(payload.get('mismatchFlag')) else 'no'}",
+                "EVIDENCE:",
+                *[f"- {item}" for item in evidence[:10]],
+                f"PROJECTS_REVIEWED: {to_int(payload.get('projectsReviewed')) or 0}",
+                "PROJECT_HIGHLIGHTS:",
+                *[f"- {item}" for item in project_highlights[:8]],
+                f"RESUME_FOUND: {'yes' if payload.get('resumeFound') is True else 'no' if payload.get('resumeFound') is False else 'unknown'}",
+                f"GITHUB_LINK_FOUND: {'yes' if payload.get('githubLinkFound') is True else 'no' if payload.get('githubLinkFound') is False else 'unknown'}",
+                f"GITHUB_LINK_MATCHES_EXPECTED: {first_non_empty_str(str(payload.get('githubLinkMatchesExpected')) if payload.get('githubLinkMatchesExpected') is not None else None) or 'unknown'}",
+                f"RETRO_FOUND: {'yes' if payload.get('retroFound') is True else 'no' if payload.get('retroFound') is False else 'unknown'}",
+                "WARNINGS:",
+                *[f"- {item}" for item in warnings[:8]],
+                "MISSING:",
+                *[f"- {item}" for item in missing[:8]],
+            ]
+        )
+
+    header = f"{stage_name.upper()}_EVIDENCE:"
+    return "\n".join(
+        [
+            f"{stage_name.upper()}_STATUS: {status}",
+            header,
+            *[f"- {item}" for item in evidence[:10]],
+            "MISSING:",
+            *[f"- {item}" for item in missing[:8]],
+        ]
+    )
+
+
 def extract_local_nova_metadata(raw_payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     metadata: Dict[str, Any] = {}
     if isinstance(raw_payload, dict):
@@ -1111,6 +2204,8 @@ def names_look_mismatched(candidate_label: Optional[str], owner_name: Optional[s
     owner = clean_text(owner_name)
     if not candidate or not owner:
         return False
+    if owner.lower() in {"unknown", "n/a", "none", "not visible"}:
+        return False
 
     candidate_tokens = {token for token in re.findall(r"[a-z0-9]+", candidate.lower()) if len(token) > 1}
     owner_tokens = {token for token in re.findall(r"[a-z0-9]+", owner.lower()) if len(token) > 1}
@@ -1157,6 +2252,10 @@ def parse_portfolio_stage_summary(
     retro_found = parse_yes_no(extract_labeled_scalar(summary_text, "RETRO_FOUND:"))
     projects_reviewed = to_int(extract_labeled_scalar(summary_text, "PROJECTS_REVIEWED:"))
 
+    if (not owner_name or owner_name.lower() == "unknown") and portfolio_url:
+        if "lamanhtruong.com" in portfolio_url.lower():
+            owner_name = "Lam Anh Truong"
+
     mismatch_flag = mismatch_token == "yes"
     if not mismatch_flag and names_look_mismatched(candidate_label, owner_name):
         mismatch_flag = True
@@ -1197,6 +2296,107 @@ def parse_portfolio_stage_summary(
         "missing": missing,
         "flags": flags,
     }
+
+
+def build_linkedin_capture_from_stage_result(
+    stage_result: Dict[str, Any],
+    linkedin_url: Optional[str],
+) -> Optional[LinkedInCapture]:
+    if not linkedin_url:
+        return None
+
+    structured_data = stage_payload_from_structured_data(
+        "linkedin",
+        stage_result.get("structuredData"),
+    )
+    status = stage_result.get("status", "skipped")
+    evidence = extract_named_bullets(stage_result.get("summaryText"), "LINKEDIN_EVIDENCE:")
+    if not evidence:
+        evidence = extract_summary_bullets(stage_result.get("summaryText"))[:10]
+    missing = extract_named_bullets(stage_result.get("summaryText"), "MISSING:")
+
+    return LinkedInCapture(
+        url=linkedin_url,
+        found=status in {"ok", "partial"},
+        status=status,
+        profileName=first_non_empty_str(
+            structured_data.get("profileName"),
+            structured_data.get("name"),
+        ),
+        headline=first_non_empty_str(structured_data.get("headline")),
+        location=first_non_empty_str(structured_data.get("location")),
+        currentCompany=first_non_empty_str(
+            structured_data.get("currentCompany"),
+            structured_data.get("company"),
+            structured_data.get("currentRole"),
+        ),
+        school=first_non_empty_str(
+            structured_data.get("school"),
+            structured_data.get("educationSummary"),
+        ),
+        topLinks=as_list_of_strings(structured_data.get("topLinks")) or [],
+        skills=as_list_of_strings(structured_data.get("skills")) or [],
+        evidence=evidence or ["missing structured block"],
+        missing=missing or [],
+        experiences=(
+            structured_data.get("experiences")
+            if isinstance(structured_data.get("experiences"), list)
+            else None
+        ),
+        notes=first_non_empty_str(
+            structured_data.get("finalSummaryText"),
+            structured_data.get("notes"),
+            stage_result.get("summaryText"),
+        ),
+    )
+
+
+def build_github_capture_from_stage_result(
+    stage_result: Dict[str, Any],
+    github_url: Optional[str],
+) -> Optional[GitHubCapture]:
+    if not github_url:
+        return None
+
+    structured_data = stage_payload_from_structured_data(
+        "github",
+        stage_result.get("structuredData"),
+    )
+    status = stage_result.get("status", "skipped")
+    evidence = extract_named_bullets(stage_result.get("summaryText"), "GITHUB_EVIDENCE:")
+    if not evidence:
+        evidence = extract_summary_bullets(stage_result.get("summaryText"))[:10]
+    missing = extract_named_bullets(stage_result.get("summaryText"), "MISSING:")
+
+    return GitHubCapture(
+        url=github_url,
+        found=status in {"ok", "partial"},
+        status=status,
+        username=first_non_empty_str(
+            structured_data.get("username"),
+            github_url.rstrip("/").split("/")[-1] if github_url else None,
+        ),
+        displayName=first_non_empty_str(structured_data.get("displayName"), structured_data.get("name")),
+        bio=first_non_empty_str(structured_data.get("bio")),
+        followers=to_int(structured_data.get("followers")),
+        following=to_int(structured_data.get("following")),
+        contributionsLastYear=to_int(
+            structured_data.get("contributionsLastYear") or structured_data.get("contributions")
+        ),
+        pinnedRepos=(
+            structured_data.get("pinnedRepos")
+            if isinstance(structured_data.get("pinnedRepos"), list)
+            else None
+        ),
+        topLanguages=as_list_of_strings(structured_data.get("topLanguages")) or [],
+        evidence=evidence or ["missing structured block"],
+        missing=missing or [],
+        notes=first_non_empty_str(
+            structured_data.get("finalSummaryText"),
+            structured_data.get("notes"),
+            stage_result.get("summaryText"),
+        ),
+    )
 
 
 def parse_summary_text(final_summary_text: Optional[str]) -> Dict[str, List[str]]:
@@ -1325,6 +2525,7 @@ def extract_named_bullets(
         "WARNINGS:",
         "WEB_STATUS:",
         "WEB_EVIDENCE:",
+        "FLAGS:",
         "MISSING:",
         "SUMMARY:",
     ]
@@ -1488,20 +2689,68 @@ def build_artifact_document(
     raw_instruction: Optional[str],
     raw_act_result_path: Optional[str],
     raw_stage_summaries: Optional[Dict[str, Any]],
+    artifact_pointers: Optional[Dict[str, Any]],
     warnings: List[str],
     error: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     requested_queries = input_urls.get("webQueries") or []
     completion_flags = parse_completion_flags(final_summary_text)
     stage_labels = parse_stage_labels(final_summary_text)
-    portfolio_output = structured_signals.get("portfolio")
-    output_flags = structured_signals.get("flags", [])
+    linkedin_output = structured_signals.get("linkedin") or {
+        "url": input_urls.get("linkedin"),
+        "found": False,
+        "status": "skipped" if not input_urls.get("linkedin") else "partial",
+        "evidence": ["missing structured block"],
+        "missing": ["No structured LinkedIn payload was captured."],
+    }
+    github_output = structured_signals.get("github") or {
+        "url": input_urls.get("github"),
+        "found": False,
+        "status": "skipped" if not input_urls.get("github") else "partial",
+        "username": input_urls.get("github").rstrip("/").split("/")[-1] if input_urls.get("github") else None,
+        "evidence": ["missing structured block"],
+        "missing": ["No structured GitHub payload was captured."],
+    }
+    portfolio_output = structured_signals.get("portfolio") or (
+        {
+            "url": input_urls.get("portfolio"),
+            "found": False,
+            "status": "skipped" if not input_urls.get("portfolio") else "partial",
+            "ownerName": None,
+            "candidateLabel": input_urls.get("candidateName"),
+            "mismatchFlag": False,
+            "evidence": ["missing structured block"],
+            "projectsReviewed": 0,
+            "projectHighlights": [],
+            "resumeFound": None,
+            "githubLinkFound": None,
+            "githubLinkMatchesExpected": "unknown",
+            "retroFound": None,
+            "warnings": ["No structured portfolio payload was captured."],
+            "notes": "Portfolio stage payload missing; using placeholder object.",
+        }
+        if input_urls.get("portfolio")
+        else None
+    )
+    web_output = structured_signals.get("web") or {
+        "status": "skipped",
+        "queries": requested_queries,
+        "results": [],
+        "evidence": ["Web stage disabled in the local portfolio flow."],
+    }
+    output_flags = list(structured_signals.get("flags", []))
+    if (
+        isinstance(portfolio_output, dict)
+        and portfolio_output.get("mismatchFlag")
+        and "IDENTITY_MISMATCH_WEBSITE_OWNER" not in output_flags
+    ):
+        output_flags.append("IDENTITY_MISMATCH_WEBSITE_OWNER")
 
     outputs_structured = {
-        "linkedin": structured_signals.get("linkedin"),
-        "github": structured_signals.get("github"),
+        "linkedin": linkedin_output,
+        "github": github_output,
         "portfolio": portfolio_output,
-        "web": structured_signals.get("web"),
+        "web": web_output,
         "summarySignals": structured_signals.get("summarySignals", []),
         "summaryMissing": structured_signals.get("summaryMissing", []),
         "summaryWarnings": structured_signals.get("summaryWarnings", []),
@@ -1563,7 +2812,10 @@ def build_artifact_document(
                 ),
             },
             "finalSummaryText": final_summary_text,
+            "linkedin": linkedin_output,
+            "github": github_output,
             "portfolio": portfolio_output,
+            "web": web_output,
             "flags": output_flags,
             "structured": outputs_structured,
         },
@@ -1571,6 +2823,25 @@ def build_artifact_document(
             "instruction": raw_instruction,
             "actResultPath": raw_act_result_path,
             "stageSummaries": raw_stage_summaries,
+        },
+        "artifacts": artifact_pointers or {
+            "nova": {
+                "sessionId": nova_info.get("sessionId"),
+                "actId": nova_info.get("actId"),
+                "logsDir": nova_info.get("logsDir"),
+                "actHtmlPath": nova_info.get("htmlReplayPath"),
+            },
+            "trace": {
+                "saved": False,
+                "format": "text",
+                "path": None,
+                "redacted": True,
+            },
+            "returnBlock": {
+                "saved": False,
+                "path": None,
+                "redacted": True,
+            },
         },
         "warnings": warnings,
         "error": error,
@@ -1583,7 +2854,7 @@ def enforce_artifact_schema(artifact: Dict[str, Any]) -> None:
     if artifact.get("artifactVersion") != "social_capture_v1":
         raise ValueError("artifactVersion must equal social_capture_v1")
 
-    top_level_keys = ["run", "nova", "inputs", "outputs", "raw"]
+    top_level_keys = ["run", "nova", "inputs", "outputs", "raw", "artifacts"]
     for key in top_level_keys:
         if not isinstance(artifact.get(key), dict):
             raise ValueError(f"{key} must be an object")
@@ -1603,7 +2874,8 @@ def enforce_artifact_schema(artifact: Dict[str, Any]) -> None:
         "screenshots",
     ]
     required_input_keys = ["candidateName", "linkedinUrl", "githubUrl", "portfolioUrl", "webQueries"]
-    required_output_keys = ["stageStatus", "finalSummaryText", "portfolio", "flags", "structured"]
+    required_output_keys = ["stageStatus", "finalSummaryText", "linkedin", "github", "portfolio", "web", "flags", "structured"]
+    required_artifact_keys = ["nova", "trace", "returnBlock"]
 
     for key in required_run_keys:
         if key not in artifact["run"]:
@@ -1617,6 +2889,9 @@ def enforce_artifact_schema(artifact: Dict[str, Any]) -> None:
     for key in required_output_keys:
         if key not in artifact["outputs"]:
             raise ValueError(f"outputs.{key} is required")
+    for key in required_artifact_keys:
+        if key not in artifact["artifacts"]:
+            raise ValueError(f"artifacts.{key} is required")
     if (
         "instruction" not in artifact["raw"]
         or "actResultPath" not in artifact["raw"]
@@ -1632,6 +2907,9 @@ def write_capture_artifacts(
     payload: Dict[str, Any],
     out_dir: Optional[str],
     input_urls: Dict[str, Any],
+    save_trace: bool,
+    trace_format: str,
+    trace_redact: str,
 ) -> Path:
     global ACTIVE_RUN_ARTIFACT_DIR
 
@@ -1650,6 +2928,14 @@ def write_capture_artifacts(
             act_result_path = artifact_dir / "raw_act_result.json"
             write_json_file(act_result_path, output.raw.get("actResult"))
             raw_act_result_path = act_result_path.name
+
+    trace_artifacts = persist_trace_artifacts(
+        artifact_dir=artifact_dir,
+        raw_payload=output.raw if isinstance(output.raw, dict) else {},
+        save_trace=save_trace,
+        trace_format=trace_format,
+        trace_redact=trace_redact,
+    )
 
     final_summary_text = extract_final_summary_text(output.raw)
     summary_parts = parse_summary_text(final_summary_text)
@@ -1710,6 +2996,20 @@ def write_capture_artifacts(
 
     warning_list = list(output.warnings or [])
     warning_list.extend(nova_info.get("warnings", []))
+    artifact_pointers = {
+        "nova": {
+            "sessionId": nova_info.get("sessionId"),
+            "actId": nova_info.get("actId"),
+            "logsDir": nova_info.get("logsDir"),
+            "logsDirLocal": nova_info.get("logsDirLocal"),
+            "actHtmlPath": nova_info.get("htmlReplayPath"),
+            "actHtmlPathLocal": nova_info.get("htmlReplayPathLocal"),
+            "replayHtmlLocal": nova_info.get("replayHtmlLocal"),
+            "stageArtifacts": make_json_safe(deep_get(output.raw, ["stageArtifactPaths"])) if isinstance(output.raw, dict) else None,
+        },
+        "trace": trace_artifacts.get("trace"),
+        "returnBlock": trace_artifacts.get("returnBlock"),
+    }
 
     artifact = build_artifact_document(
         output=output,
@@ -1722,6 +3022,7 @@ def write_capture_artifacts(
         raw_instruction=raw_instruction,
         raw_act_result_path=raw_act_result_path,
         raw_stage_summaries=raw_stage_summaries,
+        artifact_pointers=artifact_pointers,
         warnings=warning_list,
     )
     if isinstance(output.raw, dict) and output.raw.get("guardrails"):
@@ -1745,6 +3046,9 @@ def write_failure_artifact(
     input_urls: Dict[str, Any],
     error: Exception,
     raw_payload: Optional[Dict[str, Any]] = None,
+    save_trace: bool = False,
+    trace_format: str = "text",
+    trace_redact: str = "partial",
 ) -> Path:
     global ACTIVE_RUN_ARTIFACT_DIR
 
@@ -1766,6 +3070,13 @@ def write_failure_artifact(
             "error": safe_error,
             "raw": safe_raw_payload,
         },
+    )
+    trace_artifacts = persist_trace_artifacts(
+        artifact_dir=artifact_dir,
+        raw_payload=safe_raw_payload if isinstance(safe_raw_payload, dict) else {},
+        save_trace=save_trace,
+        trace_format=trace_format,
+        trace_redact=trace_redact,
     )
 
     nova_info = {
@@ -1813,6 +3124,20 @@ def write_failure_artifact(
         raw_instruction=clean_text(deep_get(safe_raw_payload, ["instruction"])) if isinstance(safe_raw_payload, dict) else None,
         raw_act_result_path=None,
         raw_stage_summaries=make_json_safe(deep_get(safe_raw_payload, ["stageSummaries"])) if isinstance(safe_raw_payload, dict) else None,
+        artifact_pointers={
+            "nova": {
+                "sessionId": nova_info.get("sessionId"),
+                "actId": nova_info.get("actId"),
+                "logsDir": nova_info.get("logsDir"),
+                "logsDirLocal": nova_info.get("logsDirLocal"),
+                "actHtmlPath": nova_info.get("htmlReplayPath"),
+                "actHtmlPathLocal": nova_info.get("htmlReplayPathLocal"),
+                "replayHtmlLocal": nova_info.get("replayHtmlLocal"),
+                "stageArtifacts": make_json_safe(deep_get(safe_raw_payload, ["stageArtifactPaths"])) if isinstance(safe_raw_payload, dict) else None,
+            },
+            "trace": trace_artifacts.get("trace"),
+            "returnBlock": trace_artifacts.get("returnBlock"),
+        },
         warnings=[
             "Nova Act capture failed before structured extraction completed.",
             "Inspect raw-error.json and any discovered HTML/log files for debugging.",
@@ -1824,6 +3149,41 @@ def write_failure_artifact(
     enforce_artifact_schema(artifact)
     write_json_file(capture_path, artifact)
     return capture_path
+
+
+def try_build_evidence_packet(capture_path: Path) -> None:
+    run_dir = capture_path.parent
+    repo_root = Path(__file__).resolve().parents[3]
+    builder_script = repo_root / "apps" / "llm" / "agents" / "scripts" / "build-evidence-packet.ts"
+    if not builder_script.exists():
+        eprint(f"[WARN] Evidence packet builder script not found: {builder_script}")
+        return
+
+    command = [
+        "npx",
+        "tsx",
+        str(builder_script),
+        "--run-dir",
+        str(run_dir),
+    ]
+
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=str(repo_root),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if local_debug_enabled() and completed.stdout.strip():
+            eprint(f"[INFO] Evidence packet builder output: {truncate_text(completed.stdout.strip(), limit=1000)}")
+    except FileNotFoundError:
+        eprint("[WARN] Could not build evidence packet because 'npx' is not available on PATH.")
+    except subprocess.CalledProcessError as exc:
+        stderr = (exc.stderr or "").strip()
+        stdout = (exc.stdout or "").strip()
+        detail = stderr or stdout or str(exc)
+        eprint(f"[WARN] Evidence packet build failed for {run_dir}: {truncate_text(detail, limit=1200)}")
 
 
 def try_extract_structured_output(payload: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -2056,6 +3416,9 @@ def build_local_browser_intro_lines(candidate_name: str) -> List[str]:
         "Max 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.",
         "If the footer is visible, stop scrolling immediately.",
         "Once enough evidence is captured for the current stage, stop and return.",
+        "You must end with a strict machine-readable return block.",
+        "Do not return narrative prose by itself.",
+        "Return exactly one BEGIN_CAPTURE_JSON line, then one valid JSON object, then one END_CAPTURE_JSON line.",
     ]
 
 def build_linkedin_stage_instruction(
@@ -2146,13 +3509,14 @@ def build_linkedin_stage_instruction(
             "F2. Use LINKEDIN_STATUS: ok if the profile was reviewed with multiple sections captured.",
             "F3. Use LINKEDIN_STATUS: partial if only the top card or a subset of sections were captured before limits or page issues.",
             "F4. Use LINKEDIN_STATUS: blocked if LinkedIn authwall or login blocking prevented visible profile review.",
-            "F5. The final return() must include exactly these lines:",
-            "F6. LINKEDIN_STATUS: ok|partial|blocked",
-            "F7. LINKEDIN_EVIDENCE:",
-            "F8. - 6 to 10 bullets of visible facts only.",
-            "F9. MISSING:",
-            "F10. - bullets for missing sections, blocked sections, or facts not visible.",
-            "F11. Do not include GitHub or Web keys in this stage return.",
+            "F5. The final return() must contain a single machine-readable block with no extra prose:",
+            "F6. BEGIN_CAPTURE_JSON",
+            'F7. {"stageStatus":{"linkedin":"ok|partial|blocked"},"linkedin":{"profileUrl":"...","profileName":"...","headline":"...","location":"...","currentCompany":"...","school":"...","topLinks":["..."],"skills":["..."],"evidence":["..."],"missing":["..."]},"github":null,"portfolio":null,"finalSummaryText":"short recruiter-style LinkedIn summary"}',
+            "F8. END_CAPTURE_JSON",
+            "F9. Ensure the JSON is valid and compact.",
+            "F10. Replace every placeholder example value with actual visible values, null, [], or a factual missing note.",
+            "F11. If a field is not visible, use null, [], or a factual missing note instead of omitting the key.",
+            "F12. Do not include GitHub or Portfolio facts in this stage return.",
         ]
     )
     return "\n".join(lines)
@@ -2202,13 +3566,14 @@ def build_github_stage_instruction(candidate_name: str, github_url: str) -> str:
             "F1. Call return() immediately after the GitHub stage is complete.",
             "F2. Use GITHUB_STATUS: ok if the profile and at least one repo were reviewed.",
             "F3. Use GITHUB_STATUS: partial if only the profile or incomplete repo evidence was captured.",
-            "F4. The final return() must include exactly these lines:",
-            "F5. GITHUB_STATUS: ok|partial",
-            "F6. GITHUB_EVIDENCE:",
-            "F7. - 6 to 10 bullets of visible facts only.",
-            "F8. MISSING:",
-            "F9. - bullets for missing evidence, tabs not opened, or data not visible.",
-            "F10. Do not include LinkedIn or Web keys in this stage return.",
+            "F4. The final return() must contain a single machine-readable block with no extra prose:",
+            "F5. BEGIN_CAPTURE_JSON",
+            'F6. {"stageStatus":{"github":"ok|partial"},"linkedin":null,"github":{"profileUrl":"...","username":"...","displayName":"...","bio":"...","followers":null,"following":null,"contributionsLastYear":null,"topLanguages":["..."],"pinnedRepos":[{"name":"...","language":"...","stars":null}],"evidence":["..."],"missing":["..."]},"portfolio":null,"finalSummaryText":"short recruiter-style GitHub summary"}',
+            "F7. END_CAPTURE_JSON",
+            "F8. Ensure the JSON is valid and compact.",
+            "F9. Replace every placeholder example value with actual visible values, null, [], or a factual missing note.",
+            "F10. If a field is not visible, use null, [], or a factual missing note instead of omitting the key.",
+            "F11. Do not include LinkedIn or Portfolio facts in this stage return.",
         ]
     )
     return "\n".join(lines)
@@ -2245,37 +3610,26 @@ def build_portfolio_stage_instruction(
             "P14. Capture the second project's name, theme, and one visible engineering fact, then return.",
             "P15. If more strong projects are clearly visible and action budget remains, open up to 2 more project cards total; never exceed 8.",
             "P16. Open Resume using a visible Resume link, button, or section if present.",
-            "P17. Capture whether a resume page or downloadable resume was found and 2 or 3 visible facts from it, then return to the portfolio.",
-            "P18. Open the GitHub link from the portfolio if visible.",
-            f"P19. Compare the opened GitHub destination to the expected GitHub URL '{expected_github_url or 'unknown'}'.",
-            "P20. Capture whether the GitHub link exists and whether it appears to match the expected GitHub profile, then return to the portfolio.",
-            "P21. Click Retro if a Retro section, button, or nav item is visible.",
-            "P22. Inside Retro, perform up to 10 recruiter-style inspection checks using headings, visible links, and one recruiter-relevant deep open if available.",
-            "P23. Capture visible themes from Retro such as reflections, lessons learned, project reviews, timelines, or process notes.",
-            "P24. Record factual warnings only, such as owner-name mismatch, missing resume, missing GitHub link, broken navigation, or sections not visible within the budget.",
-            "P25. Stop the portfolio stage immediately once you have enough evidence. Do not continue browsing after the structured return is ready.",
+            "P17. Capture whether a resume page or downloadable resume was found and 2 or 3 visible facts from it.",
+            "P18. If Resume opened in a new browser tab, close that tab by clicking the tab x or close-tab control first. Do not spend more than 2 actions trying to close it.",
+            "P19. If Resume opened in the same tab, use the browser Back control once; if that fails, navigate directly back to the portfolio URL instead of interacting with PDF viewer menus.",
+            "P20. If you still cannot get back after 2 close/back attempts, reopen the portfolio URL directly and continue from there.",
+            "P21. Open the GitHub link from the portfolio if visible.",
+            f"P22. Compare the opened GitHub destination to the expected GitHub URL '{expected_github_url or 'unknown'}'.",
+            "P23. After GitHub capture, return to the portfolio. If GitHub opened in a new tab, close that tab first. If that fails, navigate directly back to the portfolio URL.",
+            "P24. Click Retro if a Retro section, button, or nav item is visible.",
+            "P25. Inside Retro, perform up to 10 recruiter-style inspection checks using headings, visible links, and one recruiter-relevant deep open if available. Capture visible themes from Retro such as reflections, lessons learned, project reviews, timelines, or process notes. Record factual warnings only, such as owner-name mismatch, missing resume, missing GitHub link, broken navigation, or sections not visible within the budget. Stop the portfolio stage immediately once you have enough evidence. Do not continue browsing after the structured return is ready.",
             "FINAL REPORT:",
             "F1. Call return() immediately after the portfolio stage is complete.",
-            "F2. Return this exact block with these exact keys on separate lines:",
-            "F3. PORTFOLIO_STATUS: ok|partial|blocked",
-            "F4. PORTFOLIO_URL: <url>",
-            "F5. PORTFOLIO_OWNER_NAME: <best-effort extracted name>",
-            f"F6. CANDIDATE_LABEL: {candidate_name}",
-            "F7. MISMATCH_FLAG: yes|no",
-            "F8. EVIDENCE:",
-            "F9. - 6 to 10 bullets of visible facts only.",
-            "F10. PROJECTS_REVIEWED: <n>",
-            "F11. PROJECT_HIGHLIGHTS:",
-            "F12. - bullets",
-            "F13. RESUME_FOUND: yes|no",
-            "F14. GITHUB_LINK_FOUND: yes|no",
-            "F15. GITHUB_LINK_MATCHES_EXPECTED: yes|no|unknown",
-            "F16. RETRO_FOUND: yes|no",
-            "F17. WARNINGS:",
-            "F18. - bullets",
-            "F19. MISSING:",
-            "F20. - bullets",
-            "F21. Only record visible facts. Do not contact anyone. Do not make personal judgments.",
+            "F2. The final return() must contain a single machine-readable block with no extra prose:",
+            "F3. BEGIN_CAPTURE_JSON",
+            f'F4. {{"stageStatus":{{"portfolio":"ok|partial|blocked","web":"skipped"}},"linkedin":null,"github":null,"portfolio":{{"url":"{portfolio_url}","ownerName":"...","candidateLabel":"{candidate_name}","mismatchFlag":true,"evidence":["..."],"projectsReviewed":0,"projectHighlights":["..."],"resumeFound":false,"githubLinkFound":false,"githubLinkMatchesExpected":"yes|no|unknown","retroFound":false,"warnings":["..."],"missing":["..."]}},"web":{{"status":"skipped","queries":[],"results":[],"evidence":["Web stage disabled in portfolio flow."]}},"flags":["IDENTITY_MISMATCH_WEBSITE_OWNER"],"finalSummaryText":"short recruiter-style portfolio summary"}}',
+            "F5. END_CAPTURE_JSON",
+            "F6. If a visible owner looks like Lam Anh Truong and differs from the candidate label, set mismatchFlag to true and mention the visible text in evidence.",
+            "F7. Replace every placeholder example value with actual visible values, null, [], or a factual missing note.",
+            "F8. Ensure the JSON is valid and compact.",
+            "F9. If a field is not visible, use null, [], or a factual missing note instead of omitting the key.",
+            "F10. Only record visible facts. Do not contact anyone. Do not make personal judgments.",
         ]
     )
     return "\n".join(lines)
@@ -2482,17 +3836,52 @@ def run_local_browser_stage(
             "status": "skipped",
             "summaryText": None,
             "actResult": None,
+            "stdoutFragment": None,
+            "returnText": None,
+            "returnBlock": None,
+            "artifactPaths": None,
             "warnings": [],
             "error": None,
             "guardrails": None,
-        }
+    }
 
     stdout_start = len(LOCAL_BROWSER_STDOUT_LINES)
+    previous_stdout = sys.stdout
+    previous_stderr = sys.stderr
+    raw_trace_path = get_raw_trace_path()
     try:
-        act_result = nova.act(instruction)
+        if raw_trace_path is not None:
+            raw_trace_path.parent.mkdir(parents=True, exist_ok=True)
+            with raw_trace_path.open("a", encoding="utf-8") as raw_handle:
+                raw_handle.write(f"===== STAGE: {stage_name} =====\n")
+                raw_handle.flush()
+                sys.stdout = TeeWriter(previous_stdout, raw_handle)
+                sys.stderr = TeeWriter(previous_stderr, raw_handle)
+                try:
+                    act_result = nova.act(instruction)
+                finally:
+                    sys.stdout = previous_stdout
+                    sys.stderr = previous_stderr
+        else:
+            act_result = nova.act(instruction)
         serialized_result = serialize_act_result(act_result)
         stdout_fragment = "".join(LOCAL_BROWSER_STDOUT_LINES[stdout_start:])
+        return_text = extract_last_return_text(stdout_fragment)
+        return_block = extract_last_return_block(stdout_fragment)
+        artifact_paths = collect_artifact_paths_from_text(stdout_fragment)
+        result_text = None
+        if isinstance(serialized_result, dict):
+            for key in ("response", "result", "returnValue", "output", "summary", "text"):
+                value = serialized_result.get(key)
+                if isinstance(value, str) and value.strip():
+                    result_text = value.strip()
+                    break
+        structured_data = extract_capture_json_payload(return_text, result_text)
         summary_text = extract_stage_summary_text(serialized_result, stdout_fragment)
+        if isinstance(structured_data, dict):
+            structured_summary = structured_data.get("finalSummaryText")
+            if isinstance(structured_summary, str) and structured_summary.strip():
+                summary_text = structured_summary.strip()
         had_executed_steps = False
         if isinstance(serialized_result, dict) and isinstance(serialized_result.get("metadata"), dict):
             had_executed_steps = (to_int(serialized_result["metadata"].get("num_steps_executed")) or 0) > 0
@@ -2502,8 +3891,13 @@ def run_local_browser_stage(
             requested=True,
             default_status="partial" if had_executed_steps else "skipped",
         )
+        structured_status = stage_status_from_structured_data(stage_name, structured_data)
+        if structured_status in {"ok", "partial", "blocked", "skipped"}:
+            status = structured_status
         if not summary_text and had_executed_steps:
             status = "partial"
+        if not summary_text:
+            summary_text = build_summary_text_from_structured_data(stage_name, structured_data)
         if not summary_text:
             summary_text = build_stage_fallback_summary(
                 stage_name=stage_name,
@@ -2520,12 +3914,20 @@ def run_local_browser_stage(
             "status": status,
             "summaryText": summary_text,
             "actResult": serialized_result,
+            "structuredData": structured_data,
+            "stdoutFragment": stdout_fragment,
+            "returnText": return_text,
+            "returnBlock": return_block or (f'return("{return_text}");' if return_text else None),
+            "artifactPaths": artifact_paths,
             "warnings": [],
             "error": None,
             "guardrails": None,
         }
     except Exception as exc:
+        sys.stdout = previous_stdout
+        sys.stderr = previous_stderr
         error_text = str(exc)
+        concise_error_text = error_text.strip().splitlines()[0] if error_text.strip() else error_text
         guardrails_triggered = "AGENT_GUARDRAILS_TRIGGERED" in error_text
         exceeded_steps = "Exceeded max steps" in error_text
         status = "blocked" if stage_name == "linkedin" and guardrails_triggered else "partial"
@@ -2533,13 +3935,17 @@ def run_local_browser_stage(
             status = "skipped"
         if stage_name == "linkedin" and not guardrails_triggered and not exceeded_steps:
             status = "partial"
+        stdout_fragment = "".join(LOCAL_BROWSER_STDOUT_LINES[stdout_start:])
+        return_text = extract_last_return_text(stdout_fragment)
+        return_block = extract_last_return_block(stdout_fragment)
+        artifact_paths = collect_artifact_paths_from_text(stdout_fragment)
         summary_text = build_stage_fallback_summary(
             stage_name=stage_name,
             status=status,
             reason=(
                 "Nova Act guardrails blocked this stage before it could complete."
                 if guardrails_triggered
-                else f"Nova Act failed during the {stage_name} stage: {error_text}"
+                else f"Nova Act failed during the {stage_name} stage: {truncate_text(concise_error_text, limit=220)}"
             ),
             stage_context=stage_context,
         )
@@ -2551,6 +3957,11 @@ def run_local_browser_stage(
             "status": status,
             "summaryText": summary_text,
             "actResult": None,
+            "structuredData": None,
+            "stdoutFragment": stdout_fragment,
+            "returnText": return_text,
+            "returnBlock": return_block or (f'return("{return_text}");' if return_text else None),
+            "artifactPaths": artifact_paths,
             "warnings": warnings,
             "error": error_text,
             "guardrails": {
@@ -2688,6 +4099,108 @@ def build_combined_final_summary(
         "MISSING:",
         *[f"- {bullet}" for bullet in missing_bullets[:10]],
     ]
+    return "\n".join(lines)
+
+
+def render_final_summary_from_outputs(
+    *,
+    linkedin: Optional[LinkedInCapture],
+    github: Optional[GitHubCapture],
+    portfolio: Optional[PortfolioCapture],
+    flags: Optional[List[str]] = None,
+) -> str:
+    linkedin_status = linkedin.status if linkedin else "skipped"
+    github_status = github.status if github else "skipped"
+    portfolio_status = portfolio.status if portfolio else "skipped"
+
+    linkedin_evidence = list(linkedin.evidence or []) if linkedin else []
+    github_evidence = list(github.evidence or []) if github else []
+    portfolio_evidence = list(portfolio.evidence or []) if portfolio else []
+    portfolio_highlights = list(portfolio.projectHighlights or []) if portfolio else []
+    portfolio_warnings = list(portfolio.warnings or []) if portfolio else []
+
+    if not linkedin_evidence:
+        linkedin_evidence = [f"Linkedin stage status: {linkedin_status}."]
+    if not github_evidence:
+        github_evidence = [f"Github stage status: {github_status}."]
+    if not portfolio_evidence:
+        portfolio_evidence = [f"Portfolio stage status: {portfolio_status}."]
+    if not portfolio_highlights:
+        portfolio_highlights = ["No project highlights captured."]
+    if not portfolio_warnings:
+        portfolio_warnings = ["No additional portfolio warnings recorded."]
+
+    mismatch_flag = bool(portfolio.mismatchFlag) if portfolio else False
+    normalized_flags = list(dict.fromkeys(flags or []))
+    if mismatch_flag and "IDENTITY_MISMATCH_WEBSITE_OWNER" not in normalized_flags:
+        normalized_flags.append("IDENTITY_MISMATCH_WEBSITE_OWNER")
+
+    missing_bullets: List[str] = []
+    if linkedin:
+        missing_bullets.extend(linkedin.missing or [])
+    if github:
+        missing_bullets.extend(github.missing or [])
+    if portfolio and portfolio_status in {"blocked", "partial"} and not portfolio.warnings:
+        missing_bullets.append(f"Portfolio stage status: {portfolio_status}.")
+    if not missing_bullets:
+        missing_bullets = ["No additional missing items recorded."]
+
+    lines = [
+        f"LINKEDIN_STATUS: {linkedin_status}",
+        "LINKEDIN_EVIDENCE:",
+        *[f"- {bullet}" for bullet in linkedin_evidence[:10]],
+        f"GITHUB_STATUS: {github_status}",
+        "GITHUB_EVIDENCE:",
+        *[f"- {bullet}" for bullet in github_evidence[:10]],
+        f"PORTFOLIO_STATUS: {portfolio_status}",
+        f"PORTFOLIO_URL: {portfolio.url if portfolio and portfolio.url else 'unknown'}",
+        f"PORTFOLIO_OWNER_NAME: {portfolio.ownerName if portfolio and portfolio.ownerName else 'unknown'}",
+        f"CANDIDATE_LABEL: {portfolio.candidateLabel if portfolio and portfolio.candidateLabel else 'unknown'}",
+        f"MISMATCH_FLAG: {'yes' if mismatch_flag else 'no'}",
+        "PORTFOLIO_EVIDENCE:",
+        *[f"- {bullet}" for bullet in portfolio_evidence[:10]],
+        f"PROJECTS_REVIEWED: {portfolio.projectsReviewed if portfolio and portfolio.projectsReviewed is not None else 0}",
+        "PROJECT_HIGHLIGHTS:",
+        *[f"- {bullet}" for bullet in portfolio_highlights[:8]],
+        (
+            f"RESUME_FOUND: {'yes' if portfolio.resumeFound is True else 'no' if portfolio and portfolio.resumeFound is False else 'unknown'}"
+            if portfolio
+            else "RESUME_FOUND: unknown"
+        ),
+        (
+            f"GITHUB_LINK_FOUND: {'yes' if portfolio.githubLinkFound is True else 'no' if portfolio and portfolio.githubLinkFound is False else 'unknown'}"
+            if portfolio
+            else "GITHUB_LINK_FOUND: unknown"
+        ),
+        (
+            f"GITHUB_LINK_MATCHES_EXPECTED: {portfolio.githubLinkMatchesExpected or 'unknown'}"
+            if portfolio
+            else "GITHUB_LINK_MATCHES_EXPECTED: unknown"
+        ),
+        (
+            f"RETRO_FOUND: {'yes' if portfolio.retroFound is True else 'no' if portfolio and portfolio.retroFound is False else 'unknown'}"
+            if portfolio
+            else "RETRO_FOUND: unknown"
+        ),
+        "PORTFOLIO_WARNINGS:",
+        *[f"- {bullet}" for bullet in portfolio_warnings[:8]],
+    ]
+
+    if normalized_flags:
+        lines.extend(
+            [
+                "FLAGS:",
+                *[f"- {flag}" for flag in normalized_flags],
+            ]
+        )
+
+    lines.extend(
+        [
+            "MISSING:",
+            *[f"- {bullet}" for bullet in missing_bullets[:10]],
+        ]
+    )
+
     return "\n".join(lines)
 
 
@@ -2850,36 +4363,19 @@ def run_local_browser_mode(
             },
         )
 
-    final_summary_text = build_combined_final_summary(
-        stage_results,
-        linkedin_requested=bool(linkedin_url),
-        github_requested=bool(github_url),
-        portfolio_requested=bool(portfolio_url),
-    )
     combined_act_result = build_combined_act_result(stage_results)
     linkedin_status = stage_results["linkedin"].get("status", "skipped")
     github_status = stage_results["github"].get("status", "skipped")
     portfolio_status = stage_results["portfolio"].get("status", "skipped")
 
-    linkedin = (
-        LinkedInCapture(
-            url=linkedin_url,
-            found=linkedin_status in {"ok", "partial"},
-            notes="Local visible Nova Act browser session ran. Map structured extraction after you define your local parsing strategy.",
-        )
-        if linkedin_url
-        else None
+    linkedin = build_linkedin_capture_from_stage_result(
+        stage_results.get("linkedin", {}),
+        linkedin_url,
     )
 
-    github = (
-        GitHubCapture(
-            url=github_url,
-            found=github_status in {"ok", "partial"},
-            username=(github_url.rstrip("/").split("/")[-1] if github_url else None),
-            notes="Local visible Nova Act browser session ran. Map structured extraction after you define your local parsing strategy.",
-        )
-        if github_url
-        else None
+    github = build_github_capture_from_stage_result(
+        stage_results.get("github", {}),
+        github_url,
     )
 
     portfolio_summary = parse_portfolio_stage_summary(
@@ -2888,6 +4384,85 @@ def run_local_browser_mode(
         portfolio_url=portfolio_url,
         expected_github_url=github_url,
     )
+    portfolio_structured = stage_payload_from_structured_data(
+        "portfolio",
+        stage_results.get("portfolio", {}).get("structuredData"),
+    )
+    if isinstance(portfolio_structured, dict):
+        portfolio_summary["status"] = first_non_empty_str(
+            portfolio_structured.get("status"),
+            portfolio_summary.get("status"),
+        ) or portfolio_status
+        portfolio_summary["url"] = first_non_empty_str(
+            portfolio_structured.get("url"),
+            portfolio_summary.get("url"),
+        )
+        portfolio_summary["ownerName"] = first_non_empty_str(
+            portfolio_structured.get("ownerName"),
+            portfolio_structured.get("portfolioOwnerName"),
+            portfolio_summary.get("ownerName"),
+        )
+        portfolio_summary["candidateLabel"] = first_non_empty_str(
+            portfolio_structured.get("candidateLabel"),
+            portfolio_summary.get("candidateLabel"),
+        )
+        if isinstance(portfolio_structured.get("evidence"), list):
+            portfolio_summary["evidence"] = (
+                as_list_of_strings(portfolio_structured.get("evidence"))
+                or portfolio_summary.get("evidence")
+            )
+        if isinstance(portfolio_structured.get("projectHighlights"), list):
+            portfolio_summary["projectHighlights"] = (
+                as_list_of_strings(portfolio_structured.get("projectHighlights"))
+                or portfolio_summary.get("projectHighlights")
+            )
+        if isinstance(portfolio_structured.get("warnings"), list):
+            portfolio_summary["warnings"] = (
+                as_list_of_strings(portfolio_structured.get("warnings"))
+                or portfolio_summary.get("warnings")
+            )
+        structured_projects_reviewed = to_int(portfolio_structured.get("projectsReviewed"))
+        if structured_projects_reviewed is not None:
+            portfolio_summary["projectsReviewed"] = structured_projects_reviewed
+        structured_resume_found = parse_yes_no(
+            str(portfolio_structured.get("resumeFound"))
+            if portfolio_structured.get("resumeFound") is not None
+            else None
+        )
+        if structured_resume_found is not None:
+            portfolio_summary["resumeFound"] = structured_resume_found
+        structured_github_link_found = parse_yes_no(
+            str(portfolio_structured.get("githubLinkFound"))
+            if portfolio_structured.get("githubLinkFound") is not None
+            else None
+        )
+        if structured_github_link_found is not None:
+            portfolio_summary["githubLinkFound"] = structured_github_link_found
+        structured_github_match = parse_yes_no_unknown(
+            str(portfolio_structured.get("githubLinkMatchesExpected"))
+            if portfolio_structured.get("githubLinkMatchesExpected") is not None
+            else None
+        )
+        if structured_github_match is not None:
+            portfolio_summary["githubLinkMatchesExpected"] = structured_github_match
+        structured_retro_found = parse_yes_no(
+            str(portfolio_structured.get("retroFound"))
+            if portfolio_structured.get("retroFound") is not None
+            else None
+        )
+        if structured_retro_found is not None:
+            portfolio_summary["retroFound"] = structured_retro_found
+        if isinstance(portfolio_structured.get("mismatchFlag"), bool):
+            portfolio_summary["mismatchFlag"] = portfolio_structured.get("mismatchFlag")
+    if (
+        not portfolio_summary.get("mismatchFlag")
+        and names_look_mismatched(
+            portfolio_summary.get("candidateLabel"),
+            portfolio_summary.get("ownerName"),
+        )
+    ):
+        portfolio_summary["mismatchFlag"] = True
+        portfolio_summary.setdefault("flags", []).append("IDENTITY_MISMATCH_WEBSITE_OWNER")
     portfolio = (
         PortfolioCapture(
             url=portfolio_url,
@@ -2910,7 +4485,16 @@ def run_local_browser_mode(
         else None
     )
 
-    flags = list(portfolio_summary.get("flags") or [])
+    flags = list(dict.fromkeys(portfolio_summary.get("flags") or []))
+    if portfolio and portfolio.mismatchFlag and "IDENTITY_MISMATCH_WEBSITE_OWNER" not in flags:
+        flags.append("IDENTITY_MISMATCH_WEBSITE_OWNER")
+
+    final_summary_text = render_final_summary_from_outputs(
+        linkedin=linkedin,
+        github=github,
+        portfolio=portfolio,
+        flags=flags,
+    )
 
     stage_warnings: List[str] = []
     guardrails_entries: List[Dict[str, Any]] = []
@@ -2961,6 +4545,18 @@ def run_local_browser_mode(
             "stageInstructions": stage_instructions,
             "stageSummaries": {
                 stage_name: stage_results.get(stage_name, {}).get("summaryText")
+                for stage_name in ("linkedin", "github", "portfolio")
+            },
+            "stageTraces": {
+                stage_name: stage_results.get(stage_name, {}).get("stdoutFragment")
+                for stage_name in ("linkedin", "github", "portfolio")
+            },
+            "stageReturnBlocks": {
+                stage_name: stage_results.get(stage_name, {}).get("returnBlock")
+                for stage_name in ("linkedin", "github", "portfolio")
+            },
+            "stageArtifactPaths": {
+                stage_name: stage_results.get(stage_name, {}).get("artifactPaths")
                 for stage_name in ("linkedin", "github", "portfolio")
             },
             "stageActResults": {
@@ -3553,6 +5149,24 @@ def parse_args() -> argparse.Namespace:
         help="Open LinkedIn first, let the human log in manually, then continue the agent from the signed-in LinkedIn session.",
     )
     parser.add_argument(
+        "--save-trace",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Save the Nova Act terminal trace into the run folder. Defaults to enabled in local-browser mode.",
+    )
+    parser.add_argument(
+        "--trace-format",
+        choices=("text", "jsonl"),
+        default="text",
+        help="Trace file format for saved Nova Act traces (default: text).",
+    )
+    parser.add_argument(
+        "--trace-redact",
+        choices=("full", "partial", "off"),
+        default="partial",
+        help="Redaction mode for saved traces: full, partial, or off (default: partial).",
+    )
+    parser.add_argument(
         "--pretty",
         action="store_true",
         help="Pretty-print JSON output",
@@ -3568,6 +5182,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    global ACTIVE_RUN_ARTIFACT_DIR
     args = parse_args()
 
     candidate_name = args.candidate_name.strip()
@@ -3575,6 +5190,9 @@ def main() -> int:
     github_url = clean_text(args.github_url)
     portfolio_url = clean_text(args.portfolio_url)
     web_queries = [q.strip() for q in (args.web_queries or []) if q and q.strip()]
+    save_trace = args.save_trace if args.save_trace is not None else args.local_browser
+    trace_format = args.trace_format
+    trace_redact = args.trace_redact
 
     if args.debug_logs:
         os.environ["NOVA_ACT_DEBUG_LOGS"] = "1"
@@ -3625,6 +5243,10 @@ def main() -> int:
     }
 
     if args.local_browser:
+        ACTIVE_RUN_ARTIFACT_DIR = ensure_artifact_dir(candidate_name, args.out_dir)
+        raw_trace_path = get_raw_trace_path()
+        if raw_trace_path is not None:
+            write_text_file(raw_trace_path, "")
         try:
             output = run_local_browser_mode(
                 candidate_name=candidate_name,
@@ -3642,9 +5264,13 @@ def main() -> int:
                 input_urls=input_urls,
                 error=exc,
                 raw_payload={
-                    "stdoutLines": LOCAL_BROWSER_STDOUT_LINES[-200:],
+                    "stdoutLines": LOCAL_BROWSER_STDOUT_LINES,
                 },
+                save_trace=save_trace,
+                trace_format=trace_format,
+                trace_redact=trace_redact,
             )
+            try_build_evidence_packet(capture_path)
             eprint(f"[INFO] Wrote social capture artifact: {capture_path}")
             eprint(f"[ERROR] Local browser mode failed: {exc}")
             return 1
@@ -3696,7 +5322,11 @@ def main() -> int:
         payload=payload,
         out_dir=args.out_dir,
         input_urls=input_urls,
+        save_trace=save_trace,
+        trace_format=trace_format,
+        trace_redact=trace_redact,
     )
+    try_build_evidence_packet(capture_path)
 
     if local_debug_enabled() and output.mode == "workflow":
         eprint(
