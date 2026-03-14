@@ -72,6 +72,16 @@ const globalStyle = `
   .lp .rflow-node { cursor: default; }
 
   .lp .modal-back { position: fixed; inset: 0; background: rgba(13,35,24,0.48); backdrop-filter: blur(7px); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+  @keyframes marquee-left {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  @keyframes marquee-right {
+    0%   { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+  }
+  .lp .marquee-track-left { display: flex; width: max-content; animation: marquee-left 60s linear infinite; }
 `;
 
 const LOGO_URL = "https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504";
@@ -237,14 +247,21 @@ function EvidenceViz() {
 
 function ATSViz() {
   const ref = useRef(null); const inView = useInView(ref, { once: true });
-  const tools = [{ l: "Greenhouse", c: "#3BAA6A" }, { l: "Lever", c: "#2066C8" }, { l: "Workday", c: "#C24A20" }, { l: "Ashby", c: "#5A3AC2" }];
+  const tools = [
+    { l: "Greenhouse", src: "/logos/greenhouse.png" },
+    { l: "Lever",      src: "/logos/lever.png"      },
+    { l: "Workday",    src: "/logos/workday.png"     },
+    { l: "Ashby",      src: "/logos/ashby.png"       },
+  ];
   return (
     <div ref={ref}>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
         {tools.map((t, i) => (
           <motion.div key={t.l} initial={{ opacity: 0, y: 6 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: i * 0.09 }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-              <div style={{ width: 31, height: 31, borderRadius: 9, background: t.c, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 700, color: "#fff" }}>{t.l.slice(0, 2)}</div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.9)", border: "1px solid rgba(62,122,82,0.15)", display: "flex", alignItems: "center", justifyContent: "center", padding: 5 }}>
+                <img src={t.src} alt={t.l} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              </div>
               <span style={{ fontSize: 8, color: C.muted, fontWeight: 500 }}>{t.l}</span>
             </div>
           </motion.div>
@@ -262,10 +279,10 @@ function ATSViz() {
 // ── Agent Flowchart (candidate side) ─────────────────────────────────────────
 function AgentFlowchart() {
   const ref = useRef(null); const inView = useInView(ref, { once: true, margin: "-50px" });
-  const W = 620; const H = 310;
-  const cx0 = 72; const cx1 = 202; const cx2 = 368; const cx3 = 538;
-  const ry = [70, 155, 240]; const agY = 155;
-  const nW = 104; const nH = 36; const aW = 128; const aH = 44;
+  const W = 780; const H = 390;
+  const cx0 = 88; const cx1 = 264; const cx2 = 468; const cx3 = 664;
+  const ry = [80, 195, 310]; const agY = 195;
+  const nW = 144; const nH = 56; const aW = 172; const aH = 66;
   const iNodes = [{ id: "Resume", icon: "📄" }, { id: "Job Desc", icon: "📋" }, { id: "User Profile", icon: "🤝" }];
   const pNodes = [{ id: "JD Analyzer", icon: "🔍" }, { id: "Skill Matcher", icon: "🎯" }, { id: "Resume Tailor", icon: "✨" }];
   const oNodes = [{ id: "Submit App", icon: "🚀" }, { id: "Confirmation", icon: "✅" }, { id: "Book Chat Slot", icon: "📅" }];
@@ -289,9 +306,9 @@ function AgentFlowchart() {
     const w = wide ? aW : nW, h = wide ? aH : nH;
     return (
       <motion.g initial={{ opacity: 0, y: 8 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: (idx || 0) * 0.1, duration: 0.44 }}>
-        <rect x={cx - w / 2} y={cy - h / 2} width={w} height={h} rx="9" fill="rgba(255,255,255,0.9)" stroke={acc || "rgba(62,122,82,0.22)"} strokeWidth="1.4" />
-        <rect x={cx - w / 2} y={cy - h / 2 + 3} width="3.5" height={h - 6} rx="2" fill={acc} opacity="0.85" />
-        <text x={cx + 4} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fontSize={wide ? "10.5" : "9.5"} fontWeight={wide ? "700" : "600"} fontFamily="'DM Sans',sans-serif" fill="#0D2318">{icon} {label}</text>
+        <rect x={cx - w / 2} y={cy - h / 2} width={w} height={h} rx="11" fill="rgba(255,255,255,0.92)" stroke={acc} strokeWidth="1.6" />
+        <rect x={cx - w / 2} y={cy - h / 2 + 4} width="4" height={h - 8} rx="2" fill={acc} opacity="0.85" />
+        <text x={cx + 5} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fontSize={wide ? "14.5" : "12.5"} fontWeight={wide ? "700" : "600"} fontFamily="'DM Sans',sans-serif" fill="#0D2318">{icon} {label}</text>
       </motion.g>
     );
   };
@@ -307,7 +324,7 @@ function AgentFlowchart() {
           </marker>
         </defs>
         {([["INPUTS", cx0, "#7B68EE"], ["AI PROCESSING", cx1, "#7B68EE"], ["OUTPUTS", cx3, "#3E7A52"]] as [string, number, string][]).map(([l, x, clr]) => (
-          <text key={l} x={x} y={H - 8} textAnchor="middle" fontSize="8" fontWeight="700" fontFamily="'DM Sans',sans-serif" letterSpacing="0.09em" fill={clr} opacity="0.85">{l}</text>
+          <text key={l} x={x} y={H - 8} textAnchor="middle" fontSize="10" fontWeight="700" fontFamily="'DM Sans',sans-serif" letterSpacing="0.09em" fill={clr} opacity="0.85">{l}</text>
         ))}
         {paths.map((p, i) => <path key={`cp-${i}`} d={p.d} fill="none" stroke="rgba(122,174,138,0.2)" strokeWidth="1.3" markerEnd="url(#arr-c)" />)}
         {inView && paths.map((p, i) => (
@@ -332,8 +349,26 @@ function AgentFlowchart() {
 
 // ── Recruiter Flowchart ───────────────────────────────────────────────────────
 function RecruiterFlowchart({ onRewardClick }: { onRewardClick: () => void }) {
-  const ref = useRef(null); const inView = useInView(ref, { once: true, margin: "-50px" });
+  const ref = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-50px" });
   const W = 780; const H = 430;
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const tipArrowRef = useRef<HTMLDivElement>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const descriptions: Record<string, string> = {
+    candEnter:    "Intake candidate and start automated screening + routing workflow.",
+    microScreen:  "Score fit, identify gaps, flag risk, and rank priority.",
+    smartRouter:  "Route candidates into lanes based on score, role, and risk.",
+    recruiterNow: "Surface top candidates instantly for recruiter attention and action.",
+    quickScreen:  "Generate ATS-ready brief: strengths, gaps, questions, next steps.",
+    redirectLane: "Triage low-fit candidates with polite guidance and alternate roles.",
+    novaAgent:    "Take actions across ATS: update stages, add notes, schedule steps.",
+    atsSync:      "Sync evidence packet, scores, and decisions into Greenhouse.",
+    interview:    "Auto-schedule interview, confirm availability, and create calendar event.",
+    rewardSig:    "Learn from recruiter outcomes to improve scoring and routing.",
+  };
 
   const N: Record<string, { cx: number; cy: number; w: number; h: number; label: string; sub: string; icon: string; ck: string }> = {
     candEnter:    { cx: 85,  cy: 205, w: 134, h: 48, label: "Candidate Enters",  sub: "Career Fair Queue",   icon: "🧑", ck: "blue"   },
@@ -384,6 +419,53 @@ function RecruiterFlowchart({ onRewardClick }: { onRewardClick: () => void }) {
     { d: `M${e("atsSync","b")[0]},${e("atsSync","b")[1]} C${e("atsSync","b")[0]},${e("atsSync","b")[1]+42} ${e("rewardSig","t")[0]+12},${e("rewardSig","t")[1]-28} ${e("rewardSig","t")[0]},${e("rewardSig","t")[1]}`, c: "rgba(123,104,238,.22)" },
   ];
 
+  const handleSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!svgRef.current || !ref.current || !tooltipRef.current) return;
+    const svgRect = svgRef.current.getBoundingClientRect();
+    const svgX = (e.clientX - svgRect.left) * (W / svgRect.width);
+    const svgY = (e.clientY - svgRect.top)  * (H / svgRect.height);
+    let found: typeof N[string] | null = null;
+    let foundId = "";
+    for (const [id, n] of Object.entries(N)) {
+      if (svgX >= n.cx - n.w / 2 && svgX <= n.cx + n.w / 2 &&
+          svgY >= n.cy - n.h / 2 && svgY <= n.cy + n.h / 2) {
+        found = n; foundId = id; break;
+      }
+    }
+    if (!found) return;
+    if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; }
+    const containerRect = ref.current.getBoundingClientRect();
+    const x = found.cx * (svgRect.width / W) + (svgRect.left - containerRect.left);
+    const y = found.cy * (svgRect.height / H) + (svgRect.top - containerRect.top);
+    const aboveNode = found.cy > 80;
+    const tip = tooltipRef.current;
+    tip.style.left = `${x}px`;
+    tip.style.top = aboveNode ? `${y - 12}px` : `${y + 12}px`;
+    tip.style.transform = aboveNode ? "translate(-50%, calc(-100% - 8px))" : "translate(-50%, 8px)";
+    tip.style.opacity = "1";
+    const titleEl = tip.querySelector<HTMLElement>("[data-tip-title]");
+    const descEl  = tip.querySelector<HTMLElement>("[data-tip-desc]");
+    if (titleEl) titleEl.textContent = `${found.icon} ${found.label}`;
+    if (descEl)  descEl.textContent  = descriptions[foundId];
+    if (tipArrowRef.current) {
+      const a = tipArrowRef.current;
+      if (aboveNode) {
+        a.style.bottom = "-5px"; a.style.top = "";
+        a.style.borderTop = "5px solid rgba(13,30,20,0.93)"; a.style.borderBottom = "";
+      } else {
+        a.style.top = "-5px"; a.style.bottom = "";
+        a.style.borderBottom = "5px solid rgba(13,30,20,0.93)"; a.style.borderTop = "";
+      }
+    }
+  };
+
+  const handleSvgMouseLeave = () => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
+    }, 120);
+  };
+
   const NodeG = ({ id }: { id: string }) => {
     const n = N[id]; const t = theme[n.ck];
     const isClickable = id === "rewardSig";
@@ -418,9 +500,9 @@ function RecruiterFlowchart({ onRewardClick }: { onRewardClick: () => void }) {
   ];
 
   return (
-    <div ref={ref} style={{ background: "rgba(255,255,255,0.55)", borderRadius: 22, border: `1px solid ${C.border}`, padding: "22px 12px 20px", boxShadow: C.shadow, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", inset: 0, borderRadius: 22, zIndex: 0, opacity: 0.34, backgroundImage: "linear-gradient(rgba(62,122,82,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(62,122,82,.08) 1px,transparent 1px)", backgroundSize: "26px 26px" }} />
-      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ position: "relative", zIndex: 2, display: "block", overflow: "visible" }}>
+    <div ref={ref} style={{ background: "rgba(255,255,255,0.55)", borderRadius: 22, border: `1px solid ${C.border}`, padding: "22px 12px 20px", boxShadow: C.shadow, position: "relative", overflow: "visible" }}>
+      <div style={{ position: "absolute", inset: 0, borderRadius: 22, zIndex: 0, opacity: 0.34, overflow: "hidden", backgroundImage: "linear-gradient(rgba(62,122,82,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(62,122,82,.08) 1px,transparent 1px)", backgroundSize: "26px 26px" }} />
+      <svg ref={svgRef} width="100%" viewBox={`0 0 ${W} ${H}`} style={{ position: "relative", zIndex: 2, display: "block", overflow: "visible" }} onMouseMove={handleSvgMouseMove} onMouseLeave={handleSvgMouseLeave}>
         <defs>
           <marker id="arr-rg" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto"><path d="M0,1 L5.5,3 L0,5 Z" fill="rgba(122,174,138,0.5)" /></marker>
           <marker id="arr-ro" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto"><path d="M0,1 L5.5,3 L0,5 Z" fill="rgba(217,119,6,0.7)" /></marker>
@@ -451,6 +533,18 @@ function RecruiterFlowchart({ onRewardClick }: { onRewardClick: () => void }) {
             {c.label}{c.clickable ? " →" : ""}
           </span>
         ))}
+      </div>
+
+      {/* ── Node Tooltip (DOM-driven, zero React re-renders) ── */}
+      <div
+        ref={tooltipRef}
+        style={{ position: "absolute", opacity: 0, transition: "opacity 0.18s ease", zIndex: 50, pointerEvents: "none", maxWidth: 215, left: 0, top: 0 }}
+      >
+        <div ref={tipArrowRef} style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", bottom: -5, borderTop: "5px solid rgba(13,30,20,0.93)" }} />
+        <div style={{ background: "rgba(13,30,20,0.93)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 10, padding: "10px 13px", boxShadow: "0 8px 28px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.06)" }}>
+          <div data-tip-title style={{ fontSize: 11, fontWeight: 700, color: "#7FD4A0", marginBottom: 4, letterSpacing: "0.01em" }} />
+          <div data-tip-desc  style={{ fontSize: 11.5, color: "rgba(255,255,255,0.82)", lineHeight: 1.55 }} />
+        </div>
       </div>
     </div>
   );
@@ -525,7 +619,6 @@ function AgentConfigModal({ onClose }: { onClose: () => void }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
-  const [activeTab, setActiveTab] = useState("candidates");
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
   const { openSignIn } = useClerk();
@@ -546,7 +639,6 @@ export default function HomePage() {
     { n: "05", title: "Safe-stop review + ATS handoff",        chip: "One click",               desc: "Human reviews before submission. Structured brief drops into your ATS." },
   ];
 
-  const techPills = ["Amazon Nova", "AWS Bedrock", "Nova Act", "Next.js", "React", "tRPC", "TypeScript", "Drizzle", "Supabase", "Recharts", "Redis", "PostgreSQL"];
 
   const featureCards = [
     { title: "Candidate Agent", icon: "🤖", color: "#3E7A52", bullets: ["Batches 10+ applications simultaneously via parallel agents", "Field Mapper pre-fills every form from profile memory", "Generates tailored answers, cover letters & safe-stop review"], mock: ["Parallel batch: 10 roles", "Field mapper: on", "Safe-stop: enabled"] },
@@ -571,15 +663,6 @@ export default function HomePage() {
     { title: "Auto social screening + ATS adaptive", content: <ATSViz /> },
   ];
 
-  const panelOrder = activeTab === "candidates"
-    ? [
-        { label: "Apply Smarter", sub: "Candidate-side automation", icon: "🤖", ac: "#3E7A52", bc: "rgba(62,122,82,0.2)", rows: candRows, glow: true },
-        { label: "Screen Faster", sub: "Recruiter-side automation", icon: "📋", ac: "#4A7ACC", bc: "rgba(74,122,204,0.13)", rows: recRows, glow: false },
-      ]
-    : [
-        { label: "Screen Faster", sub: "Recruiter-side automation", icon: "📋", ac: "#4A7ACC", bc: "rgba(74,122,204,0.22)", rows: recRows, glow: true },
-        { label: "Apply Smarter", sub: "Candidate-side automation", icon: "🤖", ac: "#3E7A52", bc: "rgba(62,122,82,0.13)", rows: candRows, glow: false },
-      ];
 
   return (
     <>
@@ -647,22 +730,66 @@ export default function HomePage() {
           </Reveal>
         </section>
 
+        {/* ── INTEGRATION MARQUEE ── */}
+        {(() => {
+          const logos = [
+            { src: "/logos/greenhouse.png",          name: "Greenhouse"      },
+            { src: "/logos/github.png",               name: "GitHub"          },
+            { src: "/logos/zoom.png",                 name: "Zoom"            },
+            { src: "/logos/google-calendar-icon.png", name: "Google Calendar" },
+            { src: "/logos/workday.png",              name: "Workday"         },
+            { src: "/logos/gmail-clean.png",          name: "Gmail"           },
+            { src: "/logos/ashby.png",                name: "Ashby"           },
+            { src: "/logos/google-drive.png",         name: "Google Drive"    },
+            { src: "/logos/vervoe.svg",               name: "Vervoe"          },
+            { src: "/logos/chrome.png",               name: "Chrome"          },
+            { src: "/logos/safari.png",               name: "Safari"          },
+          ];
+          // 4 copies so the track is always wider than any viewport — prevents the gap/respawn glitch
+          const repeated = [...logos, ...logos, ...logos, ...logos];
+          return (
+            <section style={{ padding: "0 0 88px", overflow: "hidden" }}>
+              <Reveal>
+                <div style={{ textAlign: "center", marginBottom: 44 }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                    <div style={{ height: 1, width: 48, background: "linear-gradient(to right, transparent, rgba(62,122,82,0.45))" }} />
+                    <span style={{ fontSize: 10.5, letterSpacing: "0.14em", fontWeight: 700, color: C.accent, textTransform: "uppercase" }}>Integrations</span>
+                    <div style={{ height: 1, width: 48, background: "linear-gradient(to left, transparent, rgba(62,122,82,0.45))" }} />
+                  </div>
+                  <h3 className="serif" style={{ fontSize: "clamp(22px,2.8vw,34px)", fontWeight: 700, color: C.fg, letterSpacing: "-0.022em", lineHeight: 1.18, margin: 0 }}>
+                    Works with the tools<br /><em style={{ color: C.accent }}>you already use.</em>
+                  </h3>
+                </div>
+              </Reveal>
+              <div style={{ overflow: "hidden", maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)" }}>
+                <div className="marquee-track-left" style={{ alignItems: "center" }}>
+                  {repeated.map((logo, i) => (
+                    <div key={`m-${i}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0 44px", flexShrink: 0 }}>
+                      <img src={logo.src} alt={logo.name} style={{ height: 38, width: "auto", maxWidth: 120, objectFit: "contain", opacity: 0.65, filter: "grayscale(20%)", pointerEvents: "none" }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
         {/* ── CANDIDATE FLOW ── */}
         <section style={{ padding: "0 24px 96px" }}>
-          <div style={{ maxWidth: 1150, margin: "0 auto" }}>
-            <Reveal><div style={{ textAlign: "center", marginBottom: 48 }}><span style={{ fontSize: 11, letterSpacing: "0.11em", color: C.accent, fontWeight: 700 }}>HOW CANDIDATES APPLY (AGENTIC FLOW)</span></div></Reveal>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 370px), 1fr))", gap: 50, alignItems: "start" }}>
+          <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+            <Reveal><div style={{ textAlign: "center", marginBottom: 52 }}><span style={{ fontSize: 12, letterSpacing: "0.11em", color: C.accent, fontWeight: 700 }}>HOW CANDIDATES APPLY (AGENTIC FLOW)</span></div></Reveal>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))", gap: 64, alignItems: "center" }}>
               <Reveal>
                 <div style={{ paddingTop: 6 }}>
-                  <h2 className="serif" style={{ fontSize: "clamp(27px,3.6vw,44px)", fontWeight: 700, letterSpacing: "-0.025em", lineHeight: 1.13, marginBottom: 18, color: C.fg }}>
+                  <h2 className="serif" style={{ fontSize: "clamp(30px,3.8vw,50px)", fontWeight: 700, letterSpacing: "-0.025em", lineHeight: 1.13, marginBottom: 22, color: C.fg }}>
                     Apply in parallel with<br /><em style={{ color: C.accent }}>agentic workflows.</em>
                   </h2>
-                  <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.74, marginBottom: 28 }}>Your profile + resume + job description feed specialized agents that tailor your materials, answer questions, and prefill forms — then hand you a safe-stop review before submission.</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <p style={{ fontSize: 17, color: C.muted, lineHeight: 1.74, marginBottom: 32 }}>Your profile + resume + job description feed specialized agents that tailor your materials, answer questions, and prefill forms — then hand you a safe-stop review before submission.</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                     {[{ icon: "⚡", text: "Batch 10+ applications in parallel — minutes, not hours" }, { icon: "🗂️", text: "Field Mapper fills every form from your profile memory" }, { icon: "🛡️", text: "Safe-stop review: you see it before the agent submits" }].map(o => (
-                      <div key={o.text} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                        <span style={{ fontSize: 18, lineHeight: 1.1 }}>{o.icon}</span>
-                        <span style={{ fontSize: 14.5, color: C.fg, lineHeight: 1.56 }}>{o.text}</span>
+                      <div key={o.text} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                        <span style={{ fontSize: 22, lineHeight: 1.1 }}>{o.icon}</span>
+                        <span style={{ fontSize: 17, color: C.fg, lineHeight: 1.58, fontWeight: 500 }}>{o.text}</span>
                       </div>
                     ))}
                   </div>
@@ -673,62 +800,110 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── BENEFITS TOGGLE ── */}
+        {/* ── BENEFITS PANELS ── */}
         <section style={{ padding: "0 24px 96px" }}>
           <div style={{ maxWidth: 1180, margin: "0 auto" }}>
             <Reveal>
-              <div style={{ textAlign: "center", marginBottom: 42 }}>
-                <h2 className="serif" style={{ fontSize: "clamp(29px,4.5vw,50px)", fontWeight: 700, letterSpacing: "-0.025em", marginBottom: 20, color: C.fg }}>Built for speed. Built to scale.</h2>
-                <div className="toggle-pill">
-                  <button className={activeTab === "candidates" ? "active" : ""} onClick={() => setActiveTab("candidates")}>For Candidates</button>
-                  <button className={activeTab === "recruiters" ? "active" : ""} onClick={() => setActiveTab("recruiters")}>For Recruiters</button>
-                </div>
+              <div style={{ textAlign: "center", marginBottom: 52 }}>
+                <h2 className="serif" style={{ fontSize: "clamp(29px,4.5vw,50px)", fontWeight: 700, letterSpacing: "-0.025em", marginBottom: 8, color: C.fg }}>Built for speed. Built to scale.</h2>
+                <p style={{ fontSize: 15, color: C.muted, margin: 0 }}>Two sides of the same hire — both powered by AI.</p>
               </div>
             </Reveal>
-            <AnimatePresence mode="wait">
-              <motion.div key={activeTab} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.4 }}
-                style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%,500px),1fr))", gap: 20 }}>
-                {panelOrder.map(panel => (
-                  <div key={panel.label} style={{ background: C.bgCard, borderRadius: 22, padding: 32, border: `1px solid ${panel.bc}`, boxShadow: panel.glow ? "0 0 0 1.5px rgba(122,174,138,.2), 0 8px 28px rgba(13,35,24,.08)" : C.shadow }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-                      <div style={{ width: 33, height: 33, borderRadius: 9, background: panel.ac, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{panel.icon}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%,500px),1fr))", gap: 24, alignItems: "stretch" }}>
+
+              {/* ── Candidates Panel ── */}
+              <Reveal delay={0} style={{ height: "100%" }}>
+                <div style={{ height: "100%", display: "flex", flexDirection: "column", background: C.bgCard, borderRadius: 22, border: "1px solid rgba(62,122,82,0.18)", boxShadow: "0 0 0 1.5px rgba(122,174,138,.12), 0 8px 32px rgba(13,35,24,.07)", overflow: "hidden" }}>
+                  <div style={{ position: "relative", padding: "28px 28px 20px", background: "linear-gradient(135deg, rgba(62,122,82,0.08) 0%, rgba(122,174,138,0.04) 100%)", borderBottom: "1px solid rgba(62,122,82,0.1)", flexShrink: 0 }}>
+                    <img src="/logos/candidate.png" alt="Candidate" style={{ position: "absolute", right: 16, bottom: 0, height: 90, objectFit: "contain", opacity: 0.92, pointerEvents: "none" }} />
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(62,122,82,0.1)", border: "1px solid rgba(62,122,82,0.2)", borderRadius: 99, padding: "3px 10px", marginBottom: 12, fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: "0.08em" }}>FOR CANDIDATES</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "#3E7A52", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤖</div>
                       <div>
-                        <div className="serif" style={{ fontSize: 16.5, fontWeight: 700, color: C.fg }}>{panel.label}</div>
-                        <div style={{ fontSize: 11, color: C.muted }}>{panel.sub}</div>
+                        <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: C.fg, lineHeight: 1.2 }}>Apply Smarter</div>
+                        <div style={{ fontSize: 11.5, color: C.muted }}>Candidate-side automation</div>
                       </div>
-                      {panel.glow && <span style={{ marginLeft: "auto", background: "rgba(62,122,82,.11)", border: "1px solid rgba(62,122,82,.2)", borderRadius: 99, padding: "3px 9px", fontSize: 10, color: C.accent, fontWeight: 600 }}>ACTIVE</span>}
                     </div>
-                    {panel.rows.map((row, ri) => (
-                      <Reveal key={row.title} delay={ri * 0.06}>
-                        <motion.div whileHover={{ y: -3 }} style={{ marginBottom: 14, background: "#F2F8F3", border: "1px solid #DAF0DE", borderRadius: 13, padding: "15px 17px" }}>
+                  </div>
+                  <div style={{ flex: 1, padding: "20px 28px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
+                    {candRows.map((row, ri) => (
+                      <Reveal key={row.title} delay={ri * 0.06} style={{ flex: 1 }}>
+                        <motion.div whileHover={{ y: -2 }} style={{ height: "100%", background: "#F2F8F3", border: "1px solid #DAF0DE", borderRadius: 13, padding: "15px 17px" }}>
                           <div style={{ fontSize: 12.5, fontWeight: 700, color: C.fg, marginBottom: 10 }}>{row.title}</div>
                           {row.content}
                         </motion.div>
                       </Reveal>
                     ))}
                   </div>
-                ))}
-              </motion.div>
-            </AnimatePresence>
+                </div>
+              </Reveal>
+
+              {/* ── Recruiters Panel ── */}
+              <Reveal delay={0.1} style={{ height: "100%" }}>
+                <div style={{ height: "100%", display: "flex", flexDirection: "column", background: C.bgCard, borderRadius: 22, border: "1px solid rgba(74,122,204,0.18)", boxShadow: "0 0 0 1.5px rgba(74,122,204,.1), 0 8px 32px rgba(13,35,24,.07)", overflow: "hidden" }}>
+                  <div style={{ position: "relative", padding: "28px 28px 20px", background: "linear-gradient(135deg, rgba(74,122,204,0.08) 0%, rgba(74,122,204,0.03) 100%)", borderBottom: "1px solid rgba(74,122,204,0.1)", flexShrink: 0 }}>
+                    <img src="/logos/recruiter.png" alt="Recruiter" style={{ position: "absolute", right: 16, bottom: 0, height: 90, objectFit: "contain", opacity: 0.92, pointerEvents: "none" }} />
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(74,122,204,0.1)", border: "1px solid rgba(74,122,204,0.22)", borderRadius: 99, padding: "3px 10px", marginBottom: 12, fontSize: 10, color: "#4A7ACC", fontWeight: 700, letterSpacing: "0.08em" }}>FOR RECRUITERS</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "#4A7ACC", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>📋</div>
+                      <div>
+                        <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: C.fg, lineHeight: 1.2 }}>Screen Faster</div>
+                        <div style={{ fontSize: 11.5, color: C.muted }}>Recruiter-side automation</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, padding: "20px 28px 28px", display: "flex", flexDirection: "column", gap: 12 }}>
+                    {recRows.map((row, ri) => (
+                      <Reveal key={row.title} delay={ri * 0.06} style={{ flex: 1 }}>
+                        <motion.div whileHover={{ y: -2 }} style={{ height: "100%", background: "#F2F8F3", border: "1px solid #DAF0DE", borderRadius: 13, padding: "15px 17px" }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: C.fg, marginBottom: 10 }}>{row.title}</div>
+                          {row.content}
+                        </motion.div>
+                      </Reveal>
+                    ))}
+                  </div>
+                </div>
+              </Reveal>
+
+            </div>
           </div>
         </section>
 
         {/* ── RECRUITER FLOWCHART ── */}
         <section style={{ padding: "0 24px 100px" }}>
-          <div style={{ maxWidth: 1150, margin: "0 auto" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "420px 1fr", gap: 60, alignItems: "center" }}>
+            {/* Left: heading + bullets */}
             <Reveal>
-              <div style={{ textAlign: "center", marginBottom: 48 }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(123,104,238,.1)", border: "1px solid rgba(123,104,238,.25)", borderRadius: 99, padding: "5px 16px", marginBottom: 18, fontSize: 11, color: "#7B68EE", fontWeight: 600, letterSpacing: "0.06em" }}>
+              <div>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(123,104,238,.1)", border: "1px solid rgba(123,104,238,.25)", borderRadius: 99, padding: "5px 16px", marginBottom: 20, fontSize: 11, color: "#7B68EE", fontWeight: 600, letterSpacing: "0.06em" }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7B68EE", display: "inline-block" }} />
                   RECRUITER WORKFLOW
                 </span>
-                <h2 className="serif" style={{ fontSize: "clamp(27px,3.8vw,46px)", fontWeight: 700, letterSpacing: "-0.025em", lineHeight: 1.12, marginBottom: 14, color: C.fg }}>
+                <h2 className="serif" style={{ fontSize: "clamp(26px,3.2vw,42px)", fontWeight: 700, letterSpacing: "-0.025em", lineHeight: 1.12, marginBottom: 14, color: C.fg }}>
                   Screen in minutes.<br /><em style={{ color: C.accent }}>Route in seconds.</em>
                 </h2>
-                <p style={{ fontSize: 15.5, color: C.muted, maxWidth: 580, margin: "0 auto", lineHeight: 1.7 }}>AI micro-screening + smart routing + ATS automation. Recruiters get a clean lane decision and an ATS-ready packet — fast.</p>
+                <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.7, marginBottom: 32 }}>AI micro-screening + smart routing + ATS automation. Recruiters get a clean lane decision and an ATS-ready packet — fast.</p>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 0 }}>
+                  {[
+                    { stat: "3–6×", text: "faster candidate review — compress 8–15 min → 2–5 min per candidate" },
+                    { stat: "60–90s", text: "triage to a lane decision vs 5–10 min manual scanning" },
+                    { stat: "30–60%", text: "fewer repetitive ATS actions" },
+                    { stat: "50–80%", text: "less \"tab chaos\" — LinkedIn/GitHub/portfolio/web signals unified" },
+                    { stat: "2–4×", text: "higher throughput at career fairs" },
+                    { stat: "<10s", text: "recruiter feedback captured and used to improve routing over time" },
+                  ].map(({ stat, text }) => (
+                    <li key={stat} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "14px 0", borderBottom: "1px solid rgba(62,122,82,0.1)" }}>
+                      <span style={{ minWidth: 72, fontWeight: 800, fontSize: 16, color: C.accent, paddingTop: 1, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{stat}</span>
+                      <span style={{ fontSize: 15, color: C.fg, lineHeight: 1.55, fontWeight: 500 }}>{text}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </Reveal>
-            <Reveal delay={0.1}><RecruiterFlowchart onRewardClick={() => setShowModal(true)} /></Reveal>
+            {/* Right: flowchart full size */}
+            <Reveal delay={0.1}>
+              <RecruiterFlowchart onRewardClick={() => setShowModal(true)} />
+            </Reveal>
           </div>
         </section>
 
@@ -763,10 +938,35 @@ export default function HomePage() {
 
         {/* ── BUILT WITH ── */}
         <section style={{ padding: "58px 24px 52px" }}>
-          <Reveal style={{ maxWidth: 840, margin: "0 auto", textAlign: "center" }}>
-            <div style={{ fontSize: 10, letterSpacing: "0.11em", color: "#8A9A8A", marginBottom: 16, fontWeight: 700 }}>BUILT WITH</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-              {techPills.map(p => <motion.span key={p} whileHover={{ scale: 1.06, y: -2 }} style={{ background: "rgba(255,255,255,.72)", border: "1px solid #C4D8C8", borderRadius: 99, padding: "6px 14px", fontSize: 12, color: C.accent, fontWeight: 500, boxShadow: "0 2px 6px rgba(13,35,24,.04)" }}>{p}</motion.span>)}
+          <Reveal style={{ maxWidth: 860, margin: "0 auto", textAlign: "center" }}>
+            <div style={{ fontSize: 10, letterSpacing: "0.14em", color: "#8A9A8A", marginBottom: 8, fontWeight: 700, textTransform: "uppercase" }}>Built With</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#0D2318", marginBottom: 44, letterSpacing: "-0.02em" }}>
+              Powered by best-in-class infrastructure
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", rowGap: 36, columnGap: 24 }}>
+              {[
+                { name: "Next.js",     src: "/logos/nextjs.svg"     },
+                { name: "React",       src: "/logos/react.png"       },
+                { name: "TypeScript",  src: "/logos/typescript.png"  },
+                { name: "tRPC",        src: "/logos/trpc.svg"        },
+                { name: "Drizzle",     src: "/logos/drizzle.svg"     },
+                { name: "Supabase",    src: "/logos/supabase.png"    },
+                { name: "PostgreSQL",  src: "/logos/postgresql-new.png" },
+                { name: "Redis",       src: "/logos/redis.svg"          },
+                { name: "AWS Bedrock", src: "/logos/bedrock.png"        },
+                { name: "Nova Act",    src: "/logos/nova-act.png"       },
+                { name: "Figma",       src: "/logos/figma.png"          },
+                { name: "GitHub",      src: "/logos/github.png"      },
+              ].map(({ name, src }) => (
+                <motion.div
+                  key={name}
+                  whileHover={{ y: -4, opacity: 1 }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: 0.6, cursor: "default" }}
+                >
+                  <img src={src} alt={name} style={{ height: 40, maxWidth: 80, objectFit: "contain" }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#6B8070", letterSpacing: "0.02em" }}>{name}</span>
+                </motion.div>
+              ))}
             </div>
           </Reveal>
         </section>

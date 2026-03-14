@@ -15,8 +15,8 @@ export default function GetStartedPage() {
   const [hovered, setHovered] = useState<"recruiter" | "candidate" | null>(null);
   const [candidateToast, setCandidateToast] = useState(false);
 
-  const goToRecruiter = () => router.push("/hiring-center");
-  const triggerRecruiterSignIn = () => openSignIn({ redirectUrl: "/hiring-center" });
+  const goToRecruiter = () => router.push("/recruiter/hiring-center");
+  const triggerRecruiterSignIn = () => openSignIn({ redirectUrl: "/recruiter/hiring-center" });
 
   const handleCandidateClick = () => {
     setCandidateToast(true);

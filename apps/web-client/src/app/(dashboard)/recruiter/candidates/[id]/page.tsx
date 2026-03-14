@@ -530,9 +530,12 @@ export default function CandidateDetailPage() {
           {/* Tabs */}
           <div className="flex gap-1 bg-muted/50 p-1 rounded-lg w-fit">
             {tabs.map((tab) => (
-              <button
+              <motion.button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 400, damping: 22 }}
                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
                   activeTab === tab.key
                     ? "bg-foreground text-background shadow-sm"
@@ -545,7 +548,7 @@ export default function CandidateDetailPage() {
                     {actions.length}
                   </span>
                 )}
-              </button>
+              </motion.button>
             ))}
           </div>
 
@@ -818,39 +821,51 @@ export default function CandidateDetailPage() {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Actions</p>
 
             {/* Run Social Screen */}
-            <button
+            <motion.button
               onClick={() => setSocialScreenOpen(true)}
-              className="w-full flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
+              className="w-full flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg"
               style={{ background: "linear-gradient(135deg, #0e3d27 0%, #1f6b43 100%)", color: "#fff" }}
             >
               <ScanSearch className="w-3.5 h-3.5" />
               Run Social Screen
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               onClick={() => fireAction("sync_to_ats")}
               disabled={createAction.isPending}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
               className="w-full flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium py-2 px-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <Zap className="w-3.5 h-3.5" />
               Sync to ATS
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => fireAction("schedule_interview")}
               disabled={createAction.isPending}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
               className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border disabled:opacity-60"
             >
               <Calendar className="w-3.5 h-3.5" />
               Schedule Interview
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => fireAction("follow_up_email")}
               disabled={createAction.isPending}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
               className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border disabled:opacity-60"
             >
               <Send className="w-3.5 h-3.5" />
               Draft Follow-up
-            </button>
+            </motion.button>
 
             {/* Action processing banner */}
             {pendingActionType && <ActionProcessingBanner actionType={pendingActionType} />}
@@ -873,7 +888,11 @@ export default function CandidateDetailPage() {
               </button>
 
               {showStagePicker && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                <motion.div
+                  className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 26 }}
+                >
                   {STAGE_ORDER.map((s) => (
                     <button
                       key={s}
@@ -888,7 +907,7 @@ export default function CandidateDetailPage() {
                       )}
                     </button>
                   ))}
-                </div>
+                </motion.div>
               )}
             </div>
           </div>

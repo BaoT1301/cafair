@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Check, AlertTriangle, X, Cpu } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -331,9 +332,11 @@ export function SocialScreenModal({ candidateName, onClose }: { candidateName: s
         onWheel={e => e.stopPropagation()}
         onTouchMove={e => e.stopPropagation()}
       >
-        <div
+        <motion.div
           className="w-full max-w-[1080px] flex flex-col rounded-[16px] overflow-hidden shadow-2xl"
           style={{ background: "#13131f", height: "min(88vh, 680px)" }}
+          initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 320, damping: 28 }}
         >
           {/* Title bar */}
           <div className="flex items-center gap-4 px-5 py-3 border-b shrink-0" style={{ borderColor: "#2a2a3e" }}>
@@ -474,7 +477,7 @@ export function SocialScreenModal({ candidateName, onClose }: { candidateName: s
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </>
   );
