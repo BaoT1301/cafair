@@ -1,7 +1,7 @@
 {
   "runId": "demo",
-  "candidateId": "demo",
-  "candidateLabel": "Demo Candidate",
+  "candidateId": "cand_np_001",
+  "candidateLabel": "Nguyen Phan Nguyen",
   "candidateSlug": "demo",
   "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo",
   "status": "completed",
@@ -9,7 +9,7 @@
   "updatedAtISO": "2026-03-14T02:57:52.457Z",
   "finishedAtISO": "2026-03-14T02:57:52.457Z",
   "stageStatus": {
-    "linkedin": "partial",
+    "linkedin": "blocked",
     "github": "partial",
     "portfolio": "partial",
     "web": "partial"

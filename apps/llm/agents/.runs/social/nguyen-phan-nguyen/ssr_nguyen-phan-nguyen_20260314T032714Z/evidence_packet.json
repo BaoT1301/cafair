@@ -1,12 +1,12 @@
 {
   "version": "1.0",
-  "createdAtISO": "2026-03-14T02:47:58.058Z",
+  "createdAtISO": "2026-03-14T03:27:22.012Z",
   "candidate": {
     "label": "Nguyen Phan Nguyen",
     "candidateId": "cand_np_001"
   },
   "run": {
-    "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T024755Z"
+    "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z"
   },
   "stageStatus": {
     "linkedin": "blocked",
@@ -49,7 +49,7 @@
           "source": "portfolio",
           "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
           "url": "https://lamanhtruong.com",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/capture.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/capture.json"
         }
       ]
     },
@@ -118,7 +118,7 @@
           "source": "github",
           "quote": "GitHub display name appears to be 'Stephen Nguyen'.",
           "url": "https://github.com/ngstephen1",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/capture.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/capture.json"
         }
       ]
     },
@@ -132,7 +132,7 @@
           "source": "github",
           "quote": "GitHub bio: Virginia Tech '27",
           "url": "https://github.com/ngstephen1",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/capture.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/capture.json"
         }
       ]
     },
@@ -146,7 +146,7 @@
           "source": "linkedin",
           "quote": "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually.",
           "url": "https://www.linkedin.com/in/nguyenpn1/",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/capture.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/capture.json"
         }
       ]
     },
@@ -160,7 +160,7 @@
           "source": "portfolio",
           "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong'.",
           "url": "https://lamanhtruong.com",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/capture.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/capture.json"
         }
       ]
     },
@@ -174,13 +174,13 @@
           "source": "portfolio",
           "quote": "Portfolio title: Anh Portfolio",
           "url": "https://lamanhtruong.com",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/capture.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/capture.json"
         }
       ]
     }
   ],
   "novaReturn": {
-    "rawTextPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/nova_return_block.txt",
+    "rawTextPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/nova_return_block.txt",
     "parsed": {},
     "parseOk": true
   },

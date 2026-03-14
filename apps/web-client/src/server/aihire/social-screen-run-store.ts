@@ -42,6 +42,8 @@ type SocialScreenRunEventDraft = {
   data?: Record<string, unknown>;
 };
 
+type LooseRecord = Record<string, unknown>;
+
 export interface SocialScreenRunManifest {
   runId: string;
   candidateId?: string;
@@ -95,6 +97,20 @@ if (!globalThis.__aihireSocialScreenRunIndex) {
 function nowIso(): string {
   return new Date().toISOString();
 }
+
+const demoArtifactBasenames = new Set([
+  "run.json",
+  "events.jsonl",
+  "capture.json",
+  "evidence_packet.json",
+  "evidence_packet.md",
+  "report.json",
+  "bedrock_input.txt",
+  "nova_trace.txt",
+  "nova_trace_raw.txt",
+  "nova_return_block.txt",
+  "replay.html",
+]);
 
 export function slugifyCandidateLabel(value: string): string {
   return value
@@ -272,23 +288,164 @@ function findLatestSuccessfulRunDir(candidateSlug?: string): string | null {
   return bestDir;
 }
 
+function repoRelativePath(filePath: string): string {
+  return path.relative(findRepoRoot(), filePath).replace(/\\/g, "/");
+}
+
+function rewriteDemoPathString(value: string, demoRunDir: string): string {
+  const basename = path.basename(value);
+  if (!demoArtifactBasenames.has(basename)) {
+    return value;
+  }
+
+  const repoRelativeDemo = repoRelativePath(demoRunDir);
+  const isSocialRunAbsolute = value.includes(`${path.sep}.runs${path.sep}social${path.sep}`);
+  const isSocialRunRelative = value.startsWith("apps/llm/agents/.runs/social/");
+
+  if (!isSocialRunAbsolute && !isSocialRunRelative) {
+    return value;
+  }
+
+  return path.isAbsolute(value)
+    ? path.join(demoRunDir, basename)
+    : `${repoRelativeDemo}/${basename}`;
+}
+
+function rewriteDemoPathsDeep<T>(value: T, demoRunDir: string): T {
+  if (typeof value === "string") {
+    return rewriteDemoPathString(value, demoRunDir) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => rewriteDemoPathsDeep(item, demoRunDir)) as T;
+  }
+  if (value && typeof value === "object") {
+    const next: LooseRecord = {};
+    for (const [key, entry] of Object.entries(value as LooseRecord)) {
+      next[key] = rewriteDemoPathsDeep(entry, demoRunDir);
+    }
+    return next as T;
+  }
+  return value;
+}
+
+function parseJsonlFile(filePath: string): SocialScreenRunEvent[] {
+  if (!fs.existsSync(filePath)) return [];
+  return fs
+    .readFileSync(filePath, "utf-8")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .flatMap((line) => {
+      try {
+        return [JSON.parse(line) as SocialScreenRunEvent];
+      } catch {
+        return [];
+      }
+    });
+}
+
+function writeJsonlFile(filePath: string, events: SocialScreenRunEvent[]): void {
+  const text = events.map((event) => JSON.stringify(event)).join("\n");
+  fs.writeFileSync(filePath, text ? `${text}\n` : "", "utf-8");
+}
+
+function normalizeDemoBundle(demoRunDir: string): SocialScreenLatestPointer | null {
+  const demoRunJson = path.join(demoRunDir, "run.json");
+  const demoReportJson = path.join(demoRunDir, "report.json");
+  const demoEventsJsonl = path.join(demoRunDir, "events.jsonl");
+
+  const report = tryReadJson<LooseRecord>(demoReportJson);
+  const manifest = tryReadJson<SocialScreenRunManifest>(demoRunJson);
+  if (!manifest || !report) return null;
+
+  const normalizedReport = rewriteDemoPathsDeep(report, demoRunDir);
+  writeJsonAtomic(demoReportJson, normalizedReport);
+
+  const evidencePacketPath = path.join(demoRunDir, "evidence_packet.json");
+  const capturePath = path.join(demoRunDir, "capture.json");
+  if (fs.existsSync(evidencePacketPath)) {
+    const packet = tryReadJson<LooseRecord>(evidencePacketPath);
+    if (packet) writeJsonAtomic(evidencePacketPath, rewriteDemoPathsDeep(packet, demoRunDir));
+  }
+  if (fs.existsSync(capturePath)) {
+    const capture = tryReadJson<LooseRecord>(capturePath);
+    if (capture) writeJsonAtomic(capturePath, rewriteDemoPathsDeep(capture, demoRunDir));
+  }
+
+  const sourceEvents = parseJsonlFile(demoEventsJsonl);
+  const normalizedEvents = sourceEvents
+    .filter((event) => event.type !== "log")
+    .map((event, index) => ({
+      ...rewriteDemoPathsDeep(event, demoRunDir),
+      eventId: String(index + 1),
+    }));
+  writeJsonlFile(demoEventsJsonl, normalizedEvents);
+
+  const candidateLabel =
+    typeof normalizedReport.candidateLabel === "string" && normalizedReport.candidateLabel.trim()
+      ? normalizedReport.candidateLabel.trim()
+      : manifest.candidateLabel;
+  const candidateId =
+    typeof normalizedReport.candidateId === "string" && normalizedReport.candidateId.trim()
+      ? normalizedReport.candidateId.trim()
+      : manifest.candidateId;
+
+  const nextManifest: SocialScreenRunManifest = {
+    ...manifest,
+    runId: "demo",
+    candidateId,
+    candidateLabel,
+    candidateSlug: "demo",
+    runDir: demoRunDir,
+    status: "completed",
+    finishedAtISO: manifest.finishedAtISO ?? nowIso(),
+    stageStatus: {
+      linkedin: normalizedReport.stageStatus && typeof normalizedReport.stageStatus === "object" && typeof (normalizedReport.stageStatus as LooseRecord).linkedin === "string"
+        ? String((normalizedReport.stageStatus as LooseRecord).linkedin)
+        : manifest.stageStatus.linkedin,
+      github: normalizedReport.stageStatus && typeof normalizedReport.stageStatus === "object" && typeof (normalizedReport.stageStatus as LooseRecord).github === "string"
+        ? String((normalizedReport.stageStatus as LooseRecord).github)
+        : manifest.stageStatus.github,
+      portfolio: normalizedReport.stageStatus && typeof normalizedReport.stageStatus === "object" && typeof (normalizedReport.stageStatus as LooseRecord).portfolio === "string"
+        ? String((normalizedReport.stageStatus as LooseRecord).portfolio)
+        : manifest.stageStatus.portfolio,
+      web: normalizedReport.stageStatus && typeof normalizedReport.stageStatus === "object" && typeof (normalizedReport.stageStatus as LooseRecord).web === "string"
+        ? String((normalizedReport.stageStatus as LooseRecord).web)
+        : manifest.stageStatus.web,
+    },
+    paths: {
+      runJson: demoRunJson,
+      eventsJsonl: demoEventsJsonl,
+      captureJson: fs.existsSync(capturePath) ? capturePath : undefined,
+      evidencePacketJson: fs.existsSync(evidencePacketPath) ? evidencePacketPath : undefined,
+      evidencePacketMarkdown: fs.existsSync(path.join(demoRunDir, "evidence_packet.md"))
+        ? path.join(demoRunDir, "evidence_packet.md")
+        : undefined,
+      reportJson: demoReportJson,
+    },
+  };
+
+  writeJsonAtomic(demoRunJson, nextManifest);
+  runIndex.set("demo", demoRunJson);
+  return {
+    runId: "demo",
+    runDir: demoRunDir,
+    candidateSlug: "demo",
+    candidateId,
+    candidateLabel,
+    startedAtISO: nextManifest.startedAtISO,
+    updatedAtISO: nextManifest.updatedAtISO,
+  };
+}
+
 function ensureDemoRun(): SocialScreenLatestPointer | null {
   const repoRoot = findRepoRoot();
   const demoBaseDir = path.join(repoRoot, "apps", "llm", "agents", ".runs", "social", "demo");
   const demoRunDir = path.join(demoBaseDir, "demo");
   const demoRunJson = path.join(demoRunDir, "run.json");
-
   const existing = tryReadJson<SocialScreenRunManifest>(demoRunJson);
   if (existing && fs.existsSync(path.join(demoRunDir, "report.json"))) {
-    return {
-      runId: existing.runId,
-      runDir: existing.runDir,
-      candidateSlug: existing.candidateSlug,
-      candidateId: existing.candidateId,
-      candidateLabel: existing.candidateLabel,
-      startedAtISO: existing.startedAtISO,
-      updatedAtISO: existing.updatedAtISO,
-    };
+    return normalizeDemoBundle(demoRunDir);
   }
 
   const sourceRunDir =
@@ -344,15 +501,7 @@ function ensureDemoRun(): SocialScreenLatestPointer | null {
   };
   writeJsonAtomic(demoRunJson, manifest);
   runIndex.set("demo", demoRunJson);
-  return {
-    runId: "demo",
-    runDir: demoRunDir,
-    candidateSlug: "demo",
-    candidateId: "demo",
-    candidateLabel: "Demo Candidate",
-    startedAtISO: now,
-    updatedAtISO: now,
-  };
+  return normalizeDemoBundle(demoRunDir);
 }
 
 function scanLatestRunPointer(candidate?: string): SocialScreenLatestPointer | null {

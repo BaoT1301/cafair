@@ -90,7 +90,7 @@ Example:
 curl -N "http://localhost:3002/api/aihire/social-screen/stream?runId=latest&candidate=nguyen-phan-nguyen"
 ```
 
-Event types:
+### Event types:
 
 - `status`
 - `finding`
@@ -99,7 +99,7 @@ Event types:
 - `done`
 - `ping`
 
-SSE payloads:
+## SSE payloads:
 
 | Event | Shape |
 | --- | --- |
@@ -131,6 +131,39 @@ curl -s "http://localhost:3002/api/aihire/social-screen/status?runId=latest&cand
 
 ## Frontend Reference
 
+## Bao Tran Handoff
+
+What Bao needs to wire the button:
+
+- Start run on button click with `POST /api/aihire/social-screen/run`
+- Read `runId`, `streamUrl`, `reportUrl`, and `status` from the response
+- Open `EventSource(streamUrl)` immediately for live updates
+- Listen for `status`, `finding`, `log`, `error`, and `done`
+- After `done`, fetch `reportUrl` and render the final report
+
+Best modes for demos:
+
+- Demo mode: always works, no live run required
+  - `POST /run` with `{ "mode":"demo" }`
+  - or use `/stream?runId=demo` and `/report?runId=demo`
+- Latest alias: useful for repeat demos without copying a run id
+  - `/stream?runId=latest&candidate=<candidateSlug>`
+  - `/report?runId=latest&candidate=<candidateSlug>`
+  - example candidate slug: `nguyen-phan-nguyen`
+
+## UI contract to build around:
+
+- Live event payloads
+  - `status`: stage and phase progress, such as capture started or reasoner started
+  - `finding`: incremental cards to render with severity, text/title, and citations
+  - `done`: final risk, recommendation, flags, and report path
+  - `error`: show a toast or inline error state and stop streaming
+- Final report JSON
+  - stable fields: `socialScore`, `risk`, `recommendation`
+  - collections: `verifiedFindings[]`, `concerns[]`, `nextSteps[]`
+  - supporting fields: `citations[]`, `flags[]`, `stageStatus`
+  - execution metadata: `provider`, `modelId`, `parseOk`, `validationOk`, `usedFallback`, `degraded`, `metrics`
+
 Minimal browser flow:
 
 1. `POST /run`
@@ -156,6 +189,14 @@ Demo flow:
 - Start with `POST /api/aihire/social-screen/run` and `{ "mode": "demo" }`
 - Stream from `/api/aihire/social-screen/stream?runId=demo`
 - Fetch the final report from `/api/aihire/social-screen/report?runId=demo`
+
+Important behavior and gotchas:
+
+- The run is async. `/run` returns immediately with `status: "queued"`. The UI must stream or poll.
+- LinkedIn may be blocked. Treat that as normal and show manual verification messaging instead of a hard failure.
+- Findings can arrive before the final report exists. Do not fetch `reportUrl` until you receive `done`, or poll `/status` until `completed`.
+- `provider`, `usedFallback`, and `degraded` tell you whether the backend used real Bedrock reasoning or a deterministic fallback path.
+- `artifactPath` values are local file paths for debugging only. In UI, prefer displaying citation `source`, `url`, and `quote`.
 
 ```ts
 const runRes = await fetch("/api/aihire/social-screen/run", {
@@ -186,3 +227,59 @@ es.addEventListener("done", async () => {
   console.log("report", report);
 });
 ```
+
+Minimal integration snippet:
+
+```ts
+const run = await fetch("/api/aihire/social-screen/run", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload),
+}).then((r) => r.json());
+
+const es = new EventSource(run.streamUrl);
+
+es.addEventListener("finding", (e) => addFinding(JSON.parse((e as MessageEvent).data)));
+es.addEventListener("status", (e) => setStatus(JSON.parse((e as MessageEvent).data)));
+es.addEventListener("error", () => {
+  es.close();
+  showError();
+});
+
+es.addEventListener("done", async () => {
+  es.close();
+  const report = await fetch(run.reportUrl).then((r) => r.json());
+  renderReport(report.report ?? report);
+});
+```
+
+## Local Test Commands
+
+Start a deterministic run:
+
+```bash
+curl -s -X POST http://localhost:3002/api/aihire/social-screen/run \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"deterministic","candidateId":"cand_np_001","candidateLabel":"Nguyen Phan Nguyen","linkedinUrl":"https://www.linkedin.com/in/nguyenpn1/","githubUrl":"https://github.com/ngstephen1","portfolioUrl":"https://lamanhtruong.com"}' | jq .
+```
+
+Stream without copying a run id:
+
+```bash
+curl -N "http://localhost:3002/api/aihire/social-screen/stream?runId=latest&candidate=nguyen-phan-nguyen"
+```
+
+Fetch the final report:
+
+```bash
+curl -s "http://localhost:3002/api/aihire/social-screen/report?runId=latest&candidate=nguyen-phan-nguyen" | jq .
+```
+
+## Integration Notes
+
+- The web app assumes same-origin API calls. If Bao tests from another frontend origin, convert relative `streamUrl` and `reportUrl` into absolute URLs.
+- `runId=demo` is now a self-contained demo bundle under `apps/llm/agents/.runs/social/demo/demo`, so it is safe for demos and does not depend on the latest real run path.
+- `runId=latest&candidate=<slug>` depends on the candidate slug folder under `apps/llm/agents/.runs/social/<slug>/`.
+- The stream is SSE, not JSON polling. Use `EventSource` in browser code, and keep `/status` as the fallback path if SSE disconnects.
+- The backend writes artifacts into the llm run directory. If the UI needs a human-readable debug link, point internal users to the run folder, not to raw `artifactPath` values in the candidate-facing UI.
+- If Bao needs a deterministic demo, use `mode: "demo"` or `mode: "deterministic"`. Use `mode: "nova"` only when live capture is actually needed.

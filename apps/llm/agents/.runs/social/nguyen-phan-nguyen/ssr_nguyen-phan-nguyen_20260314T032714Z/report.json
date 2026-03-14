@@ -13,7 +13,7 @@
           "source": "github",
           "url": "https://github.com/ngstephen1",
           "quote": "Github stage status: partial.",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/evidence_packet.json"
         }
       ]
     }
@@ -27,7 +27,7 @@
           "source": "portfolio",
           "url": "https://lamanhtruong.com",
           "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/evidence_packet.json"
         }
       ]
     },
@@ -39,42 +39,42 @@
           "source": "linkedin",
           "url": "https://www.linkedin.com/in/nguyenpn1/",
           "quote": "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually.",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/evidence_packet.json"
         }
       ]
     },
     {
-      "text": "Github capture partial; structured evidence is limited.",
+      "text": "Github stage incomplete; structured evidence is limited.",
       "severity": "warning",
       "citations": [
         {
           "source": "github",
           "url": "https://github.com/ngstephen1",
-          "quote": "GitHub display name appears to be 'Stephen Nguyen'.",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.json"
+          "quote": "Github stage status: partial.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/evidence_packet.json"
         }
       ]
     },
     {
-      "text": "Portfolio capture partial; structured evidence is limited.",
+      "text": "Portfolio stage incomplete; structured evidence is limited.",
       "severity": "warning",
       "citations": [
         {
           "source": "portfolio",
           "url": "https://lamanhtruong.com",
           "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong'.",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/evidence_packet.json"
         }
       ]
     },
     {
-      "text": "Web capture partial; structured evidence is limited.",
+      "text": "Web stage incomplete; structured evidence is limited.",
       "severity": "warning",
       "citations": [
         {
           "source": "system",
           "quote": "web stage completed with status partial.",
-          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.json"
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/evidence_packet.json"
         }
       ]
     }
@@ -90,7 +90,7 @@
       "source": "portfolio",
       "url": "https://lamanhtruong.com",
       "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
-      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/demo/demo/evidence_packet.json"
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T032714Z/evidence_packet.json"
     }
   ],
   "flags": [
@@ -109,11 +109,11 @@
   "usedFallback": false,
   "degraded": false,
   "metrics": {
-    "latencyMs": 5779,
+    "latencyMs": 6878,
     "attempts": 1,
     "inputTokensEstimated": 4659,
-    "outputTokensEstimated": 1352,
-    "timestampISO": "2026-03-14T02:48:04.108Z",
-    "requestId": "4c25c4b4-342a-4fde-b99c-cf8e69c451a8"
+    "outputTokensEstimated": 1347,
+    "timestampISO": "2026-03-14T03:27:30.898Z",
+    "requestId": "f753aacd-7725-4089-b85f-85f43e30114d"
   }
 }
