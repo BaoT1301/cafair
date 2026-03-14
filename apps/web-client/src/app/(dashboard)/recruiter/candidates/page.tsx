@@ -11,6 +11,16 @@ import {
   ChevronRight,
   Star,
 } from "lucide-react";
+import { motion } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.35, delay: Math.min(i, 10) * 0.045, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
+
 import { FitScoreBar } from "@/components/recruiter/FitScoreBar";
 import { RiskBadge } from "@/components/recruiter/RiskBadge";
 import { getInitials } from "@/lib/recruiter-utils";
@@ -79,7 +89,7 @@ export default function CandidatesPage() {
 
   // ─── Filter state ────────────────────────────────────
   const [roleFilter, setRoleFilter] = useState("all");
-  const [riskFilter, setRiskFilter] = useState("all");
+  const [riskFilter, setRiskFilter] = useState(searchParams.get("risk") ?? "all");
 
   // ─── Search from URL ─────────────────────────────────
   const search = searchParams.get("search") ?? "";
@@ -155,8 +165,21 @@ export default function CandidatesPage() {
 
   return (
     <div className="max-w-[1200px]">
+      {/* Risk filter banner — shown when arriving from "Flagged issues" */}
+      {riskFilter === "high" && (
+        <div className="flex items-center gap-2 mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+          <span className="text-xs font-semibold text-red-700">Showing high-risk candidates only</span>
+          <button
+            onClick={() => setRiskFilter("all")}
+            className="ml-auto text-xs text-red-500 hover:text-red-700 font-medium"
+          >
+            Clear filter ×
+          </button>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Candidates</h1>
           <p className="text-sm text-muted-foreground">
@@ -207,7 +230,7 @@ export default function CandidatesPage() {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Table */}
       <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
@@ -238,8 +261,12 @@ export default function CandidatesPage() {
               </tr>
             ) : (
               filtered?.map((c, i) => (
-                <tr
+                <motion.tr
                   key={c.id}
+                  custom={i}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
                   onClick={() => router.push(`/recruiter/candidates/${c.id}`)}
                   className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
                 >
@@ -333,7 +360,7 @@ export default function CandidatesPage() {
                   <td className="pr-4 py-3">
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </td>
-                </tr>
+                </motion.tr>
               ))
             )}
           </tbody>

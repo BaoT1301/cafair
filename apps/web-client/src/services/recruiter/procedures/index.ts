@@ -240,9 +240,14 @@ export const recruiterRouter = createTRPCRouter({
   deleteRole: authedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.secureDb!.rls((tx) =>
-        tx.delete(jobRoles).where(eq(jobRoles.id, input.id)),
-      );
+      await ctx.secureDb!.rls(async (tx) => {
+        // nullify roleId on any candidates linked to this role first
+        await tx
+          .update(candidates)
+          .set({ roleId: null })
+          .where(eq(candidates.roleId, input.id));
+        await tx.delete(jobRoles).where(eq(jobRoles.id, input.id));
+      });
       return { success: true };
     }),
 

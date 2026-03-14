@@ -180,6 +180,72 @@ async function seed() {
       nextAction: "Complete phone screen; evaluate override if score doesn't reflect true potential",
       ownerId: "seed",
     },
+
+    // ── Fresh applicants — just arrived at the career fair (stage: fair) ──
+    {
+      userId: "seed", eventId: event.id, roleId: sweRole.id,
+      name: "Marcus Webb", school: "University of Maryland", role: "Software Engineer Intern",
+      fitScore: 83, riskLevel: "low", stage: "fair", lane: "quick_screen",
+      verified: false, strengths: ["Node.js", "AWS", "REST APIs"],
+      gaps: ["No ML experience", "Limited frontend"], nextAction: "Queue for quick screen",
+      ownerId: "seed",
+    },
+    {
+      userId: "seed", eventId: event.id, roleId: mlRole.id,
+      name: "Priya Suresh", school: "Johns Hopkins University", role: "ML Engineer Intern",
+      fitScore: 81, riskLevel: "low", stage: "fair", lane: "quick_screen",
+      verified: false, strengths: ["Python", "Scikit-learn", "Data analysis"],
+      gaps: ["No deep learning experience", "Limited prod exposure"], nextAction: "Queue for quick screen",
+      ownerId: "seed",
+    },
+    {
+      userId: "seed", eventId: event.id, roleId: sweRole.id,
+      name: "Tyler Brooks", school: "Virginia Tech", role: "Software Engineer Intern",
+      fitScore: 78, riskLevel: "low", stage: "fair", lane: "quick_screen",
+      verified: false, strengths: ["Java", "Spring Boot", "OOP"],
+      gaps: ["No cloud experience", "Weak on modern JS stack"], nextAction: "Queue for quick screen",
+      ownerId: "seed",
+    },
+    {
+      userId: "seed", eventId: event.id, roleId: dsRole.id,
+      name: "Nadia Osei", school: "Howard University", role: "Data Science Intern",
+      fitScore: 76, riskLevel: "medium", stage: "fair", lane: "quick_screen",
+      verified: false, strengths: ["R", "Tableau", "Statistics"],
+      gaps: ["No Python", "Limited SQL", "No ML models in prod"], nextAction: "Queue for quick screen",
+      ownerId: "seed",
+    },
+    {
+      userId: "seed", eventId: event.id, roleId: sweRole.id,
+      name: "Sean Callahan", school: "Penn State University", role: "Software Engineer Intern",
+      fitScore: 74, riskLevel: "medium", stage: "fair", lane: "redirect",
+      verified: false, strengths: ["C++", "Algorithms", "Competitive programming"],
+      gaps: ["No web experience", "No team projects"], nextAction: "Redirect to embedded track",
+      ownerId: "seed",
+    },
+    {
+      userId: "seed", eventId: event.id, roleId: designRole.id,
+      name: "Anya Petrova", school: "Parsons School of Design", role: "Product Design Intern",
+      fitScore: 86, riskLevel: "low", stage: "fair", lane: "recruiter_now",
+      verified: false, strengths: ["Figma", "Prototyping", "UX research"],
+      gaps: ["No developer handoff experience"], nextAction: "Priority — fast track to interview",
+      ownerId: "seed",
+    },
+    {
+      userId: "seed", eventId: event.id, roleId: mlRole.id,
+      name: "James Okonkwo", school: "Carnegie Mellon", role: "ML Engineer Intern",
+      fitScore: 67, riskLevel: "high", stage: "fair", lane: "redirect",
+      verified: false, strengths: ["Enthusiasm", "Math background"],
+      gaps: ["No Python", "No ML projects", "GPA below threshold"], nextAction: "Polite redirect",
+      ownerId: "seed",
+    },
+    {
+      userId: "seed", eventId: event.id, roleId: sweRole.id,
+      name: "Linh Pham", school: "George Mason University", role: "Software Engineer Intern",
+      fitScore: 80, riskLevel: "low", stage: "fair", lane: "quick_screen",
+      verified: false, strengths: ["Go", "Docker", "Backend systems"],
+      gaps: ["No frontend", "Limited testing experience"], nextAction: "Queue for quick screen",
+      ownerId: "seed",
+    },
   ]).returning();
 
   console.log("✓ Candidates created");

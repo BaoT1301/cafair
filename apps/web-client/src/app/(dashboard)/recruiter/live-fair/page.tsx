@@ -14,6 +14,17 @@ import { Avatar } from "@/components/recruiter/Avatar";
 // ─── Types ────────────────────────────────────────────────
 type Lane = "recruiter_now" | "quick_screen" | "redirect";
 type Risk = "low" | "medium" | "high";
+type LiveCandidate = {
+  id: string;
+  name: string;
+  role: string | null;
+  fitScore: number | null;
+  lane: string | null;
+  riskLevel: Risk | null;
+  strengths: unknown;
+  school: string | null;
+  avatarUrl: string | null;
+};
 
 // ─── Lane config ──────────────────────────────────────────
 const LANES = [
@@ -286,10 +297,10 @@ export default function LiveFairPage() {
 
   // Distribute candidates across lanes using their lane field or fallback by index
   const getLaneCandidates = (lane: Lane) => {
-    const laned = (candidates as any[]).filter(c => c.lane === lane);
+    const all = (candidates ?? []) as LiveCandidate[];
+    const laned = all.filter(c => c.lane === lane);
     if (laned.length > 0) return laned;
     // Fallback: distribute by index for demo
-    const all = [...(candidates as any[])];
     if (lane === "recruiter_now") return all.filter((_, i) => i % 3 === 0).slice(0, 6);
     if (lane === "quick_screen") return all.filter((_, i) => i % 3 === 1).slice(0, 4);
     return all.filter((_, i) => i % 3 === 2).slice(0, 3);
