@@ -14,17 +14,18 @@ import {
   ClipboardCheck,
   Settings,
   PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
-  { label: "Hiring Center",       href: "/hiring-center",    icon: Building2 },
-  { label: "Role Management",     href: "/roles",             icon: Briefcase },
-  { label: "Candidate Queue",     href: "/candidate-queue",  icon: Users },
-  { label: "Ranking & Shortlist", href: "/ranking",           icon: BarChart2 },
-  { label: "Risk Flags",          href: "/risk-flags",        icon: Flag },
-  { label: "Conversation",        href: "/conversation",      icon: MessageSquare },
-  { label: "Post-Call Review",    href: "/post-call-review", icon: ClipboardCheck },
+  { label: "Hiring Center",       href: "/recruiter/hiring-center",    icon: Building2 },
+  { label: "Role Management",     href: "/recruiter/roles",             icon: Briefcase },
+  { label: "Candidate Queue",     href: "/recruiter/candidate-queue",  icon: Users },
+  { label: "Ranking & Shortlist", href: "/recruiter/ranking",           icon: BarChart2 },
+  { label: "Risk Flags",          href: "/recruiter/risk-flags",        icon: Flag },
+  { label: "Conversation",        href: "/recruiter/conversation",      icon: MessageSquare },
+  { label: "Post-Call Review",    href: "/recruiter/post-call-review", icon: ClipboardCheck },
 ];
 
 export function Sidebar() {
@@ -74,41 +75,44 @@ export function Sidebar() {
       <div
         className={cn(
           "flex items-center border-b border-[#e2e8e5] py-6 shrink-0",
-          isCollapsed ? "justify-center px-2" : "justify-between px-4"
+          isCollapsed ? "flex-col gap-2 justify-center px-2" : "justify-between px-4"
         )}
       >
+        {/* Logo always mounted — avoids flicker on collapse/expand */}
+        <Link
+          href="/"
+          aria-label="Go to home"
+          className={cn("flex items-center gap-1 min-w-0 shrink-0", isCollapsed && "justify-center")}
+        >
+          <img
+            src="https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504"
+            alt="AlHire logo"
+            className="w-12 h-12 object-cover shrink-0"
+          />
+          {!isCollapsed && (
+            <span className="font-semibold text-[20px] text-[#111827] leading-5 whitespace-nowrap">
+              AlHire
+            </span>
+          )}
+        </Link>
+
+        {/* Toggle button */}
         {isCollapsed ? (
           <button
             onClick={() => toggle(false)}
             aria-label="Expand sidebar"
-            className="shrink-0"
+            className="text-[#4b5563] hover:text-[#0e3d27] hover:bg-[#e8f5ee] rounded-[8px] p-1.5 transition-colors"
           >
-            <img
-              src="https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504"
-              alt="AlHire logo"
-              className="w-12 h-12 object-cover pointer-events-none"
-            />
+            <PanelLeftOpen className="w-4 h-4" />
           </button>
         ) : (
-          <>
-            <div className="flex items-center gap-1 min-w-0">
-              <img
-                src="https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504"
-                alt="AlHire logo"
-                className="w-12 h-12 object-cover pointer-events-none shrink-0"
-              />
-              <span className="font-semibold text-[20px] text-[#111827] leading-5 whitespace-nowrap">
-                AlHire
-              </span>
-            </div>
-            <button
-              onClick={() => toggle(true)}
-              aria-label="Collapse sidebar"
-              className="text-[#4b5563] hover:text-[#111827] transition-colors shrink-0"
-            >
-              <PanelLeftClose className="w-4 h-4" />
-            </button>
-          </>
+          <button
+            onClick={() => toggle(true)}
+            aria-label="Collapse sidebar"
+            className="text-[#4b5563] hover:text-[#111827] transition-colors shrink-0"
+          >
+            <PanelLeftClose className="w-4 h-4" />
+          </button>
         )}
       </div>
 

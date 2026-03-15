@@ -7,6 +7,7 @@ import { RiskBadge } from "@/components/recruiter/RiskBadge";
 import { SocialScreenModal } from "@/components/recruiter/SocialScreenModal";
 import { getInitials, STAGE_ORDER } from "@/lib/recruiter-utils";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   FileText,
@@ -438,16 +439,17 @@ export default function CandidateDetailPage() {
   ];
 
   return (
-    <div className="space-y-4 w-full">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="space-y-4 w-full">
 
       {/* Back */}
-      <button
+      <motion.button
+        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
         onClick={() => router.back()}
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
-      </button>
+      </motion.button>
 
       {/* ── High-risk alert banner ── */}
       {candidate.riskLevel === "high" && !riskBannerDismissed && (
@@ -470,7 +472,7 @@ export default function CandidateDetailPage() {
 
       <div className="flex gap-5">
         {/* Left content */}
-        <div className="flex-1 space-y-4 min-w-0">
+        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35, delay: 0.1, ease: [0.22, 1, 0.36, 1] }} className="flex-1 space-y-4 min-w-0">
 
           {/* Header card */}
           <div className="bg-card border border-border rounded-xl shadow-sm p-5">
@@ -529,9 +531,12 @@ export default function CandidateDetailPage() {
           {/* Tabs */}
           <div className="flex gap-1 bg-muted/50 p-1 rounded-lg w-fit">
             {tabs.map((tab) => (
-              <button
+              <motion.button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 400, damping: 22 }}
                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
                   activeTab === tab.key
                     ? "bg-foreground text-background shadow-sm"
@@ -544,7 +549,7 @@ export default function CandidateDetailPage() {
                     {actions.length}
                   </span>
                 )}
-              </button>
+              </motion.button>
             ))}
           </div>
 
@@ -807,24 +812,27 @@ export default function CandidateDetailPage() {
               )}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Right sidebar */}
-        <div className="w-[220px] shrink-0 space-y-4">
+        <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35, delay: 0.15, ease: [0.22, 1, 0.36, 1] }} className="w-[220px] shrink-0 space-y-4">
 
           {/* Actions */}
           <div className="bg-card border border-border rounded-xl shadow-sm p-4 space-y-2">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Actions</p>
 
             {/* Run Social Screen */}
-            <button
+            <motion.button
               onClick={() => setSocialScreenOpen(true)}
-              className="w-full flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
+              className="w-full flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg"
               style={{ background: "linear-gradient(135deg, #0e3d27 0%, #1f6b43 100%)", color: "#fff" }}
             >
               <ScanSearch className="w-3.5 h-3.5" />
               Run Social Screen
-            </button>
+            </motion.button>
 
             {/* Get Notified on Agent — OpenClaw */}
             <motion.button
@@ -839,30 +847,39 @@ export default function CandidateDetailPage() {
               <span className="text-[10px] text-[#6b7280]">powered by GPT 5.4 Codex · OpenClaw</span>
             </motion.button>
 
-            <button
+            <motion.button
               onClick={() => fireAction("sync_to_ats")}
               disabled={createAction.isPending}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
               className="w-full flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium py-2 px-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <Zap className="w-3.5 h-3.5" />
               Sync to ATS
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => fireAction("schedule_interview")}
               disabled={createAction.isPending}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
               className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border disabled:opacity-60"
             >
               <Calendar className="w-3.5 h-3.5" />
               Schedule Interview
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => fireAction("follow_up_email")}
               disabled={createAction.isPending}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
               className="w-full flex items-center gap-2 bg-muted text-foreground text-sm font-medium py-2 px-3 rounded-lg hover:bg-muted/70 transition-colors border border-border disabled:opacity-60"
             >
               <Send className="w-3.5 h-3.5" />
               Draft Follow-up
-            </button>
+            </motion.button>
 
             {/* Action processing banner */}
             {pendingActionType && <ActionProcessingBanner actionType={pendingActionType} />}
@@ -885,7 +902,11 @@ export default function CandidateDetailPage() {
               </button>
 
               {showStagePicker && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                <motion.div
+                  className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 26 }}
+                >
                   {STAGE_ORDER.map((s) => (
                     <button
                       key={s}
@@ -900,7 +921,7 @@ export default function CandidateDetailPage() {
                       )}
                     </button>
                   ))}
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
@@ -984,7 +1005,7 @@ export default function CandidateDetailPage() {
               {candidate.riskLevel === "high" ? "Run Social Screen" : "Run Web Scan"}
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Close stage picker on outside click */}
@@ -1019,7 +1040,7 @@ export default function CandidateDetailPage() {
             <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "#2a2a3e" }}>
               <div>
                 <p className="text-[13px] font-bold text-white">Internal OpenClaw Workflow Runner</p>
-                <p className="text-[11px] text-[#9ca3af]">who Syncs Up with you once Agent starts to Screen</p>
+                <p className="text-[11px] text-[#9ca3af]">Syncs up with you once Agent starts to Screen</p>
               </div>
               <button onClick={() => setOpenClawOpen(false)} className="text-[#4b5563] hover:text-white transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1040,12 +1061,9 @@ export default function CandidateDetailPage() {
       {socialScreenOpen && candidate && (
         <SocialScreenModal
           candidateName={candidate.name}
-          candidateId={candidate.id}
-          roleTitle={candidate.role ?? undefined}
-          school={candidate.school ?? undefined}
           onClose={() => setSocialScreenOpen(false)}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

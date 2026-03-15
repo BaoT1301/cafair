@@ -25,10 +25,21 @@ const RETRY_BASE_MS = 1000;
 export function getNovaClient(): BedrockRuntimeClient {
   if (client) return client;
 
-  client = new BedrockRuntimeClient({
-    region: process.env.AWS_REGION ?? "us-east-1",
-    // AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are read from env automatically
-  });
+  const region = process.env.AWS_REGION ?? process.env.MODEL_REGION ?? "us-east-1";
+  const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
+
+  if (bearerToken) {
+    // Use bearer token auth (hackathon / short-lived token)
+    client = new BedrockRuntimeClient({
+      region,
+      token: { token: bearerToken },
+    });
+    console.log("Nova client: using bearer token auth (AWS_BEARER_TOKEN_BEDROCK)");
+  } else {
+    // Fall back to IAM credentials from env (AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY)
+    client = new BedrockRuntimeClient({ region });
+    console.log("Nova client: using IAM credential auth");
+  }
 
   return client;
 }

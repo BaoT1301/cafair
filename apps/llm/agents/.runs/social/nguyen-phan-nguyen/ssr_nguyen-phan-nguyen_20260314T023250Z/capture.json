@@ -1,0 +1,237 @@
+{
+  "artifactVersion": "social_capture_v1",
+  "ok": true,
+  "run": {
+    "startedAtISO": null,
+    "endedAtISO": null,
+    "durationSeconds": null,
+    "mode": "deterministic",
+    "modelId": "deterministic-social-capture"
+  },
+  "nova": {
+    "sessionId": null,
+    "actId": null,
+    "logsDirTemp": null,
+    "replayHtmlTemp": null,
+    "logsDir": null,
+    "htmlReplayPath": null,
+    "numStepsExecuted": null,
+    "logsDirLocal": null,
+    "replayHtmlLocal": null,
+    "htmlReplayPathLocal": null,
+    "screenshots": [],
+    "warnings": []
+  },
+  "inputs": {
+    "candidateId": "cand_np_001",
+    "candidateName": "Nguyen Phan Nguyen",
+    "linkedinUrl": "https://www.linkedin.com/in/nguyenpn1/",
+    "githubUrl": "https://github.com/ngstephen1",
+    "portfolioUrl": "https://lamanhtruong.com",
+    "webQueries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ]
+  },
+  "outputs": {
+    "stageStatus": {
+      "linkedin": {
+        "requested": true,
+        "completed": true,
+        "status": "blocked"
+      },
+      "github": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      },
+      "portfolio": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      },
+      "web": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      }
+    },
+    "finalSummaryText": null,
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "found": true,
+      "status": "blocked",
+      "profileName": null,
+      "headline": null,
+      "location": null,
+      "currentCompany": null,
+      "school": null,
+      "topLinks": [],
+      "skills": [],
+      "evidence": [
+        "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually."
+      ],
+      "missing": [],
+      "experienceCount": 0,
+      "notes": "Deterministic fallback could not reliably read LinkedIn profile details."
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1",
+      "found": true,
+      "status": "partial",
+      "username": "ngstephen1",
+      "displayName": "Stephen Nguyen",
+      "bio": "Virginia Tech '27",
+      "followers": 16,
+      "following": 34,
+      "contributionsLastYear": null,
+      "topLanguages": [],
+      "pinnedRepoCount": 0,
+      "pinnedRepos": [],
+      "evidence": [
+        "GitHub display name appears to be 'Stephen Nguyen'.",
+        "GitHub bio: Virginia Tech '27"
+      ],
+      "missing": [],
+      "notes": "GitHub details collected from the public GitHub user API."
+    },
+    "portfolio": {
+      "url": "https://lamanhtruong.com",
+      "found": true,
+      "status": "partial",
+      "ownerName": "Lam Anh Truong",
+      "candidateLabel": "Nguyen Phan Nguyen",
+      "mismatchFlag": true,
+      "evidence": [
+        "Visible portfolio owner name appears to be 'Lam Anh Truong'.",
+        "Portfolio title: Anh Portfolio",
+        "Portfolio description: Anh Portfolio is where you find him",
+        "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'."
+      ],
+      "projectsReviewed": 0,
+      "projectHighlights": [],
+      "resumeFound": null,
+      "githubLinkFound": null,
+      "githubLinkMatchesExpected": "unknown",
+      "retroFound": null,
+      "warnings": [],
+      "notes": "Portfolio details collected from the public homepage HTML during deterministic fallback."
+    },
+    "web": {
+      "queries": [
+        "Nguyen Phan Nguyen Virginia Tech"
+      ],
+      "resultCount": 0,
+      "results": []
+    },
+    "flags": [
+      "IDENTITY_MISMATCH_WEBSITE_OWNER"
+    ],
+    "structured": {
+      "linkedin": {
+        "url": "https://www.linkedin.com/in/nguyenpn1/",
+        "found": true,
+        "status": "blocked",
+        "profileName": null,
+        "headline": null,
+        "location": null,
+        "currentCompany": null,
+        "school": null,
+        "topLinks": [],
+        "skills": [],
+        "evidence": [
+          "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually."
+        ],
+        "missing": [],
+        "experienceCount": 0,
+        "notes": "Deterministic fallback could not reliably read LinkedIn profile details."
+      },
+      "github": {
+        "url": "https://github.com/ngstephen1",
+        "found": true,
+        "status": "partial",
+        "username": "ngstephen1",
+        "displayName": "Stephen Nguyen",
+        "bio": "Virginia Tech '27",
+        "followers": 16,
+        "following": 34,
+        "contributionsLastYear": null,
+        "topLanguages": [],
+        "pinnedRepoCount": 0,
+        "pinnedRepos": [],
+        "evidence": [
+          "GitHub display name appears to be 'Stephen Nguyen'.",
+          "GitHub bio: Virginia Tech '27"
+        ],
+        "missing": [],
+        "notes": "GitHub details collected from the public GitHub user API."
+      },
+      "portfolio": {
+        "url": "https://lamanhtruong.com",
+        "found": true,
+        "status": "partial",
+        "ownerName": "Lam Anh Truong",
+        "candidateLabel": "Nguyen Phan Nguyen",
+        "mismatchFlag": true,
+        "evidence": [
+          "Visible portfolio owner name appears to be 'Lam Anh Truong'.",
+          "Portfolio title: Anh Portfolio",
+          "Portfolio description: Anh Portfolio is where you find him",
+          "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'."
+        ],
+        "projectsReviewed": 0,
+        "projectHighlights": [],
+        "resumeFound": null,
+        "githubLinkFound": null,
+        "githubLinkMatchesExpected": "unknown",
+        "retroFound": null,
+        "warnings": [],
+        "notes": "Portfolio details collected from the public homepage HTML during deterministic fallback."
+      },
+      "web": {
+        "queries": [
+          "Nguyen Phan Nguyen Virginia Tech"
+        ],
+        "resultCount": 0,
+        "results": []
+      }
+    }
+  },
+  "raw": {
+    "instruction": null,
+    "actResultPath": null,
+    "stageSummaries": null
+  },
+  "artifacts": {
+    "trace": {
+      "saved": true,
+      "format": "text",
+      "path": "nova_trace.txt",
+      "rawPath": "nova_trace_raw.txt",
+      "redacted": true,
+      "redactMode": "partial",
+      "containsThinkLines": false,
+      "containsActionLines": false,
+      "containsReturnLines": false,
+      "source": "none",
+      "diagnostics": [
+        "Deterministic capture created without Nova transcript."
+      ]
+    },
+    "returnBlock": {
+      "saved": true,
+      "path": "nova_return_block.txt",
+      "redacted": true,
+      "redactMode": "partial"
+    },
+    "evidencePacket": {
+      "saved": true,
+      "path": "evidence_packet.json"
+    },
+    "evidencePacketMarkdown": {
+      "saved": true,
+      "path": "evidence_packet.md"
+    }
+  },
+  "warnings": [],
+  "error": null
+}

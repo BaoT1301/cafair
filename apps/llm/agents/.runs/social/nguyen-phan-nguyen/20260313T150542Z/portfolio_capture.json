@@ -1,0 +1,73 @@
+{
+  "summaryText": "PORTFOLIO_STATUS: partial\nPORTFOLIO_URL: https://lamanhtruong.com\nPORTFOLIO_OWNER_NAME: unknown\nCANDIDATE_LABEL: Nguyen Phan Nguyen\nMISMATCH_FLAG: no\nEVIDENCE:\n- Portfolio stage status: partial.\nPROJECTS_REVIEWED: 0\nPROJECT_HIGHLIGHTS:\n- No project highlights captured.\nRESUME_FOUND: no\nGITHUB_LINK_FOUND: no\nGITHUB_LINK_MATCHES_EXPECTED: unknown\nRETRO_FOUND: no\nWARNINGS:\n- Portfolio stage completed without an explicit summary payload.\nMISSING:\n- Portfolio stage completed without an explicit summary payload.",
+  "parsed": {
+    "url": "https://lamanhtruong.com",
+    "found": true,
+    "status": "partial",
+    "ownerName": "Lam Anh Truong",
+    "candidateLabel": "Nguyen Phan Nguyen",
+    "mismatchFlag": true,
+    "evidence": [
+      "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+      "Portfolio stage status: partial."
+    ],
+    "projectsReviewed": 0,
+    "projectHighlights": [
+      "No project highlights captured."
+    ],
+    "resumeFound": false,
+    "githubLinkFound": false,
+    "githubLinkMatchesExpected": "unknown",
+    "retroFound": false,
+    "warnings": [
+      "Portfolio stage completed without an explicit summary payload.",
+      "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+      "Portfolio stage completed without an explicit summary payload."
+    ],
+    "notes": "Portfolio stage parsed from the Nova Act structured return block."
+  },
+  "actResult": {
+    "metadata": {
+      "session_id": "019ce7b4-fea7-73f6-8f3f-cc9cca5a4300",
+      "act_id": "019ce7b7-d99b-7df3-a774-a11215394619",
+      "num_steps_executed": 30,
+      "start_time": 1773414111.6176481,
+      "end_time": 1773414341.289691,
+      "step_server_times_s": [
+        2.312,
+        4.693,
+        3.273,
+        4.084,
+        3.094,
+        4.4,
+        3.595,
+        4.186,
+        3.417,
+        3.914,
+        3.368,
+        4.208,
+        3.415,
+        4.335,
+        3.738,
+        3.222,
+        4.046,
+        3.616,
+        3.487,
+        3.479,
+        4.307,
+        3.575,
+        3.441,
+        3.687,
+        4.048,
+        6.157,
+        4.067,
+        4.111,
+        3.998,
+        8.507
+      ],
+      "time_worked_s": 229.6720428466797,
+      "human_wait_time_s": 0.0,
+      "prompt": "You are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nYou must end with a strict machine-readable return block.\nDo not return narrative prose by itself.\nReturn exactly one BEGIN_CAPTURE_JSON line, then one valid JSON object, then one END_CAPTURE_JSON line.\nPORTFOLIO STAGE: COMPLETE THIS RECRUITER-STYLE INTERACTIVE PORTFOLIO REVIEW\nPortfolio hard limits:\n- At most 25 actions total in this stage.\n- Max 2 consecutive scrolls; after that, use navigation, anchors, or mark the section missing.\n- Prefer visible navigation such as Projects, Resume, GitHub, Retro, About, Experience, or headings before scrolling.\n- Open at most 8 project cards total, but stop earlier once strong evidence is gathered.\n- Open at most 1 Resume target, 1 GitHub target from the portfolio, and 1 Retro entry.\nP1. Navigate directly to the portfolio URL: https://lamanhtruong.com\nP2. Confirm the site is visible. If the page is blocked or fails to load, set PORTFOLIO_STATUS: blocked and stop.\nP3. Capture the visible landing-page title, hero name, and title or role text exactly as shown.\nP4. Capture the first visible owner name from the hero, header, or top navigation.\nP5. Compare the visible owner name to the candidate label 'Nguyen Phan Nguyen'. If the visible owner looks like a different person, record that clearly.\nP6. Bias toward flagging a mismatch if 'Lam Anh Truong' appears prominently in the hero, header, title, or repeated branding.\nP7. Capture the visible top navigation labels and recruiter-relevant links.\nP8. Navigate to Projects using a visible Projects tab, button, anchor, or heading if available.\nP9. Capture the visible project section heading and count how many project cards are visible before opening anything.\nP10. Open the strongest visible project card.\nP11. Capture the project name, the problem or theme, and one visible engineering fact such as stack, demo, or README-style description.\nP12. Return to the project list or portfolio landing after the first project review.\nP13. Open a second clearly different project card if available.\nP14. Capture the second project's name, theme, and one visible engineering fact, then return.\nP15. If more strong projects are clearly visible and action budget remains, open up to 2 more project cards total; never exceed 8.\nP16. Open Resume using a visible Resume link, button, or section if present.\nP17. Capture whether a resume page or downloadable resume was found and 2 or 3 visible facts from it.\nP18. If Resume opened in a new browser tab, close that tab by clicking the tab x or close-tab control first. Do not spend more than 2 actions trying to close it.\nP19. If Resume opened in the same tab, use the browser Back control once; if that fails, navigate directly back to the portfolio URL instead of interacting with PDF viewer menus.\nP20. If you still cannot get back after 2 close/back attempts, reopen the portfolio URL directly and continue from there.\nP21. Open the GitHub link from the portfolio if visible.\nP22. Compare the opened GitHub destination to the expected GitHub URL 'https://github.com/ngstephen1'.\nP23. After GitHub capture, return to the portfolio. If GitHub opened in a new tab, close that tab first. If that fails, navigate directly back to the portfolio URL.\nP24. Click Retro if a Retro section, button, or nav item is visible.\nP25. Inside Retro, perform up to 10 recruiter-style inspection checks using headings, visible links, and one recruiter-relevant deep open if available. Capture visible themes from Retro such as reflections, lessons learned, project reviews, timelines, or process notes. Record factual warnings only, such as owner-name mismatch, missing resume, missing GitHub link, broken navigation, or sections not visible within the budget. Stop the portfolio stage immediately once you have enough evidence. Do not continue browsing after the structured return is ready.\nFINAL REPORT:\nF1. Call return() immediately after the portfolio stage is complete.\nF2. The final return() must contain a single machine-readable block with no extra prose:\nF3. BEGIN_CAPTURE_JSON\nF4. {\"stageStatus\":{\"portfolio\":\"ok|partial|blocked\",\"web\":\"skipped\"},\"linkedin\":null,\"github\":null,\"portfolio\":{\"url\":\"https://lamanhtruong.com\",\"ownerName\":\"...\",\"candidateLabel\":\"Nguyen Phan Nguyen\",\"mismatchFlag\":true,\"evidence\":[\"...\"],\"projectsReviewed\":0,\"projectHighlights\":[\"...\"],\"resumeFound\":false,\"githubLinkFound\":false,\"githubLinkMatchesExpected\":\"yes|no|unknown\",\"retroFound\":false,\"warnings\":[\"...\"],\"missing\":[\"...\"]},\"web\":{\"status\":\"skipped\",\"queries\":[],\"results\":[],\"evidence\":[\"Web stage disabled in portfolio flow.\"]},\"flags\":[\"IDENTITY_MISMATCH_WEBSITE_OWNER\"],\"finalSummaryText\":\"short recruiter-style portfolio summary\"}\nF5. END_CAPTURE_JSON\nF6. If a visible owner looks like Lam Anh Truong and differs from the candidate label, set mismatchFlag to true and mention the visible text in evidence.\nF7. Replace every placeholder example value with actual visible values, null, [], or a factual missing note.\nF8. Ensure the JSON is valid and compact.\nF9. If a field is not visible, use null, [], or a factual missing note instead of omitting the key.\nF10. Only record visible facts. Do not contact anyone. Do not make personal judgments."
+    }
+  }
+}

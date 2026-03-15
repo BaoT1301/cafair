@@ -1,0 +1,3 @@
+{"message":"demo> think(\"I see the visible pinned repo is ai-hire.\");"}
+{"message":"demo> goToUrl(\"https://github.com/example\");"}
+{"message":"demo> agentType(\"candidate@example.com\");"}

@@ -11,6 +11,16 @@ import {
   ChevronRight,
   Star,
 } from "lucide-react";
+import { motion } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.35, delay: Math.min(i, 10) * 0.045, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
+
 import { FitScoreBar } from "@/components/recruiter/FitScoreBar";
 import { RiskBadge } from "@/components/recruiter/RiskBadge";
 import { getInitials } from "@/lib/recruiter-utils";
@@ -169,7 +179,7 @@ export default function CandidatesPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Candidates</h1>
           <p className="text-sm text-muted-foreground">
@@ -220,7 +230,7 @@ export default function CandidatesPage() {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Table */}
       <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
@@ -251,8 +261,12 @@ export default function CandidatesPage() {
               </tr>
             ) : (
               filtered?.map((c, i) => (
-                <tr
+                <motion.tr
                   key={c.id}
+                  custom={i}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
                   onClick={() => router.push(`/recruiter/candidates/${c.id}`)}
                   className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
                 >
@@ -346,7 +360,7 @@ export default function CandidatesPage() {
                   <td className="pr-4 py-3">
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </td>
-                </tr>
+                </motion.tr>
               ))
             )}
           </tbody>

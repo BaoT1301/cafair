@@ -1,0 +1,72 @@
+BEGIN_CAPTURE_JSON
+{
+  "stageStatus": {
+    "linkedin": "partial",
+    "github": "partial",
+    "portfolio": "partial",
+    "web": "skipped"
+  },
+  "linkedin": {
+    "status": "partial",
+    "profileUrl": "https://www.linkedin.com/in/nguyenpn1/",
+    "headline": "ICLR 2026 | SHPE 2025 | Virginia Tech | TEDx Speaker | Future AI Leader",
+    "currentCompany": "Marriott International",
+    "school": "Virginia Tech",
+    "evidence": [
+      "Visible LinkedIn headline mentions Virginia Tech and TEDx Speaker.",
+      "Current role line shows Marriott International."
+    ],
+    "missing": [
+      "LinkedIn Experience section was not fully expanded."
+    ]
+  },
+  "github": {
+    "status": "partial",
+    "profileUrl": "https://github.com/ngstephen1",
+    "username": "ngstephen1",
+    "pinnedRepos": [
+      { "name": "cafair", "language": "TypeScript", "stars": 42, "note": "Pinned repo reviewed." }
+    ],
+    "topLanguages": ["TypeScript", "Python"],
+    "evidence": [
+      "Pinned repository cafair appears to use TypeScript.",
+      "GitHub username is ngstephen1."
+    ],
+    "missing": [
+      "Full README review was skipped."
+    ]
+  },
+  "portfolio": {
+    "status": "partial",
+    "url": "https://lamanhtruong.com",
+    "ownerName": "Lam Anh Truong",
+    "candidateLabel": "Nguyen Phan Nguyen",
+    "mismatchFlag": true,
+    "projectsReviewed": 2,
+    "projectHighlights": [
+      "Projects section includes portfolio UI and TypeScript project work."
+    ],
+    "resumeFound": true,
+    "githubLinkFound": true,
+    "githubLinkMatchesExpected": "no",
+    "retroFound": true,
+    "evidence": [
+      "Portfolio hero/header name is Lam Anh Truong.",
+      "That visible owner name does not match candidate label Nguyen Phan Nguyen."
+    ],
+    "warnings": [
+      "Identity mismatch: visible portfolio owner name differs from the candidate label."
+    ]
+  },
+  "web": {
+    "status": "skipped",
+    "queries": [],
+    "results": [],
+    "evidence": ["Web stage disabled in portfolio flow."]
+  },
+  "flags": [
+    "IDENTITY_MISMATCH_WEBSITE_OWNER"
+  ],
+  "finalSummaryText": "Structured return block captured successfully."
+}
+END_CAPTURE_JSON

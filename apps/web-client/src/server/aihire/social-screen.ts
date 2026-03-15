@@ -4,11 +4,24 @@
 // The frontend/backend should call this instead of directly importing
 // the agent service.
 
-import { runSocialScreenService } from "..//../../../agents/src/services/socialScreenService";
+// Dynamic import so Vercel build succeeds without the agents package
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFn = (...args: any[]) => Promise<any>;
+let _runSocialScreenService: AnyFn | null = null;
+async function loadSocialScreenAgent(): Promise<AnyFn> {
+  if (!_runSocialScreenService) {
+    try {
+      const path = ["../../../../agents/src/services/socialScreenService"].join("");
+      const mod = await import(/* webpackIgnore: true */ path);
+      _runSocialScreenService = mod.runSocialScreenService;
+    } catch {
+      throw new Error("Social screen agent package not available in this environment");
+    }
+  }
+  return _runSocialScreenService!;
+}
 
-export type SocialScreenServiceResult = Awaited<
-  ReturnType<typeof runSocialScreenService>
->;
+export type SocialScreenServiceResult = Record<string, unknown>;
 
 export interface GetSocialScreenLinkedInExperience {
   title?: string;
@@ -76,7 +89,7 @@ export interface GetSocialScreenInput {
 
 export interface GetSocialScreenSuccess {
   ok: true;
-  result: SocialScreenServiceResult;
+  result: unknown;
 }
 
 export interface GetSocialScreenFailure {
@@ -306,6 +319,7 @@ export async function getSocialScreen(
       }
     }
 
+    const runSocialScreenService = await loadSocialScreenAgent();
     const result = await runSocialScreenService({
       candidateId: input.candidateId.trim(),
       name: input.name.trim(),

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "social-capture-artifact/v1",
+  "generatedAt": "2026-03-13T04:17:15.280029Z",
+  "candidateName": "Nguyen Phan Nguyen",
+  "mode": "local-browser",
+  "input": {
+    "linkedin": "https://www.linkedin.com/in/nguyenpn1/",
+    "github": "https://github.com/ngstephen1",
+    "webQueries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ]
+  },
+  "workflow": {
+    "workflowRunId": null,
+    "workflowDefinitionName": null,
+    "timedOut": false,
+    "modelId": "nova-act-preview"
+  },
+  "paths": {
+    "artifactDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T041715Z",
+    "capturePath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T041715Z/capture.json",
+    "referencedPaths": [],
+    "htmlRunFilePath": null,
+    "logsDir": null,
+    "screenshots": [],
+    "rawOutputPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T041715Z/raw-output.json",
+    "actResultPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T041715Z/act-result.json"
+  },
+  "rawActResultSummary": {
+    "pythonType": "ActResult",
+    "preview": "ActResult(\n    metadata = ActMetadata(\n        session_id = 019ce567-e1e7-79d4-a48a-dcef44690019\n        act_id = 019ce568-63d2-7aa1-a5b4-4489aa8936ce\n        num_steps_executed = 14\n        start_time = 2026-03-13 00:15:49.747007 EDT\n        end_time = 2026-03-13 00:17:14.626906 EDT\n        step_server_times_s = ['2.004', '2.419', '2.495', '2.601', '2.627', '2.577', '2.782', '2.831', '2.602', ..."
+  },
+  "normalized": {
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "found": true,
+      "headline": null,
+      "currentCompany": null,
+      "school": null,
+      "skills": [],
+      "experienceCount": 0
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1",
+      "found": true,
+      "username": "ngstephen1",
+      "displayName": null,
+      "bio": null,
+      "followers": null,
+      "following": null,
+      "contributionsLastYear": null,
+      "topLanguages": [],
+      "pinnedRepoCount": 0,
+      "pinnedRepos": []
+    },
+    "web": {
+      "queries": [
+        "Nguyen Phan Nguyen Virginia Tech"
+      ],
+      "resultCount": 0,
+      "results": []
+    }
+  },
+  "warnings": [
+    "Local visible browser mode was used.",
+    "This mode is best for debugging because you can see the browser and Nova Act actions directly.",
+    "If manual LinkedIn login mode is enabled, the agent continues from your already signed-in LinkedIn session and performs a detailed candidate-only LinkedIn review before GitHub.",
+    "The local instruction now uses expanded detailed LinkedIn and GitHub checklists to push the agent toward more deliberate evidence gathering.",
+    "Structured extraction is still a placeholder in this mode until you add page parsing/mapping.",
+    "If NOVA_ACT_PREFER_CHROME is enabled, the script prefers launching NovaAct itself in Chrome/Chromium.",
+    "If --manual-linkedin-login is enabled, local mode starts on the LinkedIn login page and waits for human sign-in before Nova Act continues.",
+    "Without --manual-linkedin-login, local mode starts on Google when LinkedIn is requested so the agent searches for the public LinkedIn result instead of opening the profile URL directly.",
+    "This SDK path currently launches an isolated Playwright browser context, so it will not reuse your already signed-in Chrome profile.",
+    "Do not set a Chrome user-data-dir for this script unless NovaAct adds persistent-context profile support in a future SDK version."
+  ]
+}
