@@ -1061,6 +1061,9 @@ export default function CandidateDetailPage() {
       {socialScreenOpen && candidate && (
         <SocialScreenModal
           candidateName={candidate.name}
+          candidateId={candidate.id}
+          roleTitle={candidate.role ?? undefined}
+          school={candidate.school ?? undefined}
           onClose={() => setSocialScreenOpen(false)}
         />
       )}
