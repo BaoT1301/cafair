@@ -1,0 +1,18 @@
+===== STAGE: linkedin =====
+goToUrl("https://www.linkedin.com/in/nguyenpn1/");
+think("I am on the LinkedIn profile page. The headline is 'ICLR 2026 | SHPE 2025 | Virginia Tech | TEDx Speaker | Future AI Leader'.")
+agentClick("<box>186,167,211,366</box>");
+think("The current role is 'Marriott International'. The education summary is 'Virginia Tech'.")
+agentScroll("down", "<box>0,0,788,1440</box>");
+agentType("Nguyen Phan Nguyen Virginia Tech");
+===== STAGE: github =====
+goToUrl("https://github.com/ngstephen1");
+think("The username is 'ngstephen1'. The pinned repository 'cafair' uses TypeScript and has 42 stars.")
+agentClick("<box>10,10,20,20</box>");
+agentScroll("down", "<box>0,0,788,1440</box>");
+===== STAGE: portfolio =====
+goToUrl("https://lamanhtruong.com");
+think("The visible hero name is 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.")
+agentClick("<box>20,20,30,30</box>");
+think("A Resume link and a GitHub link are visible from the portfolio landing page.")
+return("BEGIN_CAPTURE_JSON {\"finalSummaryText\":\"structured\"} END_CAPTURE_JSON");

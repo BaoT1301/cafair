@@ -1,0 +1,104 @@
+{
+  "artifactVersion": "social_capture_v1",
+  "ok": true,
+  "run": {
+    "startedAtISO": null,
+    "endedAtISO": null,
+    "durationSeconds": null,
+    "mode": "local-browser",
+    "modelId": "nova-act-preview"
+  },
+  "nova": {
+    "sessionId": null,
+    "actId": null,
+    "logsDirTemp": null,
+    "replayHtmlTemp": null,
+    "logsDir": null,
+    "htmlReplayPath": null,
+    "numStepsExecuted": null,
+    "logsDirLocal": null,
+    "replayHtmlLocal": null,
+    "htmlReplayPathLocal": null,
+    "screenshots": [],
+    "warnings": []
+  },
+  "inputs": {
+    "candidateName": "Nguyen Phan Nguyen",
+    "linkedinUrl": "https://www.linkedin.com/in/nguyenpn1/",
+    "githubUrl": "https://github.com/ngstephen1",
+    "webQueries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ]
+  },
+  "outputs": {
+    "stageStatus": {
+      "linkedin": {
+        "requested": true,
+        "completed": true,
+        "status": "ok"
+      },
+      "github": {
+        "requested": true,
+        "completed": false,
+        "status": "pending"
+      },
+      "web": {
+        "requested": true,
+        "completed": false,
+        "status": "pending"
+      }
+    },
+    "finalSummaryText": "ActResult(\n    metadata = ActMetadata(\n        session_id = 019ce5b0-68a5-7d9c-8106-0ad9748f8c90\n        act_id = 019ce5b0-fc1d-70f8-90da-4d3f23b118d1\n        num_steps_executed = 21\n        start_time = 2026-03-13 01:35:07.237901 EDT\n        end_time = 2026-03-13 01:37:48.753860 EDT\n        step_server_times_s = ['4.927', '3.511', '4.235', '3.697', '3.966', '3.782', '3.441', '3.720', '3.154', '3.123', '3.791', '3.533', '3.697', '3.668', '3.993', '3.918', '3.937', '3.705', '3.580', '3.732', '12.673']\n        time_worked = 2m 41.5s\n        prompt = 'You are performing a browser evidence capture demo.\n    Use only the URLs that are explicitly provided in this prompt.\n    Summarize visible facts only.\n    Do not search for a person by name on LinkedIn or Google.\n    Do not make personal judgments, and do not contact anyone.\n    Only inspect information already visible in the current browser session.\n    Narrate actions briefly while moving.\n    Scroll only when needed. At most 2 scroll...",
+    "structured": {
+      "linkedin": {
+        "url": "https://www.linkedin.com/in/nguyenpn1/",
+        "found": true,
+        "headline": null,
+        "currentCompany": null,
+        "school": null,
+        "skills": [],
+        "experienceCount": 0
+      },
+      "github": {
+        "url": "https://github.com/ngstephen1",
+        "found": true,
+        "username": "ngstephen1",
+        "displayName": null,
+        "bio": null,
+        "followers": null,
+        "following": null,
+        "contributionsLastYear": null,
+        "topLanguages": [],
+        "pinnedRepoCount": 0,
+        "pinnedRepos": []
+      },
+      "web": {
+        "queries": [
+          "Nguyen Phan Nguyen Virginia Tech"
+        ],
+        "resultCount": 0,
+        "results": []
+      },
+      "summarySignals": [],
+      "summaryMissing": [],
+      "summaryWarnings": []
+    }
+  },
+  "raw": {
+    "instruction": "You are performing a browser evidence capture demo.\nUse only the URLs that are explicitly provided in this prompt.\nSummarize visible facts only.\nDo not search for a person by name on LinkedIn or Google.\nDo not make personal judgments, and do not contact anyone.\nOnly inspect information already visible in the current browser session.\nNarrate actions briefly while moving.\nScroll only when needed. At most 2 scroll passes per section.\nIf you overscroll, use direct navigation, page anchors, or return to the previous visible section instead of endless scrolling.\nCandidate label for notes: Nguyen Phan Nguyen.\nLINKEDIN STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE STEPS\nL1. The human operator already signed in manually before this stage starts.\nL2. Stay on the provided LinkedIn profile only. Do not search LinkedIn for people by name.\nL3. Wait for the profile page to load completely.\nL4. If LinkedIn redirects to /login, an authwall, or 'Sign in to see more' and no profile content is visible, set LINKEDIN_STATUS: blocked.\nL5. If blocked, do not attempt bypass and move to the next requested stage.\nL6. If the profile is visible, set LINKEDIN_STATUS: ok.\nL7. Capture the visible profile URL.\nL8. Capture the visible top-card headline exactly as shown.\nL9. Capture the visible location exactly as shown.\nL10. Capture the visible current company or current role line from the top card.\nL11. Capture the visible school or education summary from the top card.\nL12. Capture any visible public links or portfolio links in the top card or contact/public section.\nL13. Note whether About, Featured, Activity, Experience, Education, Skills, or Certifications sections are visible.\nL14. If an About section is visible, focus it and capture a short visible summary only.\nL15. Capture any clearly stated technical interests, specialties, or themes from the About section.\nL16. Scroll toward the Featured or Activity section if visible.\nL17. If Featured items are visible, capture the titles and what type of item each appears to be.\nL18. If Activity is visible, capture whether posts, reposts, talks, or project updates are visible.\nL19. Scroll to the Experience section.\nL20. Capture the most recent visible role title.\nL21. Capture the most recent visible company name and date range.\nL22. Capture one additional relevant visible role, internship, or research position if shown.\nL23. Capture any visible impact statements, technologies, or responsibilities that are explicitly written.\nL24. Scroll to the Education section.\nL25. Capture visible school name, degree, field, and dates.\nL26. Capture visible honors, societies, or organizations only if explicitly shown near education.\nL27. Scroll to the Skills section.\nL28. Capture the top visible skills exactly as labeled on the page.\nL29. If a clearly visible public portfolio or project link exists, open at most one, inspect briefly for visible facts, then return.\nL30. End the LinkedIn stage with 4 to 6 bullet evidence lines containing visible facts only.\nGITHUB STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE STEPS\nG1. Navigate directly to this GitHub URL: https://github.com/ngstephen1\nG2. Wait for the profile page to load.\nG3. Capture the visible profile URL.\nG4. Capture the username exactly as shown.\nG5. Capture the display name exactly as shown.\nG6. Capture the visible bio or tagline.\nG7. Capture follower and following counts if visible.\nG8. Capture visible location, organization, website, or employer links if shown.\nG9. Capture the visible contributions summary or contribution count if shown.\nG10. Capture the visible pinned repository names.\nG11. Capture the primary language and stars for each visible pinned repository if shown.\nG12. Capture visible topic tags or profile highlights if shown.\nG13. Open the Repositories tab if it is not already selected and if doing so helps surface visible facts.\nG14. Capture the visible public repository count if shown.\nG15. Identify the strongest visible repository to inspect first based on visible title and description.\nG16. Open that repository.\nG17. Capture the repository name, owner, and description.\nG18. Capture the visible language, stars, forks, and last-updated timing if shown.\nG19. Inspect the top of the README and capture whether setup, demo, or usage information is visible.\nG20. Capture whether screenshots, demo links, badges, or release markers are visible.\nG21. Capture whether the visible file tree suggests organized project structure.\nG22. Capture whether tests, CI config, lint config, notebooks, or build files are visibly present.\nG23. Return to the main GitHub profile.\nG24. Open one more visible strong repository if available.\nG25. Capture its name, description, language, and stars if visible.\nG26. Capture whether the README looks substantial or minimal.\nG27. Return to the main profile again.\nG28. Note the overall visible project themes across the profile such as ML, frontend, systems, data, music tech, or hackathon work.\nG29. Set GITHUB_STATUS: ok after you have reviewed the provided GitHub URL.\nG30. End the GitHub stage with 4 to 6 bullet evidence lines of visible facts only.\nWEB SEARCH STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE STEPS USING ONLY PROVIDED QUERIES\nW1. Use only the provided web queries. Do not invent new queries.\nW2. Open a normal web search page in a new tab or normal search context.\nW3. Use the first provided query exactly as written.\nW4. Wait for the search results page to load.\nW5. Review the first screen of results and prefer clearly relevant professional or portfolio pages.\nW6. Prefer public results such as portfolio sites, personal sites, blog posts, university pages, conference pages, Devpost pages, or talk pages.\nW7. Avoid login-only pages, irrelevant directory pages, or unrelated search results.\nW8. Open the strongest relevant result from the first query.\nW9. Capture the visible page title and page URL.\nW10. Capture 2 or 3 visible facts from that page only.\nW11. Return to the search results.\nW12. Open a second clearly relevant result from the first query if available.\nW13. Capture the visible page title and URL for that result.\nW14. Capture 2 or 3 visible facts from that page only.\nW15. Return to the search results.\nW16. If there is a second provided query, search it exactly as written.\nW17. Wait for the second query results page to load.\nW18. Review the first screen of results and again prefer clearly relevant public professional pages.\nW19. Open the strongest relevant result from the second query if available.\nW20. Capture the visible page title and URL.\nW21. Capture 2 or 3 visible facts from that page only.\nW22. Return to the search results.\nW23. Open one additional relevant result if available.\nW24. Capture the visible page title and URL.\nW25. Capture 2 or 3 visible facts from that page only.\nW26. If a portfolio or personal site is found, inspect at most one layer deep into an About, Projects, or Experience page.\nW27. Capture visible project names, talks, publications, awards, internships, or organizations if shown.\nW28. Note if no clearly relevant public result was found for a provided query.\nW29. Set WEB_STATUS: ok if at least one relevant public result was reviewed; otherwise set WEB_STATUS: skipped.\nW30. End the web stage with 4 to 6 bullet evidence lines of visible facts only.\nFINAL REPORT:\nF1. Do not call return() until every required provided-URL stage has been handled.\nF2. If a LinkedIn URL was provided, include LINKEDIN_STATUS: ok or blocked.\nF3. If a GitHub URL was provided, include GITHUB_STATUS: ok only after you have opened and reviewed the provided GitHub URL.\nF4. If web queries were provided, include WEB_STATUS: ok or skipped after handling the provided queries.\nF5. The final return() must be plain text and include these lines exactly:\nF6. LINKEDIN_STATUS: ok/blocked/skipped\nF7. GITHUB_STATUS: ok/skipped\nF8. WEB_STATUS: ok/skipped\nF9. SUMMARY:\nF10. - 8 to 12 bullets of visible facts only such as titles, companies, dates, repos, languages, stars, contributions, public links, blocked pages, or missing sections.\nF11. Do not return immediately after LinkedIn if a GitHub URL was provided.\nF12. Do not include judgments or claims beyond visible page facts.",
+    "actResultPath": "raw_act_result.json"
+  },
+  "warnings": [
+    "Local visible browser mode was used.",
+    "This mode is best for debugging because you can see the browser and Nova Act actions directly.",
+    "If manual LinkedIn login mode is enabled, the agent resumes only after you sign in manually on LinkedIn.",
+    "The local instruction now uses a shorter guardrails-safe evidence capture flow with provided URLs only.",
+    "Structured extraction is still a placeholder in this mode until you add page parsing/mapping.",
+    "If NOVA_ACT_PREFER_CHROME is enabled, the script prefers launching NovaAct itself in Chrome/Chromium.",
+    "If --manual-linkedin-login is enabled, local mode starts on the LinkedIn login page and waits for human sign-in before Nova Act continues.",
+    "Without --manual-linkedin-login, local mode opens the provided LinkedIn URL directly and stops if LinkedIn shows an authwall or login block.",
+    "This SDK path currently launches an isolated Playwright browser context, so it will not reuse your already signed-in Chrome profile.",
+    "Do not set a Chrome user-data-dir for this script unless NovaAct adds persistent-context profile support in a future SDK version."
+  ],
+  "error": null
+}

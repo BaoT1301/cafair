@@ -1,0 +1,46 @@
+{
+  "inputs": {
+    "candidateName": "Nguyen Phan Nguyen",
+    "linkedinUrl": "https://www.linkedin.com/in/nguyenpn1/",
+    "githubUrl": "https://github.com/ngstephen1",
+    "portfolioUrl": "https://lamanhtruong.com",
+    "webQueries": []
+  },
+  "outputs": {
+    "stageStatus": {
+      "linkedin": { "requested": true, "completed": true, "status": "partial" },
+      "github": { "requested": true, "completed": true, "status": "partial" },
+      "portfolio": { "requested": true, "completed": true, "status": "partial" },
+      "web": { "requested": false, "completed": false, "status": "skipped" }
+    },
+    "linkedin": null,
+    "github": null,
+    "portfolio": {
+      "url": "https://lamanhtruong.com",
+      "status": "partial",
+      "ownerName": "Lam Anh Truong",
+      "candidateLabel": "Nguyen Phan Nguyen",
+      "mismatchFlag": true,
+      "evidence": [
+        "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'."
+      ],
+      "warnings": [
+        "Portfolio stage completed without an explicit summary payload."
+      ]
+    },
+    "web": {
+      "status": "skipped",
+      "queries": [],
+      "results": [],
+      "evidence": ["Web stage disabled in the local portfolio flow."]
+    },
+    "flags": ["IDENTITY_MISMATCH_WEBSITE_OWNER"],
+    "finalSummaryText": "Partial capture summary."
+  },
+  "artifacts": {
+    "nova": {
+      "sessionId": "sess_null_001",
+      "actId": "act_null_001"
+    }
+  }
+}

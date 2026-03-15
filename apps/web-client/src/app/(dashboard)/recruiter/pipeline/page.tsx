@@ -12,7 +12,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronRight } from "lucide-react";
-import { getInitials, getScoreColor } from "@/lib/recruiter-utils";
+import { getInitials } from "@/lib/recruiter-utils";
 
 type Stage = "fair" | "screen" | "interview" | "offer" | "day1";
 
@@ -29,72 +29,63 @@ interface Candidate {
   [key: string]: unknown;
 }
 
-const STAGES = [
+/* ─── Stage config using the app's green design system ─────── */
+
+const STAGES: {
+  key: Stage;
+  label: string;
+  header: { bg: string; text: string; border: string };
+  count: { bg: string; text: string };
+  pill: { bg: string; text: string; border: string };
+  drop: { bg: string; border: string };
+  actionLabel: string;
+}[] = [
   {
-    key: "fair" as Stage,
+    key: "fair",
     label: "Fair",
-    pillColor: "bg-background text-foreground border-border",
-    headerBg: "bg-slate-100",
-    headerBorder: "border-slate-200",
-    headerText: "text-slate-700",
-    countBg: "bg-slate-200",
-    countText: "text-slate-600",
-    dropBg: "bg-slate-50/50",
-    dropBorder: "border-slate-300",
+    header: { bg: "#f7f7f7", text: "#6b7280", border: "#e2e8e5" },
+    count: { bg: "#e2e8e5", text: "#4b5563" },
+    pill: { bg: "#f7f7f7", text: "#6b7280", border: "#e2e8e5" },
+    drop: { bg: "#f0f0f0", border: "#d1d5db" },
+    actionLabel: "Invite",
   },
   {
-    key: "screen" as Stage,
+    key: "screen",
     label: "Screen",
-    pillColor: "bg-blue-50 text-blue-700 border-blue-200",
-    headerBg: "bg-blue-50",
-    headerBorder: "border-blue-200",
-    headerText: "text-blue-800",
-    countBg: "bg-blue-100",
-    countText: "text-blue-700",
-    dropBg: "bg-blue-50/50",
-    dropBorder: "border-blue-300",
+    header: { bg: "#e8f5ee", text: "#1f6b43", border: "#c5e4d1" },
+    count: { bg: "#c5e4d1", text: "#0e3d27" },
+    pill: { bg: "#e8f5ee", text: "#1f6b43", border: "#c5e4d1" },
+    drop: { bg: "#f0faf4", border: "#6fbf9a" },
+    actionLabel: "Schedule",
   },
   {
-    key: "interview" as Stage,
+    key: "interview",
     label: "Interview",
-    pillColor: "bg-purple-50 text-purple-700 border-purple-200",
-    headerBg: "bg-purple-50",
-    headerBorder: "border-purple-200",
-    headerText: "text-purple-800",
-    countBg: "bg-purple-100",
-    countText: "text-purple-700",
-    dropBg: "bg-purple-50/50",
-    dropBorder: "border-purple-300",
+    header: { bg: "#d4eddf", text: "#0e3d27", border: "#a3d9b8" },
+    count: { bg: "#a3d9b8", text: "#0e3d27" },
+    pill: { bg: "#d4eddf", text: "#0e3d27", border: "#a3d9b8" },
+    drop: { bg: "#e8f5ee", border: "#6fbf9a" },
+    actionLabel: "Review",
   },
   {
-    key: "offer" as Stage,
+    key: "offer",
     label: "Offer",
-    pillColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    headerBg: "bg-emerald-50",
-    headerBorder: "border-emerald-200",
-    headerText: "text-emerald-800",
-    countBg: "bg-emerald-100",
-    countText: "text-emerald-700",
-    dropBg: "bg-emerald-50/50",
-    dropBorder: "border-emerald-300",
+    header: { bg: "#1f6b43", text: "#ffffff", border: "#0e3d27" },
+    count: { bg: "rgba(255,255,255,0.25)", text: "#ffffff" },
+    pill: { bg: "#1f6b43", text: "#ffffff", border: "#0e3d27" },
+    drop: { bg: "#e8f5ee", border: "#1f6b43" },
+    actionLabel: "Follow up",
   },
   {
-    key: "day1" as Stage,
+    key: "day1",
     label: "Day 1",
-    pillColor: "bg-teal-50 text-teal-700 border-teal-200",
-    headerBg: "bg-teal-50",
-    headerBorder: "border-teal-200",
-    headerText: "text-teal-800",
-    countBg: "bg-teal-100",
-    countText: "text-teal-700",
-    dropBg: "bg-teal-50/50",
-    dropBorder: "border-teal-300",
+    header: { bg: "#0e3d27", text: "#abdd64", border: "#0a2e1d" },
+    count: { bg: "rgba(171,221,100,0.25)", text: "#abdd64" },
+    pill: { bg: "#0e3d27", text: "#abdd64", border: "#0a2e1d" },
+    drop: { bg: "#e8f5ee", border: "#0e3d27" },
+    actionLabel: "Onboard",
   },
 ];
-
-const ACTION_LABELS: Record<Stage, string> = {
-  fair: "Invite", screen: "Schedule", interview: "Review", offer: "Follow up", day1: "Onboard",
-};
 
 const LAST_TOUCH: Record<string, string[]> = {
   fair:      ["Registered", "Arrived at fair", "Checked in"],
@@ -106,6 +97,7 @@ const LAST_TOUCH: Record<string, string[]> = {
 
 const TIME_LABELS = ["3h ago", "1h ago", "30m ago", "45m ago", "2h ago", "1d ago", "4h ago", "5h ago"];
 
+/* ─── Candidate Card ─────────────────────────────────────────── */
 
 function CandidateCard({
   candidate, stage, index, isDragging = false,
@@ -116,43 +108,107 @@ function CandidateCard({
   const score = candidate.fitScore ?? 0;
   const touch = LAST_TOUCH[stage]?.[index % (LAST_TOUCH[stage]?.length ?? 1)] ?? "Registered";
   const time = TIME_LABELS[index % TIME_LABELS.length];
+  const initials = getInitials(candidate.name);
+
+  const scoreStyle = score >= 85
+    ? { background: "linear-gradient(180deg, #2e8b57 0%, #1f6b43 100%)", color: "#fff" }
+    : { background: "#f7f7f7", color: "#0e3d27" };
 
   return (
-    <div className={`bg-card rounded-xl border border-border p-4 shadow-sm transition-all ${
-      isDragging ? "shadow-xl rotate-1 opacity-90 scale-[1.02]" : "hover:shadow-md hover:-translate-y-0.5"
-    }`}>
-      <div className="flex items-center gap-3 mb-3">
+    <div
+      className="bg-white rounded-[14px] border p-4 flex flex-col gap-3 transition-all select-none"
+      style={{
+        borderColor: "#e2e8e5",
+        boxShadow: isDragging
+          ? "0 16px 32px rgba(0,0,0,0.15)"
+          : "0px 1px 4px rgba(0,0,0,0.05)",
+        transform: isDragging ? "rotate(1.5deg) scale(1.03)" : undefined,
+        opacity: isDragging ? 0.95 : 1,
+      }}
+    >
+      {/* Avatar + Name */}
+      <div className="flex items-center gap-3">
         {candidate.avatarUrl ? (
-          <img src={candidate.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
+          <img src={candidate.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-primary">{getInitials(candidate.name)}</span>
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: "#e8f5ee" }}
+          >
+            <span className="text-[11px] font-bold" style={{ color: "#1f6b43" }}>{initials}</span>
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground truncate">{candidate.name}</p>
-          <p className="text-xs text-muted-foreground truncate">{candidate.role ?? "—"}</p>
+          <p className="text-[13px] font-semibold truncate" style={{ color: "#111827" }}>
+            {candidate.name}
+          </p>
+          <p className="text-[11px] truncate" style={{ color: "#6b7280" }}>
+            {candidate.role ?? "—"}
+          </p>
+        </div>
+        {/* Score badge */}
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"
+          style={scoreStyle}
+        >
+          {score}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-3">
-        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${stageConf.pillColor}`}>
+      {/* Stage pill + score bar */}
+      <div className="flex items-center gap-2">
+        <span
+          className="text-[10px] font-semibold px-2 py-0.5 rounded-[6px] border whitespace-nowrap shrink-0"
+          style={{
+            background: stageConf.pill.bg,
+            color: stageConf.pill.text,
+            borderColor: stageConf.pill.border,
+          }}
+        >
           {stageConf.label}
         </span>
-        <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
-          <div className={`h-full rounded-full ${getScoreColor(score)}`} style={{ width: `${score}%` }} />
+        <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#f0f0f0" }}>
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${score}%`,
+              background: score >= 80
+                ? "linear-gradient(90deg, #1f6b43, #2e8b57)"
+                : score >= 65
+                ? "#6fbf9a"
+                : "#e2e8e5",
+            }}
+          />
         </div>
-        <span className="text-sm font-bold text-foreground tabular-nums">{score}</span>
       </div>
 
-      <p className="text-[11px] text-muted-foreground mb-3">{touch} · {time}</p>
+      {/* Last touch */}
+      <p className="text-[11px]" style={{ color: "#9ca3af" }}>
+        {touch} · {time}
+      </p>
 
-      <button className="w-full text-xs font-medium py-1.5 rounded-lg border border-border bg-gray-200 hover:bg-muted/50 text-foreground transition-colors">
-        {ACTION_LABELS[stage]}
+      {/* Action button */}
+      <button
+        className="w-full text-[12px] font-semibold py-1.5 rounded-[10px] border transition-colors"
+        style={{
+          borderColor: stageConf.pill.border,
+          background: "transparent",
+          color: stageConf.pill.text === "#ffffff" ? stageConf.header.bg : stageConf.pill.text,
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLButtonElement).style.background = stageConf.pill.bg;
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+        }}
+      >
+        {stageConf.actionLabel}
       </button>
     </div>
   );
 }
+
+/* ─── Sortable wrapper ────────────────────────────────────────── */
 
 function SortableCard({ candidate, stage, index }: { candidate: Candidate; stage: Stage; index: number }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -161,7 +217,7 @@ function SortableCard({ candidate, stage, index }: { candidate: Candidate; stage
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.35 : 1 }}
       {...attributes} {...listeners}
     >
       <CandidateCard candidate={candidate} stage={stage} index={index} />
@@ -169,33 +225,64 @@ function SortableCard({ candidate, stage, index }: { candidate: Candidate; stage
   );
 }
 
+/* ─── Column ──────────────────────────────────────────────────── */
+
 function Column({ stage, candidates, isOver }: {
   stage: (typeof STAGES)[number]; candidates: Candidate[]; isOver: boolean;
 }) {
   const { setNodeRef } = useDroppable({ id: stage.key });
+
   return (
-    <div className="flex flex-col min-w-[240px] w-[240px]">
-      <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl border mb-3 ${stage.headerBg} ${stage.headerBorder}`}>
-        <span className={`text-sm font-semibold ${stage.headerText}`}>{stage.label}</span>
-        <span className={`text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ${stage.countBg} ${stage.countText}`}>
+    <div className="flex flex-col" style={{ minWidth: 248, width: 248 }}>
+      {/* Column header */}
+      <div
+        className="flex items-center justify-between px-3 py-2.5 rounded-[12px] border mb-3"
+        style={{
+          background: stage.header.bg,
+          borderColor: stage.header.border,
+        }}
+      >
+        <span className="text-[13px] font-bold" style={{ color: stage.header.text }}>
+          {stage.label}
+        </span>
+        <span
+          className="text-[11px] font-bold rounded-full w-5 h-5 flex items-center justify-center"
+          style={{ background: stage.count.bg, color: stage.count.text }}
+        >
           {candidates.length}
         </span>
       </div>
+
+      {/* Drop zone */}
       <SortableContext items={candidates.map(c => c.id)} strategy={verticalListSortingStrategy}>
         <div
           ref={setNodeRef}
-          className={`flex flex-col gap-2.5 flex-1 min-h-[200px] rounded-xl p-2 transition-all ${
-            isOver ? `${stage.dropBg} border-2 border-dashed ${stage.dropBorder}` : ""
-          }`}
+          className="flex flex-col gap-2.5 flex-1 rounded-[14px] p-2 transition-all"
+          style={{
+            minHeight: 200,
+            background: isOver ? stage.drop.bg : "transparent",
+            border: isOver ? `2px dashed ${stage.drop.border}` : "2px solid transparent",
+          }}
         >
           {candidates.map((c, i) => (
             <SortableCard key={c.id} candidate={c} stage={stage.key} index={i} />
           ))}
+
+          {candidates.length === 0 && !isOver && (
+            <div
+              className="flex items-center justify-center h-20 rounded-[12px] border-2 border-dashed"
+              style={{ borderColor: "#e2e8e5" }}
+            >
+              <span className="text-[11px]" style={{ color: "#d1d5db" }}>Drop here</span>
+            </div>
+          )}
         </div>
       </SortableContext>
     </div>
   );
 }
+
+/* ─── Page ────────────────────────────────────────────────────── */
 
 export default function PipelinePage() {
   const trpc = useTRPC();
@@ -203,13 +290,21 @@ export default function PipelinePage() {
 
   const { data: candidates = [], isLoading } = useQuery(trpc.recruiter.getCandidates.queryOptions());
 
+  const [dragSnapshot, setDragSnapshot] = useState<Candidate[] | null>(null);
+  const [localCandidates, setLocalCandidates] = useState<Candidate[]>([]);
+
   const updateStage = useMutation(
     trpc.recruiter.updateCandidateStage.mutationOptions({
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: trpc.recruiter.getCandidates.queryKey() }),
+      onSuccess: () => {
+        setLocalCandidates([]);
+        queryClient.invalidateQueries({ queryKey: trpc.recruiter.getCandidates.queryKey() });
+      },
+      onError: () => {
+        if (dragSnapshot) setLocalCandidates(dragSnapshot);
+      },
     })
   );
 
-  const [localCandidates, setLocalCandidates] = useState<Candidate[]>([]);
   const [activeCandidate, setActiveCandidate] = useState<Candidate | null>(null);
   const [activeStage, setActiveStage] = useState<Stage | null>(null);
   const [overColumn, setOverColumn] = useState<Stage | null>(null);
@@ -263,6 +358,7 @@ export default function PipelinePage() {
     const dragged = displayCandidates.find(c => c.id === draggedId);
     if (!dragged || dragged.stage === targetStage) return;
 
+    setDragSnapshot(displayCandidates as Candidate[]);
     setLocalCandidates(prev => {
       const base = prev.length > 0 ? prev : (candidates as Candidate[]);
       return base.map(c => c.id === draggedId ? { ...c, stage: targetStage! } : c);
@@ -274,49 +370,101 @@ export default function PipelinePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#1f6b43", borderTopColor: "transparent" }} />
       </div>
     );
   }
 
+  const totalCount = displayCandidates.length;
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-foreground">Pipeline</h1>
-        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-          {STAGES.map((s, i) => (
-            <span key={s.key} className="flex items-center gap-2">
-              {s.label}
-              {i < STAGES.length - 1 && <ChevronRight className="w-3.5 h-3.5" />}
-            </span>
-          ))}
+    <div className="flex flex-col h-full gap-4">
+
+      {/* ── Page Header ── */}
+      <div
+        className="rounded-2xl px-5 py-4 shrink-0"
+        style={{ background: "#f7f7f7", boxShadow: "0px 1px 4px rgba(0,0,0,0.05)" }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[24px] font-bold" style={{ color: "#111827" }}>
+              Pipeline
+            </h1>
+            {/* Stage breadcrumb */}
+            <div className="flex items-center gap-1.5 mt-1">
+              {STAGES.map((s, i) => (
+                <span key={s.key} className="flex items-center gap-1.5">
+                  <span
+                    className="text-[12px] font-medium px-2 py-0.5 rounded-[6px] border"
+                    style={{
+                      background: s.pill.bg,
+                      color: s.pill.text,
+                      borderColor: s.pill.border,
+                    }}
+                  >
+                    {s.label}
+                    <span className="ml-1.5 opacity-60 font-normal">
+                      {getCandidatesByStage(s.key).length}
+                    </span>
+                  </span>
+                  {i < STAGES.length - 1 && (
+                    <ChevronRight className="w-3 h-3" style={{ color: "#d1d5db" }} />
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div
+              className="text-[12px] font-medium px-3 py-1.5 rounded-[10px] border"
+              style={{ borderColor: "#e2e8e5", color: "#6b7280", background: "#fff" }}
+            >
+              {totalCount} candidates total
+            </div>
+            {updateStage.isPending && (
+              <div className="flex items-center gap-2 text-[12px]" style={{ color: "#1f6b43" }}>
+                <div
+                  className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin"
+                  style={{ borderColor: "#1f6b43", borderTopColor: "transparent" }}
+                />
+                Saving…
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={rectIntersection}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
+      {/* ── Kanban Board ── */}
+      <div
+        className="rounded-2xl flex-1 overflow-hidden"
+        style={{ background: "#f7f7f7", boxShadow: "0px 1px 1px rgba(0,0,0,0.05)" }}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4 flex-1">
-          {STAGES.map(stage => (
-            <Column
-              key={stage.key}
-              stage={stage}
-              candidates={getCandidatesByStage(stage.key)}
-              isOver={overColumn === stage.key}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={rectIntersection}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-4 overflow-x-auto h-full p-4">
+            {STAGES.map(stage => (
+              <Column
+                key={stage.key}
+                stage={stage}
+                candidates={getCandidatesByStage(stage.key)}
+                isOver={overColumn === stage.key}
+              />
+            ))}
+          </div>
 
-        <DragOverlay>
-          {activeCandidate && activeStage ? (
-            <CandidateCard candidate={activeCandidate} stage={activeStage} index={0} isDragging />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeCandidate && activeStage ? (
+              <CandidateCard candidate={activeCandidate} stage={activeStage} index={0} isDragging />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      </div>
     </div>
   );
 }

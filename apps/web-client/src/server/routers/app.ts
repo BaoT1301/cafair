@@ -26,7 +26,7 @@ export const appRouter = createTRPCRouter({
   protectedHello: authedProcedure.query(({ ctx }) => {
     try {
       return {
-        greeting: `Hello ${ctx.user.firstName ?? "User"}!`,
+        greeting: `Hello ${ctx.user.id}!`,
         userId: ctx.user.id,
       };
     } catch (error) {

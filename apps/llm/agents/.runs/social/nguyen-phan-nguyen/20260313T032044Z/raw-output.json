@@ -1,0 +1,70 @@
+{
+  "ok": true,
+  "mode": "local-browser",
+  "candidateName": "Nguyen Phan Nguyen",
+  "workflowRunId": null,
+  "timedOut": false,
+  "workflowDefinitionName": null,
+  "modelId": "nova-act-preview",
+  "linkedin": null,
+  "github": {
+    "url": "https://github.com/ngstephen1",
+    "found": true,
+    "username": "ngstephen1",
+    "displayName": null,
+    "bio": null,
+    "followers": null,
+    "following": null,
+    "contributionsLastYear": null,
+    "pinnedRepos": null,
+    "topLanguages": null,
+    "notes": "Local visible Nova Act browser session ran. Map structured extraction after you define your local parsing strategy."
+  },
+  "web": {
+    "queries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ],
+    "results": [],
+    "notes": "Local visible Nova Act browser session ran. Add parser logic if you want structured web extraction."
+  },
+  "warnings": [
+    "Local visible browser mode was used.",
+    "This mode is best for debugging because you can see the browser and Nova Act actions directly.",
+    "If manual LinkedIn login mode is enabled, the agent continues from your already signed-in LinkedIn session, reviews Bao Tran first for visible profile signals, then reviews Nguyen Phan Nguyen before GitHub.",
+    "The local instruction now uses staged LinkedIn Nguyen scan -> Bao Tran outreach draft -> GitHub -> web-search steps with fewer redundant actions to reduce max-step failures.",
+    "Structured extraction is still a placeholder in this mode until you add page parsing/mapping.",
+    "If NOVA_ACT_PREFER_CHROME is enabled, the script prefers launching NovaAct itself in Chrome/Chromium.",
+    "Local mode now starts on Google when LinkedIn is requested, so the agent searches for the public LinkedIn result instead of opening the profile URL directly.",
+    "This SDK path currently launches an isolated Playwright browser context, so it will not reuse your already signed-in Chrome profile.",
+    "Do not set a Chrome user-data-dir for this script unless NovaAct adds persistent-context profile support in a future SDK version."
+  ],
+  "raw": {
+    "startingPage": "https://github.com/ngstephen1",
+    "manualLinkedInLogin": false,
+    "instruction": "You are helping gather visible public profile information for research and profile review.\nOnly inspect information that is already visible in the current browser session.\nNarrate your actions briefly while you move so the operator can follow along.\nScroll only when needed. Avoid repetitive scrolling. Prefer targeted clicks and concise movement.\nIf you complete a stage, move to the next stage immediately instead of revisiting earlier sections repeatedly.\nPrimary candidate name: Nguyen Phan Nguyen.\nGITHUB STAGE:\n11. Navigate directly to this GitHub URL: https://github.com/ngstephen1\n12. Capture the GitHub profile header: username, display name, bio, followers, following, location, organization, and contribution activity if visible.\n13. Review pinned repositories first. Open the strongest one or two only, not more.\n14. For each strong repo, gather useful evidence: repo name, description, language, stars, documentation quality, code organization, tests, issues, pull requests, actions, security, and overall engineering maturity if visible.\n15. Return to the main GitHub profile after reviewing each repo.\n16. Keep GitHub exploration efficient and avoid unnecessary extra clicks.\nWEB SEARCH STAGE:\n17. Use web search for public evidence such as hackathons, conference talks, portfolios, technical blogs, internships, or awards.\n17.1. Search this exact query: Nguyen Phan Nguyen Virginia Tech\n17.2. Search this exact query: Nguyen Phan Nguyen Software Engineer\n18. Open only clearly relevant public results and summarize only the strongest visible findings.\nFINAL REPORT:\n19. End with a concise report of the strongest positive signals, any warnings, and any missing information.\n20. Once all requested stages are complete, stop and return control immediately. Do not continue exploring.",
+    "actResult": {
+      "metadata": {
+        "session_id": "019ce535-0b0d-76bd-8e1f-ddedce94b9f9",
+        "act_id": "019ce535-2039-74cd-a9d0-1fc0c77c1b41",
+        "num_steps_executed": 7,
+        "start_time": 1773371990.052507,
+        "end_time": 1773372043.609928,
+        "prompt": "You are helping gather visible public profile information for research and profile review.\nOnly inspect information that is already visible in the current browser session.\nNarrate your actions briefly while you move so the operator can follow along.\nScroll only when needed. Avoid repetitive scrolling. Prefer targeted clicks and concise movement.\nIf you complete a stage, move to the next stage immediately instead of revisiting earlier sections repeatedly.\nPrimary candidate name: Nguyen Phan Nguyen.\nGITHUB STAGE:\n11. Navigate directly to this GitHub URL: https://github.com/ngstephen1\n12. Capture the GitHub profile header: username, display name, bio, followers, following, location, organization, and contribution activity if visible.\n13. Review pinned repositories first. Open the strongest one or two only, not more.\n14. For each strong repo, gather useful evidence: repo name, description, language, stars, documentation quality, code organization, tests, issues, pull requests, actions, security, and overall engineering maturity if visible.\n15. Return to the main GitHub profile after reviewing each repo.\n16. Keep GitHub exploration efficient and avoid unnecessary extra clicks.\nWEB SEARCH STAGE:\n17. Use web search for public evidence such as hackathons, conference talks, portfolios, technical blogs, internships, or awards.\n17.1. Search this exact query: Nguyen Phan Nguyen Virginia Tech\n17.2. Search this exact query: Nguyen Phan Nguyen Software Engineer\n18. Open only clearly relevant public results and summarize only the strongest visible findings.\nFINAL REPORT:\n19. End with a concise report of the strongest positive signals, any warnings, and any missing information.\n20. Once all requested stages are complete, stop and return control immediately. Do not continue exploring.",
+        "step_server_times_s": [
+          3.378,
+          2.538,
+          3.785,
+          2.966,
+          4.013,
+          3.188,
+          3.765
+        ],
+        "time_worked_s": 53.5574209690094,
+        "human_wait_time_s": 0.0
+      }
+    },
+    "preferChrome": true,
+    "linkedInStartsFromGoogle": false,
+    "profileReuseSupported": false
+  }
+}

@@ -26,6 +26,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - REDIS_CACHE_TTL=${REDIS_CACHE_TTL:-3600}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - FORCE_LLM_PROVIDER=${FORCE_LLM_PROVIDER:-auto}
     depends_on:
       redis:
         condition: service_healthy

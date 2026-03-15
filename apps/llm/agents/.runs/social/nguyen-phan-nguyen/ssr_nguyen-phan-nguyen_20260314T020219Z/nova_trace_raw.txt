@@ -1,0 +1,1 @@
+No live Nova trace was captured for this workflow run. Synthetic packet trace will be used.

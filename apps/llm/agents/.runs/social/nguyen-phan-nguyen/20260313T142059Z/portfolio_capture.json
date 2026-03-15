@@ -1,0 +1,55 @@
+{
+  "summaryText": "PORTFOLIO_STATUS: partial\nPORTFOLIO_URL: https://lamanhtruong.com\nPORTFOLIO_OWNER_NAME: unknown\nCANDIDATE_LABEL: Nguyen Phan Nguyen\nMISMATCH_FLAG: no\nEVIDENCE:\n- Portfolio stage status: partial.\nPROJECTS_REVIEWED: 0\nPROJECT_HIGHLIGHTS:\n- No project highlights captured.\nRESUME_FOUND: no\nGITHUB_LINK_FOUND: no\nGITHUB_LINK_MATCHES_EXPECTED: unknown\nRETRO_FOUND: no\nWARNINGS:\n- Portfolio stage completed without an explicit summary payload.\nMISSING:\n- Portfolio stage completed without an explicit summary payload.",
+  "parsed": {
+    "url": "https://lamanhtruong.com",
+    "found": true,
+    "status": "partial",
+    "ownerName": "unknown",
+    "candidateLabel": "Nguyen Phan Nguyen",
+    "mismatchFlag": false,
+    "evidence": [
+      "Portfolio stage status: partial."
+    ],
+    "projectsReviewed": 0,
+    "projectHighlights": [
+      "No project highlights captured."
+    ],
+    "resumeFound": false,
+    "githubLinkFound": false,
+    "githubLinkMatchesExpected": "unknown",
+    "retroFound": false,
+    "warnings": [
+      "Portfolio stage completed without an explicit summary payload.",
+      "Portfolio stage completed without an explicit summary payload."
+    ],
+    "notes": "Portfolio stage parsed from the Nova Act structured return block."
+  },
+  "actResult": {
+    "metadata": {
+      "session_id": "019ce78d-44f0-7d3a-ab85-0e334c619276",
+      "act_id": "019ce790-b7e9-78bb-acc2-ecb66fe8e209",
+      "num_steps_executed": 14,
+      "start_time": 1773411547.142704,
+      "end_time": 1773411658.586161,
+      "step_server_times_s": [
+        2.438,
+        4.753,
+        3.047,
+        3.568,
+        2.845,
+        3.966,
+        8.374,
+        3.227,
+        3.22,
+        3.258,
+        3.209,
+        3.469,
+        2.947,
+        10.866
+      ],
+      "time_worked_s": 111.44345688819885,
+      "human_wait_time_s": 0.0,
+      "prompt": "You are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nPORTFOLIO STAGE: COMPLETE THIS RECRUITER-STYLE INTERACTIVE PORTFOLIO REVIEW\nPortfolio hard limits:\n- At most 25 actions total in this stage.\n- Max 2 consecutive scrolls; after that, use navigation, anchors, or mark the section missing.\n- Prefer visible navigation such as Projects, Resume, GitHub, Retro, About, Experience, or headings before scrolling.\n- Open at most 8 project cards total, but stop earlier once strong evidence is gathered.\n- Open at most 1 Resume target, 1 GitHub target from the portfolio, and 1 Retro entry.\nP1. Navigate directly to the portfolio URL: https://lamanhtruong.com\nP2. Confirm the site is visible. If the page is blocked or fails to load, set PORTFOLIO_STATUS: blocked and stop.\nP3. Capture the visible landing-page title, hero name, and title or role text exactly as shown.\nP4. Capture the first visible owner name from the hero, header, or top navigation.\nP5. Compare the visible owner name to the candidate label 'Nguyen Phan Nguyen'. If the visible owner looks like a different person, record that clearly.\nP6. Bias toward flagging a mismatch if 'Lam Anh Truong' appears prominently in the hero, header, title, or repeated branding.\nP7. Capture the visible top navigation labels and recruiter-relevant links.\nP8. Navigate to Projects using a visible Projects tab, button, anchor, or heading if available.\nP9. Capture the visible project section heading and count how many project cards are visible before opening anything.\nP10. Open the strongest visible project card.\nP11. Capture the project name, the problem or theme, and one visible engineering fact such as stack, demo, or README-style description.\nP12. Return to the project list or portfolio landing after the first project review.\nP13. Open a second clearly different project card if available.\nP14. Capture the second project's name, theme, and one visible engineering fact, then return.\nP15. If more strong projects are clearly visible and action budget remains, open up to 2 more project cards total; never exceed 8.\nP16. Open Resume using a visible Resume link, button, or section if present.\nP17. Capture whether a resume page or downloadable resume was found and 2 or 3 visible facts from it, then return to the portfolio.\nP18. Open the GitHub link from the portfolio if visible.\nP19. Compare the opened GitHub destination to the expected GitHub URL 'https://github.com/ngstephen1'.\nP20. Capture whether the GitHub link exists and whether it appears to match the expected GitHub profile, then return to the portfolio.\nP21. Click Retro if a Retro section, button, or nav item is visible.\nP22. Inside Retro, perform up to 10 recruiter-style inspection checks using headings, visible links, and one recruiter-relevant deep open if available.\nP23. Capture visible themes from Retro such as reflections, lessons learned, project reviews, timelines, or process notes.\nP24. Record factual warnings only, such as owner-name mismatch, missing resume, missing GitHub link, broken navigation, or sections not visible within the budget.\nP25. Stop the portfolio stage immediately once you have enough evidence. Do not continue browsing after the structured return is ready.\nFINAL REPORT:\nF1. Call return() immediately after the portfolio stage is complete.\nF2. The final return() must contain a single machine-readable block with no extra prose:\nF3. BEGIN_CAPTURE_JSON\nF4. {\"stageStatus\":{\"portfolio\":\"ok|partial|blocked\"},\"linkedin\":null,\"github\":null,\"portfolio\":{\"url\":\"https://lamanhtruong.com\",\"ownerName\":\"...\",\"candidateLabel\":\"Nguyen Phan Nguyen\",\"mismatchFlag\":true,\"evidence\":[\"...\"],\"projectsReviewed\":0,\"projectHighlights\":[\"...\"],\"resumeFound\":false,\"githubLinkFound\":false,\"githubLinkMatchesExpected\":\"yes|no|unknown\",\"retroFound\":false,\"warnings\":[\"...\"],\"missing\":[\"...\"]},\"finalSummaryText\":\"short recruiter-style portfolio summary\"}\nF5. END_CAPTURE_JSON\nF6. If a visible owner looks like Lam Anh Truong and differs from the candidate label, set mismatchFlag to true and mention the visible text in evidence.\nF7. Ensure the JSON is valid and compact.\nF8. Only record visible facts. Do not contact anyone. Do not make personal judgments."
+    }
+  }
+}

@@ -1,0 +1,23 @@
+===== STAGE: linkedin =====
+Return exactly one BEGIN_CAPTURE_JSON line, then one valid JSON object, then one END_CAPTURE_JSON line.
+F1. Call return() immediately after the LinkedIn stage is complete.
+F5. The final return() must contain a single machine-readable block with no extra prose:
+F6. BEGIN_CAPTURE_JSON
+F7. {"stageStatus":{"linkedin":"ok|partial|blocked"},"linkedin":{"profileUrl":"...","profileName":"...","headline":"...","location":"...","currentCompany":"...","school":"...","topLinks":["..."],"skills":["..."],"evidence":["..."],"missing":["..."]},"github":null,"portfolio":null,"finalSummaryText":"short recruiter-style LinkedIn summary"}
+F8. END_CAPTURE_JSON
+
+===== STAGE: github =====
+Return exactly one BEGIN_CAPTURE_JSON line, then one valid JSON object, then one END_CAPTURE_JSON line.
+F1. Call return() immediately after the GitHub stage is complete.
+F4. The final return() must contain a single machine-readable block with no extra prose:
+F5. BEGIN_CAPTURE_JSON
+F6. {"stageStatus":{"github":"ok|partial"},"linkedin":null,"github":{"profileUrl":"...","username":"...","displayName":"...","bio":"...","followers":null,"following":null,"contributionsLastYear":null,"topLanguages":["..."],"pinnedRepos":[{"name":"...","language":"...","stars":null}],"evidence":["..."],"missing":["..."]},"portfolio":null,"finalSummaryText":"short recruiter-style GitHub summary"}
+F7. END_CAPTURE_JSON
+
+===== STAGE: portfolio =====
+Return exactly one BEGIN_CAPTURE_JSON line, then one valid JSON object, then one END_CAPTURE_JSON line.
+F1. Call return() immediately after the portfolio stage is complete.
+F2. The final return() must contain a single machine-readable block with no extra prose:
+F3. BEGIN_CAPTURE_JSON
+F4. {"stageStatus":{"portfolio":"ok|partial|blocked","web":"skipped"},"linkedin":null,"github":null,"portfolio":{"url":"https://lamanhtruong.com","ownerName":"...","candidateLabel":"Nguyen Phan Nguyen","mismatchFlag":true,"evidence":["..."],"projectsReviewed":0,"projectHighlights":["..."],"resumeFound":false,"githubLinkFound":false,"githubLinkMatchesExpected":"yes|no|unknown","retroFound":false,"warnings":["..."],"missing":["..."]},"web":{"status":"skipped","queries":[],"results":[],"evidence":["Web stage disabled in portfolio flow."]},"flags":["IDENTITY_MISMATCH_WEBSITE_OWNER"],"finalSummaryText":"short recruiter-style portfolio summary"}
+F5. END_CAPTURE_JSON

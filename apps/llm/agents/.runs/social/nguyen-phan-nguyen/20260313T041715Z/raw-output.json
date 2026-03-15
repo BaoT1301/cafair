@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "mode": "local-browser",
+  "candidateName": "Nguyen Phan Nguyen",
+  "workflowRunId": null,
+  "timedOut": false,
+  "workflowDefinitionName": null,
+  "modelId": "nova-act-preview",
+  "linkedin": {
+    "url": "https://www.linkedin.com/in/nguyenpn1/",
+    "found": true,
+    "headline": null,
+    "currentCompany": null,
+    "school": null,
+    "skills": null,
+    "experiences": null,
+    "notes": "Local visible Nova Act browser session ran. Map structured extraction after you define your local parsing strategy."
+  },
+  "github": {
+    "url": "https://github.com/ngstephen1",
+    "found": true,
+    "username": "ngstephen1",
+    "displayName": null,
+    "bio": null,
+    "followers": null,
+    "following": null,
+    "contributionsLastYear": null,
+    "pinnedRepos": null,
+    "topLanguages": null,
+    "notes": "Local visible Nova Act browser session ran. Map structured extraction after you define your local parsing strategy."
+  },
+  "web": {
+    "queries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ],
+    "results": [],
+    "notes": "Local visible Nova Act browser session ran. Add parser logic if you want structured web extraction."
+  },
+  "warnings": [
+    "Local visible browser mode was used.",
+    "This mode is best for debugging because you can see the browser and Nova Act actions directly.",
+    "If manual LinkedIn login mode is enabled, the agent continues from your already signed-in LinkedIn session and performs a detailed candidate-only LinkedIn review before GitHub.",
+    "The local instruction now uses expanded detailed LinkedIn and GitHub checklists to push the agent toward more deliberate evidence gathering.",
+    "Structured extraction is still a placeholder in this mode until you add page parsing/mapping.",
+    "If NOVA_ACT_PREFER_CHROME is enabled, the script prefers launching NovaAct itself in Chrome/Chromium.",
+    "If --manual-linkedin-login is enabled, local mode starts on the LinkedIn login page and waits for human sign-in before Nova Act continues.",
+    "Without --manual-linkedin-login, local mode starts on Google when LinkedIn is requested so the agent searches for the public LinkedIn result instead of opening the profile URL directly.",
+    "This SDK path currently launches an isolated Playwright browser context, so it will not reuse your already signed-in Chrome profile.",
+    "Do not set a Chrome user-data-dir for this script unless NovaAct adds persistent-context profile support in a future SDK version."
+  ],
+  "raw": {
+    "startingPage": "https://www.linkedin.com/login",
+    "manualLinkedInLogin": true,
+    "instruction": "You are helping gather visible public profile information for research and profile review.\nOnly inspect information that is already visible in the current browser session.\nNarrate your actions briefly while you move so the operator can follow along.\nScroll only when needed. Avoid repetitive scrolling. Prefer targeted clicks and concise movement.\nIf you complete a stage, move to the next stage immediately instead of revisiting earlier sections repeatedly.\nPrimary candidate name: Nguyen Phan Nguyen.\nLINKEDIN STAGE: FOLLOW THESE 30 DETAILED STEPS\nL1. You are starting from an already authenticated LinkedIn session after the human operator logged in manually.\nL2. Stay inside the current LinkedIn tab and do not open unrelated pages first.\nL3. Locate the LinkedIn global search bar.\nL4. Search this exact query: Nguyen Phan Nguyen Virginia Tech\nL5. Wait for the search results page to load fully.\nL6. If a People filter is visible, click the People filter.\nL7. Review the first screen of people results carefully before clicking anything.\nL8. Click the most relevant result for Nguyen Phan Nguyen.\nL9. Wait for the candidate profile page to stabilize.\nL10. Capture the visible top-card URL, headline, location, and any connection/follower count shown.\nL11. Capture the visible current employer and visible education summary from the top card.\nL12. Capture any visible public links in the top card or contact/public sections.\nL13. If an About section is visible, open or focus it.\nL14. Read the About text and capture the strongest short summary or specialties if visible.\nL15. Scroll to Activity without overscrolling past it.\nL16. Capture whether recent posts, reposts, articles, or comments are visible and what themes they show.\nL17. Scroll to Experience.\nL18. If a 'Show all experiences' button is visible, click it.\nL19. Capture the latest role title, company, and dates if visible.\nL20. Capture the second most relevant role and any impact statements or technologies mentioned.\nL21. Capture internships, research roles, or assistant roles if visible.\nL22. If the expanded experience view opened, return to the main profile when done.\nL23. Scroll to Education.\nL24. Capture school name, degree, field of study, and dates if visible.\nL25. Scroll to Featured if it exists.\nL26. If a visible public portfolio or project link appears, open one strong link, inspect it briefly, then return to LinkedIn.\nL27. Scroll to Skills and capture the top visible skills.\nL28. Capture any certifications, awards, languages, or volunteer sections if they are clearly visible.\nL29. Note any major sections that are missing, blocked, collapsed, or not publicly visible.\nL30. End the LinkedIn stage with a concise summary of the strongest visible signals and the biggest missing pieces.\nGITHUB STAGE: FOLLOW THESE 30 DETAILED STEPS\nG1. Navigate directly to this GitHub URL: https://github.com/ngstephen1\nG2. Wait for the GitHub profile page to load fully.\nG3. Capture the visible profile URL.\nG4. Capture the username exactly as shown.\nG5. Capture the display name exactly as shown.\nG6. Capture the visible bio or tagline.\nG7. Capture follower and following counts if visible.\nG8. Capture location, organization, website, or employer if visible.\nG9. Capture the visible contribution graph summary or contribution count if visible.\nG10. Capture the names of pinned repositories visible on the profile.\nG11. Capture the top visible programming languages or topic tags if visible on the profile.\nG12. Open the Repositories tab if it is not already selected.\nG13. Capture the total repository count if visible.\nG14. Review the top repositories list and choose the strongest repo to inspect first.\nG15. Click the first strong repository.\nG16. Capture repo name, owner, description, and primary language.\nG17. Capture stars, forks, watchers, and last-updated timing if visible.\nG18. Inspect the top of the README and capture whether setup, usage, or demo information is present.\nG19. Inspect the visible file tree and capture whether the repo looks organized into sensible folders/files.\nG20. Note whether tests, CI config, lint config, or package/build files are visible in the root.\nG21. Open the Actions tab if visible and capture whether workflows exist.\nG22. Open the Issues tab if visible and capture whether issues exist and whether activity appears recent.\nG23. Open the Pull requests tab if visible and capture whether PR activity exists.\nG24. Open the Security tab if visible and capture whether advisories or security tooling are shown.\nG25. Return to the repository Code tab or main page and capture any visible badges, releases, or documentation links.\nG26. Return to the main GitHub profile.\nG27. Choose one more strong pinned or notable repository if clearly visible.\nG28. Open that second repository and capture a lighter pass: name, description, language, stars, README quality, and visible engineering signals.\nG29. Return to the main profile and note any overall patterns across repos such as ML, frontend, systems, music tech, or hackathon work.\nG30. End the GitHub stage with a concise summary of the strongest positive engineering signals, weak spots, and missing evidence.\nWEB SEARCH STAGE:\nW1. Open a normal web search context instead of typing into a site-specific search box.\nW2. Use web search for public evidence such as hackathons, conference talks, portfolios, technical blogs, internships, or awards.\nW3. Search this exact query: Nguyen Phan Nguyen Virginia Tech\nW4. Search this exact query: Nguyen Phan Nguyen Software Engineer\nW9. Open only clearly relevant public results and summarize only the strongest visible findings.\nW10. Avoid typing web queries into GitHub or LinkedIn site search fields.\nFINAL REPORT:\nF1. End with a concise report of the strongest positive signals, any warnings, and any missing information.\nF2. Once all requested stages are complete, stop and return control immediately. Do not continue exploring.",
+    "actResult": {
+      "metadata": {
+        "session_id": "019ce567-e1e7-79d4-a48a-dcef44690019",
+        "act_id": "019ce568-63d2-7aa1-a5b4-4489aa8936ce",
+        "num_steps_executed": 14,
+        "start_time": 1773375349.747007,
+        "end_time": 1773375434.6269062,
+        "prompt": "You are helping gather visible public profile information for research and profile review.\nOnly inspect information that is already visible in the current browser session.\nNarrate your actions briefly while you move so the operator can follow along.\nScroll only when needed. Avoid repetitive scrolling. Prefer targeted clicks and concise movement.\nIf you complete a stage, move to the next stage immediately instead of revisiting earlier sections repeatedly.\nPrimary candidate name: Nguyen Phan Nguyen.\nLINKEDIN STAGE: FOLLOW THESE 30 DETAILED STEPS\nL1. You are starting from an already authenticated LinkedIn session after the human operator logged in manually.\nL2. Stay inside the current LinkedIn tab and do not open unrelated pages first.\nL3. Locate the LinkedIn global search bar.\nL4. Search this exact query: Nguyen Phan Nguyen Virginia Tech\nL5. Wait for the search results page to load fully.\nL6. If a People filter is visible, click the People filter.\nL7. Review the first screen of people results carefully before clicking anything.\nL8. Click the most relevant result for Nguyen Phan Nguyen.\nL9. Wait for the candidate profile page to stabilize.\nL10. Capture the visible top-card URL, headline, location, and any connection/follower count shown.\nL11. Capture the visible current employer and visible education summary from the top card.\nL12. Capture any visible public links in the top card or contact/public sections.\nL13. If an About section is visible, open or focus it.\nL14. Read the About text and capture the strongest short summary or specialties if visible.\nL15. Scroll to Activity without overscrolling past it.\nL16. Capture whether recent posts, reposts, articles, or comments are visible and what themes they show.\nL17. Scroll to Experience.\nL18. If a 'Show all experiences' button is visible, click it.\nL19. Capture the latest role title, company, and dates if visible.\nL20. Capture the second most relevant role and any impact statements or technologies mentioned.\nL21. Capture internships, research roles, or assistant roles if visible.\nL22. If the expanded experience view opened, return to the main profile when done.\nL23. Scroll to Education.\nL24. Capture school name, degree, field of study, and dates if visible.\nL25. Scroll to Featured if it exists.\nL26. If a visible public portfolio or project link appears, open one strong link, inspect it briefly, then return to LinkedIn.\nL27. Scroll to Skills and capture the top visible skills.\nL28. Capture any certifications, awards, languages, or volunteer sections if they are clearly visible.\nL29. Note any major sections that are missing, blocked, collapsed, or not publicly visible.\nL30. End the LinkedIn stage with a concise summary of the strongest visible signals and the biggest missing pieces.\nGITHUB STAGE: FOLLOW THESE 30 DETAILED STEPS\nG1. Navigate directly to this GitHub URL: https://github.com/ngstephen1\nG2. Wait for the GitHub profile page to load fully.\nG3. Capture the visible profile URL.\nG4. Capture the username exactly as shown.\nG5. Capture the display name exactly as shown.\nG6. Capture the visible bio or tagline.\nG7. Capture follower and following counts if visible.\nG8. Capture location, organization, website, or employer if visible.\nG9. Capture the visible contribution graph summary or contribution count if visible.\nG10. Capture the names of pinned repositories visible on the profile.\nG11. Capture the top visible programming languages or topic tags if visible on the profile.\nG12. Open the Repositories tab if it is not already selected.\nG13. Capture the total repository count if visible.\nG14. Review the top repositories list and choose the strongest repo to inspect first.\nG15. Click the first strong repository.\nG16. Capture repo name, owner, description, and primary language.\nG17. Capture stars, forks, watchers, and last-updated timing if visible.\nG18. Inspect the top of the README and capture whether setup, usage, or demo information is present.\nG19. Inspect the visible file tree and capture whether the repo looks organized into sensible folders/files.\nG20. Note whether tests, CI config, lint config, or package/build files are visible in the root.\nG21. Open the Actions tab if visible and capture whether workflows exist.\nG22. Open the Issues tab if visible and capture whether issues exist and whether activity appears recent.\nG23. Open the Pull requests tab if visible and capture whether PR activity exists.\nG24. Open the Security tab if visible and capture whether advisories or security tooling are shown.\nG25. Return to the repository Code tab or main page and capture any visible badges, releases, or documentation links.\nG26. Return to the main GitHub profile.\nG27. Choose one more strong pinned or notable repository if clearly visible.\nG28. Open that second repository and capture a lighter pass: name, description, language, stars, README quality, and visible engineering signals.\nG29. Return to the main profile and note any overall patterns across repos such as ML, frontend, systems, music tech, or hackathon work.\nG30. End the GitHub stage with a concise summary of the strongest positive engineering signals, weak spots, and missing evidence.\nWEB SEARCH STAGE:\nW1. Open a normal web search context instead of typing into a site-specific search box.\nW2. Use web search for public evidence such as hackathons, conference talks, portfolios, technical blogs, internships, or awards.\nW3. Search this exact query: Nguyen Phan Nguyen Virginia Tech\nW4. Search this exact query: Nguyen Phan Nguyen Software Engineer\nW9. Open only clearly relevant public results and summarize only the strongest visible findings.\nW10. Avoid typing web queries into GitHub or LinkedIn site search fields.\nFINAL REPORT:\nF1. End with a concise report of the strongest positive signals, any warnings, and any missing information.\nF2. Once all requested stages are complete, stop and return control immediately. Do not continue exploring.",
+        "step_server_times_s": [
+          2.004,
+          2.419,
+          2.495,
+          2.601,
+          2.627,
+          2.577,
+          2.782,
+          2.831,
+          2.602,
+          2.45,
+          2.442,
+          2.483,
+          2.798,
+          3.612
+        ],
+        "time_worked_s": 84.87989926338196,
+        "human_wait_time_s": 0.0
+      }
+    },
+    "preferChrome": true,
+    "linkedInStartsFromGoogle": true,
+    "profileReuseSupported": false
+  }
+}

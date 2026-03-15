@@ -1,0 +1,54 @@
+{
+  "ok": true,
+  "mode": "api-key",
+  "candidateName": "Nguyen Phan Nguyen",
+  "workflowRunId": null,
+  "timedOut": false,
+  "workflowDefinitionName": null,
+  "modelId": "nova-act-preview",
+  "linkedin": {
+    "url": "https://www.linkedin.com/in/nguyenpn1/",
+    "found": true,
+    "headline": "Captured via Nova Act stub",
+    "currentCompany": "Unknown",
+    "school": null,
+    "skills": [],
+    "experiences": [],
+    "notes": "Stub capture only. Replace with real browser extraction."
+  },
+  "github": {
+    "url": "https://github.com/ngstephen1",
+    "found": true,
+    "username": "ngstephen1",
+    "displayName": null,
+    "bio": "Stub capture only",
+    "followers": null,
+    "following": null,
+    "contributionsLastYear": null,
+    "pinnedRepos": [],
+    "topLanguages": [],
+    "notes": "Stub capture only. Replace with real browser extraction."
+  },
+  "web": {
+    "queries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ],
+    "results": [
+      {
+        "title": "Search result placeholder for: Nguyen Phan Nguyen Virginia Tech",
+        "snippet": "Stub result generated locally.",
+        "source": "stub",
+        "url": null
+      }
+    ],
+    "notes": "Stub web capture only. Replace with real search/browser results."
+  },
+  "warnings": [
+    "API-key mode currently returns stub capture placeholders in this script.",
+    "Hook API-key mode into a real Nova Act endpoint when available."
+  ],
+  "raw": {
+    "apiKeyPresent": true,
+    "implementation": "stub"
+  }
+}

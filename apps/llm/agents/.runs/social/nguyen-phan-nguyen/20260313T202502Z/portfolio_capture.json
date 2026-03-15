@@ -1,0 +1,30 @@
+{
+  "summaryText": "PORTFOLIO_STATUS: partial\nPORTFOLIO_URL: https://lamanhtruong.com\nPORTFOLIO_OWNER_NAME: unknown\nCANDIDATE_LABEL: Nguyen Phan Nguyen\nMISMATCH_FLAG: no\nEVIDENCE:\n- Portfolio stage status: partial.\nPROJECTS_REVIEWED: 0\nPROJECT_HIGHLIGHTS:\n- No project highlights captured.\nRESUME_FOUND: no\nGITHUB_LINK_FOUND: no\nGITHUB_LINK_MATCHES_EXPECTED: unknown\nRETRO_FOUND: no\nWARNINGS:\n- Nova Act failed during the portfolio stage: ActExceededMaxStepsError(\nMISSING:\n- Nova Act failed during the portfolio stage: ActExceededMaxStepsError(",
+  "parsed": {
+    "url": "https://lamanhtruong.com",
+    "found": true,
+    "status": "partial",
+    "ownerName": "Lam Anh Truong",
+    "candidateLabel": "Nguyen Phan Nguyen",
+    "mismatchFlag": true,
+    "evidence": [
+      "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+      "Portfolio stage status: partial."
+    ],
+    "projectsReviewed": 0,
+    "projectHighlights": [
+      "No project highlights captured."
+    ],
+    "resumeFound": false,
+    "githubLinkFound": false,
+    "githubLinkMatchesExpected": "unknown",
+    "retroFound": false,
+    "warnings": [
+      "Nova Act failed during the portfolio stage: ActExceededMaxStepsError(",
+      "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+      "Nova Act failed during the portfolio stage: ActExceededMaxStepsError("
+    ],
+    "notes": "Portfolio stage parsed from the Nova Act structured return block."
+  },
+  "actResult": null
+}

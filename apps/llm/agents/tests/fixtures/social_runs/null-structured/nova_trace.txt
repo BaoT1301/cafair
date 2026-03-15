@@ -1,0 +1,9 @@
+===== STAGE: linkedin =====
+think("The headline is 'ICLR 2026 | SHPE 2025 | Virginia Tech'.")
+agentScroll("down", "<box>0,0,788,1440</box>");
+===== STAGE: github =====
+goToUrl("https://github.com/ngstephen1");
+think("The username is 'ngstephen1'.")
+===== STAGE: portfolio =====
+goToUrl("https://lamanhtruong.com");
+think("The visible hero name is 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.")

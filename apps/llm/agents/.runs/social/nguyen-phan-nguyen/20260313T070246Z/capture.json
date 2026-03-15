@@ -1,0 +1,125 @@
+{
+  "artifactVersion": "social_capture_v1",
+  "ok": false,
+  "run": {
+    "startedAtISO": null,
+    "endedAtISO": null,
+    "durationSeconds": 131.191,
+    "mode": "local-browser",
+    "modelId": "nova-act-preview"
+  },
+  "nova": {
+    "sessionId": "019ce5fb-2c37-73c7-8244-53f9c42ff313",
+    "actId": "019ce5fe-c8b4-72b4-9f33-3890852615f9",
+    "logsDirTemp": "/var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmpsxw003pv_nova_act_logs/019ce5fb-2c37-73c7-8244-53f9c42ff313",
+    "replayHtmlTemp": "/var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmpsxw003pv_nova_act_logs/019ce5fb-2c37-73c7-8244-53f9c42ff313/act_019ce5fe-c8b4-72b4-9f33-3890852615f9_You_are_performing_a_recruiter.html",
+    "logsDir": "/var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmpsxw003pv_nova_act_logs/019ce5fb-2c37-73c7-8244-53f9c42ff313",
+    "htmlReplayPath": "/var/folders/1v/6m5fyhyd6ynf85g5h1kfqmwm0000gn/T/tmpsxw003pv_nova_act_logs/019ce5fb-2c37-73c7-8244-53f9c42ff313/act_019ce5fe-c8b4-72b4-9f33-3890852615f9_You_are_performing_a_recruiter.html",
+    "numStepsExecuted": 19,
+    "logsDirLocal": "nova_logs",
+    "replayHtmlLocal": "replay.html",
+    "htmlReplayPathLocal": "replay.html",
+    "screenshots": [],
+    "warnings": []
+  },
+  "inputs": {
+    "candidateName": "Nguyen Phan Nguyen",
+    "linkedinUrl": "https://www.linkedin.com/in/nguyenpn1/",
+    "githubUrl": "https://github.com/ngstephen1",
+    "webQueries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ]
+  },
+  "outputs": {
+    "stageStatus": {
+      "linkedin": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      },
+      "github": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      },
+      "web": {
+        "requested": true,
+        "completed": true,
+        "status": "partial"
+      }
+    },
+    "finalSummaryText": "LINKEDIN_STATUS: partial\nLINKEDIN_EVIDENCE:\n- Linkedin stage status: partial.\nGITHUB_STATUS: partial\nGITHUB_EVIDENCE:\n- Github stage status: partial.\nWEB_STATUS: partial\nWEB_EVIDENCE:\n- Web stage status: partial.\nMISSING:\n- Linkedin stage completed without an explicit summary payload.\n- Github stage completed without an explicit summary payload.\n- Nova Act failed during the web stage:\n- Web warning: ActBadRequestError(\n    message = Validation failed: Act in unexpected state Reason: INVALID_INPUT\n    request_id = 11DB8D926947490084FC\n    status_code = 400\n    raw_response = {\"fields\":null,\"message\":\"Act in unexpe...",
+    "structured": {
+      "linkedin": {
+        "url": "https://www.linkedin.com/in/nguyenpn1/",
+        "found": false,
+        "headline": null,
+        "currentCompany": null,
+        "school": null,
+        "skills": [],
+        "experienceCount": 0
+      },
+      "github": {
+        "url": "https://github.com/ngstephen1",
+        "found": false,
+        "username": "ngstephen1",
+        "displayName": null,
+        "bio": null,
+        "followers": null,
+        "following": null,
+        "contributionsLastYear": null,
+        "topLanguages": [],
+        "pinnedRepoCount": 0,
+        "pinnedRepos": []
+      },
+      "web": {
+        "queries": [
+          "Nguyen Phan Nguyen Virginia Tech"
+        ],
+        "resultCount": 0,
+        "results": []
+      },
+      "summarySignals": [
+        "Linkedin stage status: partial",
+        "Github stage status: partial",
+        "Web stage status: partial"
+      ],
+      "summaryMissing": [
+        "Linkedin stage completed without an explicit summary payload",
+        "Github stage completed without an explicit summary payload",
+        "Nova Act failed during the web stage",
+        "Web warning: ActBadRequestError(",
+        "message = Validation failed: Act in unexpected state Reason: INVALID_INPUT",
+        "request_id = 11DB8D926947490084FC",
+        "status_code = 400",
+        "raw_response = {\"fields\":null",
+        "\"message\":\"Act in unexpe"
+      ],
+      "summaryWarnings": []
+    }
+  },
+  "raw": {
+    "instruction": "You are a recruiter-style browser evidence collector.\nCandidate label: Nguyen Phan Nguyen.\nCore goals:\n- LinkedIn: 30-step evidence checklist.\n- GitHub: 30-step evidence checklist.\n- Web search: 20-step evidence checklist.\nHard constraints:\n- Treat steps as checklist items, not infinite actions.\n- LinkedIn action budget: at most 18 actions total.\n- GitHub action budget: at most 18 actions total.\n- Web action budget: at most 12 actions total.\n- Max 2 consecutive scrolls. If the target section is still not visible, stop scrolling, try a different method, or mark it missing.\n- If the footer is visible, stop scrolling immediately; you reached the end.\n- LinkedIn deep opens: at most 1 Show all experiences action and 1 Featured item open.\n- GitHub deep opens: at most 2 repos total, prefer pinned repos first.\n- Web deep opens: at most 3 results total, at most 1 result per query.\n- Do not contact anyone. Do not send messages. Do not make personal judgments. Visible facts only.\nDeterministic final report format:\nLINKEDIN_STATUS: ok|partial|blocked\nLINKEDIN_EVIDENCE:\n- bullets\nGITHUB_STATUS: ok|partial\nGITHUB_EVIDENCE:\n- bullets\nWEB_STATUS: ok|partial|skipped\nWEB_EVIDENCE:\n- bullets\nMISSING:\n- bullets\nBefore return(), confirm LinkedIn, GitHub, and Web stages were attempted if requested.\n\nLINKEDIN STAGE INSTRUCTION\nYou are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nLINKEDIN STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE CHECKLIST STEPS\nLinkedIn hard limits:\n- At most 18 actions total in this stage.\n- Max 2 consecutive scrolls.\n- Open at most 1 Featured item and at most 1 Show all experiences view.\n- Do not click Show all skills.\nL1. The human operator already signed in manually before this stage starts.\nL2. Click the LinkedIn global search bar.\nL3. Search this exact query in LinkedIn: Nguyen Phan Nguyen Virginia Tech\nL4. If a People filter is visible, click it once.\nL5. Open the most relevant visible result for Nguyen Phan Nguyen. If the provided profile is already open, stay on it.\nL6. Confirm whether the profile page is visible.\nL7. If redirected to login, authwall, or 'Sign in to see more', set LINKEDIN_STATUS: blocked and stop this stage.\nL8. Capture the visible profile URL and visible profile name exactly as shown.\nL9. Capture the headline exactly as shown.\nL10. Capture the location exactly as shown.\nL11. Capture the current role or company from the top card if visible.\nL12. Capture the visible education summary from the top card if visible.\nL13. Check for Contact info or visible links and capture any website, portfolio, or public profile links shown.\nL14. If About, Experience, Education, or Skills anchors are visible, prefer clicking an anchor instead of scrolling.\nL15. If About text is visible, capture 1 or 2 key phrases only.\nL16. If About is not visible, use at most 2 scrolls to try to reveal it; if still not visible, record About missing and continue.\nL17. If Featured is visible, capture the visible featured item titles.\nL18. Open at most 1 Featured item only if it looks relevant and clearly visible.\nL19. If you opened a Featured item, capture its title, type, and one visible fact, then return to the profile.\nL20. Move to Experience using an anchor if visible; otherwise use at most 2 scrolls.\nL21. Capture the latest visible role title, company, and dates.\nL22. Capture one additional visible role, internship, or research position if present.\nL23. If Show all experiences is visible and needed, open it once only.\nL24. If you opened Show all experiences, capture at most one additional role and then return to the main profile.\nL25. Capture one visible impact statement, technology, or responsibility only if explicitly written.\nL26. Move to Education using an anchor if visible; otherwise use at most 2 scrolls.\nL27. Capture school name, degree or field, and dates if visible.\nL28. Capture honors, societies, or organizations only if visibly attached to education or nearby sections.\nL29. Move to Skills using an anchor if visible; otherwise use at most 2 scrolls. Capture up to 8 top visible skills exactly as labeled on the current page.\nL30. Record factual missing pieces such as hidden sections, authwall blocks, or sections not visible within the action budget, then stop LinkedIn immediately after you have 6 to 10 evidence bullets or you reach the action budget.\nFINAL REPORT:\nF1. Call return() immediately after the LinkedIn stage is complete.\nF2. Use LINKEDIN_STATUS: ok if the profile was reviewed with multiple sections captured.\nF3. Use LINKEDIN_STATUS: partial if only the top card or a subset of sections were captured before limits or page issues.\nF4. Use LINKEDIN_STATUS: blocked if LinkedIn authwall or login blocking prevented visible profile review.\nF5. The final return() must include exactly these lines:\nF6. LINKEDIN_STATUS: ok|partial|blocked\nF7. LINKEDIN_EVIDENCE:\nF8. - 6 to 10 bullets of visible facts only.\nF9. MISSING:\nF10. - bullets for missing sections, blocked sections, or facts not visible.\nF11. Do not include GitHub or Web keys in this stage return.\n\nGITHUB STAGE INSTRUCTION\nYou are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nGITHUB STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE CHECKLIST STEPS\nGitHub hard limits:\n- At most 18 actions total in this stage.\n- Max 2 consecutive scrolls.\n- Open at most 2 repos total, prefer pinned repos first.\n- Do not open Issues, Pull Requests, Actions, or Security tabs in this stage.\nG1. Navigate directly to this GitHub URL: https://github.com/ngstephen1\nG2. Wait for the profile page to load.\nG3. Confirm whether the profile is visible. If the page fails to load properly, use GITHUB_STATUS: partial and continue with whatever is visible.\nG4. Capture the visible profile URL and username.\nG5. Capture the display name if shown.\nG6. Capture the bio or tagline if shown.\nG7. Capture location, organization, website, or employer links if shown.\nG8. Capture followers and following counts if visible.\nG9. Capture contribution count or contribution summary if visible.\nG10. Capture all visible pinned repository names.\nG11. Capture visible pinned repo languages and stars if shown.\nG12. Capture visible topics, highlights, organizations, or achievements if shown.\nG13. If pinned repos are not enough, click Repositories once to surface visible facts.\nG14. Capture total public repository count if visible.\nG15. Identify the strongest visible repository based on visible description, stars, and relevance.\nG16. Open the first strongest repository.\nG17. Capture repo name, description, language, stars, and last updated if visible.\nG18. Capture first-screen README quality signals such as install, run, demo, or badges.\nG19. Capture whether the visible file tree suggests organized structure.\nG20. Capture whether tests, CI config, Docker, notebooks, or build files are visibly present.\nG21. If there is a clear demo link on the first screen, capture its text only.\nG22. Return to the GitHub profile.\nG23. Decide whether a second repo is meaningfully different. If not, do not open a second repo.\nG24. If a second repo is worth opening, open only one more repo total.\nG25. Capture the second repo name, purpose, language, stars, and README quality quickly.\nG26. Return to the GitHub profile after the second repo if you opened it.\nG27. Record overall technical themes across the visible profile and repos such as ML, full-stack, data, systems, music tech, or hackathon work.\nG28. Record factual risk or weakness signals only if visible, such as missing README, no visible recent activity, or minimal repo descriptions.\nG29. Stop GitHub after 6 to 10 evidence bullets or after opening 2 repos total.\nG30. End the GitHub stage immediately and proceed no further in GitHub.\nFINAL REPORT:\nF1. Call return() immediately after the GitHub stage is complete.\nF2. Use GITHUB_STATUS: ok if the profile and at least one repo were reviewed.\nF3. Use GITHUB_STATUS: partial if only the profile or incomplete repo evidence was captured.\nF4. The final return() must include exactly these lines:\nF5. GITHUB_STATUS: ok|partial\nF6. GITHUB_EVIDENCE:\nF7. - 6 to 10 bullets of visible facts only.\nF8. MISSING:\nF9. - bullets for missing evidence, tabs not opened, or data not visible.\nF10. Do not include LinkedIn or Web keys in this stage return.\n\nWEB STAGE INSTRUCTION\nYou are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nWEB SEARCH STAGE: COMPLETE THESE 20 EVIDENCE-CAPTURE CHECKLIST STEPS USING ONLY PROVIDED QUERIES\nWeb hard limits:\n- At most 12 actions total in this stage.\n- Use Google or Bing only, not LinkedIn or GitHub search boxes.\n- Use at most the first 3 provided queries.\n- Open at most 3 results total, at most 1 result per query.\nW1. Open a general web search page in a fresh normal search context.\nW2. Use only the provided web queries. Do not invent new queries.\nW3. Query 1: search exactly 'Nguyen Phan Nguyen Virginia Tech'.\nW4. Review the first screen of results and prefer professional, portfolio, university, conference, blog, or project pages.\nW5. Open the most relevant result for Query 1.\nW6. Capture page title, source, URL, and 1 or 2 factual snippets.\nW7. Return to search results or close the opened result.\nW8. If there is no Query 2, skip directly to Query 3 handling.\nW9. Review the first screen of results and open at most one relevant result for Query 2 if provided.\nW10. Capture page title, source, URL, and 1 or 2 factual snippets.\nW11. Return to search results or close the opened result.\nW12. If there is no Query 3, stop after Query 2 evidence is captured.\nW13. Review the first screen of results and open at most one relevant result for Query 3 if provided.\nW14. Capture page title, source, URL, and 1 or 2 factual snippets.\nW15. Return to results or close the opened result.\nW16. If a result mentions a portfolio, publication, award, talk, hackathon, or internship, capture the claim and source.\nW17. Do not open more than 3 results total across all queries.\nW18. Record factual missing pieces, such as no clearly relevant public results found for a query.\nW19. Stop Web when you have 4 to 8 evidence bullets or you reach the action budget.\nW20. End the Web stage immediately and prepare the final Web return.\nFINAL REPORT:\nF1. Call return() immediately after the Web stage is complete.\nF2. Use WEB_STATUS: ok if at least 2 pieces of evidence were captured from search results.\nF3. Use WEB_STATUS: partial if only limited evidence was found or only one result was useful.\nF4. Use WEB_STATUS: skipped only if no web queries were provided.\nF5. The final return() must include exactly these lines:\nF6. WEB_STATUS: ok|partial|skipped\nF7. WEB_EVIDENCE:\nF8. - 4 to 8 bullets of visible facts only.\nF9. MISSING:\nF10. - bullets for queries with weak or missing public results.\nF11. Do not include LinkedIn or GitHub keys in this stage return.",
+    "actResultPath": "raw_act_result.json",
+    "stageSummaries": {
+      "linkedin": "LINKEDIN_STATUS: partial\nLINKEDIN_EVIDENCE:\n- Linkedin stage status: partial.\nMISSING:\n- Linkedin stage completed without an explicit summary payload.",
+      "github": "GITHUB_STATUS: partial\nGITHUB_EVIDENCE:\n- Github stage status: partial.\nMISSING:\n- Github stage completed without an explicit summary payload.",
+      "web": "WEB_STATUS: partial\nWEB_EVIDENCE:\n- Web stage status: partial.\nMISSING:\n- Nova Act failed during the web stage: \n\nActBadRequestError(\n    message = Validation failed: Act in unexpected state Reason: INVALID_INPUT\n    request_id = 11DB8D926947490084FC\n    status_code = 400\n    raw_response = {\"fields\":null,\"message\":\"Act in unexpected state\",\"reason\":\"INVALID_INPUT\"}\n)\n\nPlease consider providing feedback: https://amazonexteu.qualtrics.com/jfe/form/SV_bd8dHa7Em6kNkMe"
+    }
+  },
+  "warnings": [
+    "Local visible browser mode was used.",
+    "This mode is best for debugging because you can see the browser and Nova Act actions directly.",
+    "If manual LinkedIn login mode is enabled, the agent resumes only after you sign in manually on LinkedIn.",
+    "The local instruction now uses a shorter guardrails-safe evidence capture flow with provided URLs only.",
+    "Structured extraction is still a placeholder in this mode until you add page parsing/mapping.",
+    "If NOVA_ACT_PREFER_CHROME is enabled, the script prefers launching NovaAct itself in Chrome/Chromium.",
+    "If --manual-linkedin-login is enabled, local mode starts on the LinkedIn login page and waits for human sign-in before Nova Act continues.",
+    "Without --manual-linkedin-login, local mode opens the provided LinkedIn URL directly and stops if LinkedIn shows an authwall or login block.",
+    "This SDK path currently launches an isolated Playwright browser context, so it will not reuse your already signed-in Chrome profile.",
+    "Do not set a Chrome user-data-dir for this script unless NovaAct adds persistent-context profile support in a future SDK version.",
+    "Local browser mode now runs LinkedIn, GitHub, and web search as separate sequential Nova acts in the same browser session.",
+    "web_stage_failed"
+  ],
+  "error": null
+}

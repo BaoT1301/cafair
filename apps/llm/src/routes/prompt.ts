@@ -8,7 +8,8 @@
 
 import { Router } from "express";
 import { z } from "zod";
-import { generateFromPrompt, generateJSON } from "../lib/gemini.js";
+import { generateFromPrompt, generateJSON, generateJSONWithRetry } from "../lib/gemini.js";
+import { generateNovaJSON, generateNovaJSONWithRetry } from "../lib/nova.js";
 import { formatPrompt } from "../lib/prompt-formatter.js";
 import {
   PROMPT_TEMPLATES,
@@ -54,14 +55,31 @@ router.post("/run", async (req, res) => {
     // Call LLM
     const startTime = Date.now();
     let data: unknown;
+    let provider: string;
+    const forceProvider = (process.env.FORCE_LLM_PROVIDER ?? "auto").toLowerCase();
 
-    if (parseJson) {
-      data = await generateJSON(prompt);
+    if (forceProvider === "nova") {
+      console.log(`→ POST /api/prompt/run [${template}] via Nova (forced)`);
+      data = parseJson ? await generateNovaJSONWithRetry(prompt) : await generateNovaJSON(prompt);
+      provider = "nova";
+    } else if (forceProvider === "gemini") {
+      console.log(`→ POST /api/prompt/run [${template}] via Gemini (forced)`);
+      data = parseJson ? await generateJSONWithRetry(prompt) : await generateFromPrompt(prompt);
+      provider = "gemini";
     } else {
-      data = await generateFromPrompt(prompt);
+      try {
+        console.log(`→ POST /api/prompt/run [${template}] via Nova...`);
+        data = parseJson ? await generateNovaJSONWithRetry(prompt) : await generateNovaJSON(prompt);
+        provider = "nova";
+      } catch (novaErr) {
+        console.warn(`⚠ Nova failed, falling back to Gemini: ${(novaErr as Error).message}`);
+        data = parseJson ? await generateJSONWithRetry(prompt) : await generateFromPrompt(prompt);
+        provider = "gemini";
+      }
     }
 
     const duration = Date.now() - startTime;
+    console.log(`✓ /api/prompt/run [${template}] completed via ${provider} in ${duration}ms`);
 
     // Cache the response
     if (cache) {
@@ -73,7 +91,7 @@ router.post("/run", async (req, res) => {
 
     res.json({
       data,
-      meta: { template, cached: false, durationMs: duration },
+      meta: { template, cached: false, durationMs: duration, provider },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -143,14 +161,32 @@ router.post("/raw", async (req, res) => {
 
     const startTime = Date.now();
     let data: unknown;
+    let provider: string;
+    const forceProvider = (process.env.FORCE_LLM_PROVIDER ?? "auto").toLowerCase();
 
-    if (body.parseJson) {
-      data = await generateJSON(prompt);
+    if (forceProvider === "nova") {
+      console.log(`→ POST /api/prompt/raw via Nova (forced)`);
+      data = body.parseJson ? await generateNovaJSONWithRetry(prompt) : await generateNovaJSON(prompt);
+      provider = "nova";
+    } else if (forceProvider === "gemini") {
+      console.log(`→ POST /api/prompt/raw via Gemini (forced)`);
+      data = body.parseJson ? await generateJSONWithRetry(prompt) : await generateFromPrompt(prompt);
+      provider = "gemini";
     } else {
-      data = await generateFromPrompt(prompt);
+      // auto: Nova → Gemini fallback
+      try {
+        console.log(`→ POST /api/prompt/raw via Nova...`);
+        data = body.parseJson ? await generateNovaJSONWithRetry(prompt) : await generateNovaJSON(prompt);
+        provider = "nova";
+      } catch (novaErr) {
+        console.warn(`⚠ Nova failed, falling back to Gemini: ${(novaErr as Error).message}`);
+        data = body.parseJson ? await generateJSONWithRetry(prompt) : await generateFromPrompt(prompt);
+        provider = "gemini";
+      }
     }
 
     const duration = Date.now() - startTime;
+    console.log(`✓ /api/prompt/raw completed via ${provider} in ${duration}ms`);
 
     if (body.cache) {
       await setCachedResponse(
@@ -161,7 +197,7 @@ router.post("/raw", async (req, res) => {
 
     res.json({
       data,
-      meta: { cached: false, durationMs: duration },
+      meta: { cached: false, durationMs: duration, provider },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -1,0 +1,339 @@
+{
+  "version": "1.0",
+  "createdAtISO": "2026-03-14T00:53:42.814Z",
+  "candidate": {
+    "label": "Nguyen Phan Nguyen"
+  },
+  "run": {
+    "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z",
+    "sessionId": "019ce984-43ca-7f8e-a372-6561b5347c85",
+    "actId": "019ce987-08e9-74eb-9956-594cc2245a73",
+    "replayHtml": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/replay.html"
+  },
+  "stageStatus": {
+    "linkedin": "partial",
+    "github": "partial",
+    "portfolio": "partial",
+    "web": "skipped"
+  },
+  "sources": {
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "found": true
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1",
+      "found": true
+    },
+    "portfolio": {
+      "url": "https://lamanhtruong.com",
+      "found": true,
+      "ownerName": "Lam Anh Truong"
+    }
+  },
+  "flags": [
+    "IDENTITY_MISMATCH_WEBSITE_OWNER"
+  ],
+  "claims": [
+    {
+      "id": "claim_26074ff5211f",
+      "severity": "critical",
+      "title": "Portfolio owner mismatch",
+      "statement": "Portfolio appears owned by Lam Anh Truong, not Nguyen Phan Nguyen.",
+      "rationale": "Recruiters should confirm the portfolio actually belongs to the candidate before trusting portfolio evidence.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+          "url": "https://lamanhtruong.com",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/capture.json"
+        }
+      ]
+    },
+    {
+      "id": "claim_de8922a5159d",
+      "severity": "warning",
+      "title": "Github stage incomplete",
+      "statement": "Github capture partial; structured evidence is limited.",
+      "rationale": "Downstream recruiter review should treat this stage as incomplete.",
+      "evidence": [
+        {
+          "source": "github",
+          "quote": "Github stage status: partial.",
+          "url": "https://github.com/ngstephen1",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/replay.html"
+        }
+      ]
+    },
+    {
+      "id": "claim_91e7be84cb68",
+      "severity": "warning",
+      "title": "Linkedin stage incomplete",
+      "statement": "Linkedin capture partial; structured evidence is limited.",
+      "rationale": "Downstream recruiter review should treat this stage as incomplete.",
+      "evidence": [
+        {
+          "source": "linkedin",
+          "quote": "Linkedin stage status: partial.",
+          "url": "https://www.linkedin.com/in/nguyenpn1/",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/replay.html"
+        }
+      ]
+    },
+    {
+      "id": "claim_35b36063bcb9",
+      "severity": "warning",
+      "title": "Portfolio stage incomplete",
+      "statement": "Portfolio capture partial; structured evidence is limited.",
+      "rationale": "Downstream recruiter review should treat this stage as incomplete.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+          "url": "https://lamanhtruong.com",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/replay.html"
+        }
+      ]
+    },
+    {
+      "id": "claim_f1fa94981c0b",
+      "severity": "info",
+      "title": "Github evidence",
+      "statement": "Github stage status: partial.",
+      "evidence": [
+        {
+          "source": "github",
+          "quote": "Github stage status: partial.",
+          "url": "https://github.com/ngstephen1",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/capture.json"
+        }
+      ]
+    },
+    {
+      "id": "claim_a1071885f8ae",
+      "severity": "info",
+      "title": "Github evidence",
+      "statement": "Github stage completed without an explicit summary payload.",
+      "evidence": [
+        {
+          "source": "github",
+          "quote": "Github stage completed without an explicit summary payload.",
+          "url": "https://github.com/ngstephen1",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/capture.json"
+        }
+      ]
+    },
+    {
+      "id": "claim_b801e2e60cf2",
+      "severity": "info",
+      "title": "Linkedin evidence",
+      "statement": "Linkedin stage status: partial.",
+      "evidence": [
+        {
+          "source": "linkedin",
+          "quote": "Linkedin stage status: partial.",
+          "url": "https://www.linkedin.com/in/nguyenpn1/",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/capture.json"
+        }
+      ]
+    },
+    {
+      "id": "claim_439a0f0a1c2b",
+      "severity": "info",
+      "title": "Linkedin evidence",
+      "statement": "Linkedin stage completed without an explicit summary payload.",
+      "evidence": [
+        {
+          "source": "linkedin",
+          "quote": "Linkedin stage completed without an explicit summary payload.",
+          "url": "https://www.linkedin.com/in/nguyenpn1/",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/capture.json"
+        }
+      ]
+    },
+    {
+      "id": "claim_cf8a25d2524c",
+      "severity": "info",
+      "title": "Portfolio evidence",
+      "statement": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+          "url": "https://lamanhtruong.com",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/capture.json"
+        }
+      ]
+    },
+    {
+      "id": "claim_810d2371560c",
+      "severity": "info",
+      "title": "Portfolio evidence",
+      "statement": "Portfolio stage status: partial.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "quote": "Portfolio stage status: partial.",
+          "url": "https://lamanhtruong.com",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/capture.json"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b5da4228a02",
+      "severity": "info",
+      "title": "Structured summary missing",
+      "statement": "Nova Act did not emit a complete structured stage summary for part of the run.",
+      "rationale": "Bedrock should rely more heavily on normalized outputs and return-block parsing for this run.",
+      "evidence": [
+        {
+          "source": "system",
+          "quote": "Linkedin stage completed without an explicit summary payload.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/nova_return_block.txt"
+        },
+        {
+          "source": "system",
+          "quote": "Github stage completed without an explicit summary payload.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/nova_return_block.txt"
+        }
+      ]
+    },
+    {
+      "id": "claim_978d51a51052",
+      "severity": "info",
+      "title": "Web evidence",
+      "statement": "Web stage disabled in the local portfolio flow.",
+      "evidence": [
+        {
+          "source": "web",
+          "quote": "Web stage disabled in the local portfolio flow.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/capture.json"
+        }
+      ]
+    }
+  ],
+  "novaReturn": {
+    "rawTextPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T232444Z/nova_return_block.txt",
+    "parseOk": false
+  },
+  "trace": {
+    "mode": "synthetic",
+    "summary": "Nova Act trace was missing or redacted; generated synthetic trace from return block, parsed outputs, and flags.",
+    "steps": [
+      {
+        "stage": "linkedin",
+        "action": "Opened URL",
+        "observed": "linkedin source URL: https://www.linkedin.com/in/nguyenpn1/"
+      },
+      {
+        "stage": "linkedin",
+        "action": "Reviewed stage status",
+        "observed": "linkedin stage status: partial"
+      },
+      {
+        "stage": "linkedin",
+        "action": "Captured evidence",
+        "observed": "Linkedin stage status: partial."
+      },
+      {
+        "stage": "linkedin",
+        "action": "Captured evidence",
+        "observed": "Linkedin stage completed without an explicit summary payload."
+      },
+      {
+        "stage": "github",
+        "action": "Opened URL",
+        "observed": "github source URL: https://github.com/ngstephen1"
+      },
+      {
+        "stage": "github",
+        "action": "Reviewed stage status",
+        "observed": "github stage status: partial"
+      },
+      {
+        "stage": "github",
+        "action": "Captured evidence",
+        "observed": "Github stage status: partial."
+      },
+      {
+        "stage": "github",
+        "action": "Captured evidence",
+        "observed": "Github stage completed without an explicit summary payload."
+      },
+      {
+        "stage": "portfolio",
+        "action": "Opened URL",
+        "observed": "portfolio source URL: https://lamanhtruong.com"
+      },
+      {
+        "stage": "portfolio",
+        "action": "Reviewed stage status",
+        "observed": "portfolio stage status: partial"
+      },
+      {
+        "stage": "portfolio",
+        "action": "Captured evidence",
+        "observed": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'."
+      },
+      {
+        "stage": "portfolio",
+        "action": "Captured evidence",
+        "observed": "Portfolio stage status: partial."
+      },
+      {
+        "stage": "portfolio",
+        "action": "Captured evidence",
+        "observed": "Portfolio stage completed without an explicit summary payload."
+      },
+      {
+        "stage": "portfolio",
+        "action": "Compared identity",
+        "observed": "Mismatch vs candidate label Nguyen Phan Nguyen; portfolio owner appears to be Lam Anh Truong."
+      }
+    ]
+  },
+  "metrics": {
+    "thinkCount": 0,
+    "actionCounts": {
+      "agentClick": 0,
+      "agentType": 0,
+      "agentScroll": 0,
+      "goToUrl": 0,
+      "return": 0
+    },
+    "evidenceSnippetsCount": 13,
+    "claimsCount": 12
+  },
+  "highlights": {
+    "positives": [
+      "Github stage status: partial.",
+      "Github stage completed without an explicit summary payload.",
+      "Linkedin stage status: partial.",
+      "Linkedin stage completed without an explicit summary payload.",
+      "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+      "Portfolio stage status: partial.",
+      "Nova Act did not emit a complete structured stage summary for part of the run.",
+      "Web stage disabled in the local portfolio flow."
+    ],
+    "concerns": [
+      "Portfolio appears owned by Lam Anh Truong, not Nguyen Phan Nguyen.",
+      "Github capture partial; structured evidence is limited.",
+      "Linkedin capture partial; structured evidence is limited.",
+      "Portfolio capture partial; structured evidence is limited."
+    ],
+    "missing": [
+      "Linkedin stage status: partial.",
+      "Linkedin stage completed without an explicit summary payload.",
+      "Github stage status: partial.",
+      "Github stage completed without an explicit summary payload.",
+      "Portfolio stage status: partial.",
+      "Portfolio stage completed without an explicit summary payload.",
+      "linkedin stage status: partial.",
+      "github stage status: partial.",
+      "portfolio stage status: partial."
+    ]
+  },
+  "bedrockInput": {
+    "socialEvidencePacket": "Candidate Label: Nguyen Phan Nguyen\nStage Status: linkedin=partial, github=partial, portfolio=partial, web=skipped\nFlags: IDENTITY_MISMATCH_WEBSITE_OWNER\nTop Claims:\n- [critical] Portfolio owner mismatch: Portfolio appears owned by Lam Anh Truong, not Nguyen Phan Nguyen. Evidence: Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.\n- [warning] Github stage incomplete: Github capture partial; structured evidence is limited. Evidence: Github stage status: partial.\n- [warning] Linkedin stage incomplete: Linkedin capture partial; structured evidence is limited. Evidence: Linkedin stage status: partial.\n- [warning] Portfolio stage incomplete: Portfolio capture partial; structured evidence is limited. Evidence: Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.\n- [info] Github evidence: Github stage status: partial. Evidence: Github stage status: partial.\n- [info] Github evidence: Github stage completed without an explicit summary payload. Evidence: Github stage completed without an explicit summary payload.\n- [info] Linkedin evidence: Linkedin stage status: partial. Evidence: Linkedin stage status: partial.\n- [info] Linkedin evidence: Linkedin stage completed without an explicit summary payload. Evidence: Linkedin stage completed without an explicit summary payload."
+  }
+}

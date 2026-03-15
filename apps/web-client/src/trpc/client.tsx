@@ -35,11 +35,19 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
       links: [
         retryLink({
           retry(opts) {
-            // Only retry on network errors or 5xx, not on 4xx client errors
+            // Never retry auth errors (UNAUTHORIZED / FORBIDDEN)
+            if (
+              opts.error.data?.code === "UNAUTHORIZED" ||
+              opts.error.data?.code === "FORBIDDEN"
+            ) {
+              return false;
+            }
+            // Never retry 4xx client errors
             if (opts.error.data?.httpStatus && opts.error.data.httpStatus < 500) {
               return false;
             }
-            return opts.attempts < 3;
+            // Only retry network/5xx errors, up to 2 times
+            return opts.attempts < 2;
           },
         }),
         httpBatchLink({

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { Topbar } from "@/components/topbar";
+import { PageTransition } from "@/components/PageTransition";
 
 export default async function DashboardGroupLayout({
   children,
@@ -15,12 +15,11 @@ export default async function DashboardGroupLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen w-full bg-white p-2.5 gap-4 overflow-hidden">
       <Sidebar />
-      <div className="flex flex-1 flex-col pl-50">
-        <Topbar />
-        <main className="flex-1 px-6 py-6">{children}</main>
-      </div>
+      <main className="flex-1 overflow-y-auto rounded-2xl min-w-0">
+        <PageTransition>{children}</PageTransition>
+      </main>
     </div>
   );
 }

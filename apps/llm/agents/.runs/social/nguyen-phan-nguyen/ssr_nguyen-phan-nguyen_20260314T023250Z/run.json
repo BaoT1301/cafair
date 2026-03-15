@@ -1,0 +1,26 @@
+{
+  "runId": "ssr_nguyen-phan-nguyen_20260314T023250Z",
+  "candidateId": "cand_np_001",
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "candidateSlug": "nguyen-phan-nguyen",
+  "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z",
+  "status": "failed",
+  "startedAtISO": "2026-03-14T02:32:50.412Z",
+  "updatedAtISO": "2026-03-14T02:32:53.025Z",
+  "stageStatus": {
+    "linkedin": "queued",
+    "github": "queued",
+    "portfolio": "queued",
+    "web": "skipped"
+  },
+  "paths": {
+    "runJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/run.json",
+    "eventsJsonl": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/events.jsonl",
+    "captureJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/capture.json"
+  },
+  "errors": [
+    "Expected double-quoted property name in JSON at position 8192",
+    "Expected double-quoted property name in JSON at position 8192"
+  ],
+  "finishedAtISO": "2026-03-14T02:32:53.025Z"
+}
