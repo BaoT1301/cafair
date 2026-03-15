@@ -278,6 +278,7 @@ export default function CandidateDetailPage() {
   // Risk banner + social screen
   const [riskBannerDismissed, setRiskBannerDismissed] = useState(false);
   const [socialScreenOpen, setSocialScreenOpen] = useState(false);
+  const [openClawOpen, setOpenClawOpen] = useState(false);
 
   const { data: candidate, isLoading } = useQuery(
     trpc.recruiter.getCandidateWithEvidence.queryOptions({ id })
@@ -833,6 +834,19 @@ export default function CandidateDetailPage() {
               Run Social Screen
             </motion.button>
 
+            {/* Get Notified on Agent — OpenClaw */}
+            <motion.button
+              onClick={() => setOpenClawOpen(true)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
+              className="w-full flex flex-col items-start gap-0.5 py-2 px-3 rounded-lg border"
+              style={{ background: "#f0fdf4", borderColor: "#bbf7d0" }}
+            >
+              <span className="text-sm font-semibold text-[#15803d]">Get Notified on Agent</span>
+              <span className="text-[10px] text-[#6b7280]">powered by GPT 5.4 Codex · OpenClaw</span>
+            </motion.button>
+
             <motion.button
               onClick={() => fireAction("sync_to_ats")}
               disabled={createAction.isPending}
@@ -1009,6 +1023,38 @@ export default function CandidateDetailPage() {
           isDone={transitionDone}
           onClose={handleTransitionClose}
         />
+      )}
+
+      {/* OpenClaw Video Modal */}
+      {openClawOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: "rgba(0,0,0,0.82)" }}
+          onClick={() => setOpenClawOpen(false)}
+        >
+          <div
+            className="w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: "#0f0f1a" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "#2a2a3e" }}>
+              <div>
+                <p className="text-[13px] font-bold text-white">Internal OpenClaw Workflow Runner</p>
+                <p className="text-[11px] text-[#9ca3af]">Syncs up with you once Agent starts to Screen</p>
+              </div>
+              <button onClick={() => setOpenClawOpen(false)} className="text-[#4b5563] hover:text-white transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <video
+              src="/videos/OpenClawBot.mp4"
+              autoPlay
+              controls
+              className="w-full"
+              style={{ maxHeight: "80vh" }}
+            />
+          </div>
+        </div>
       )}
 
       {/* Social Screen Modal */}
