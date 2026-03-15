@@ -1,5 +1,17 @@
 import path from "node:path";
-import { runBedrockSocialEvidenceReasoner } from "../../../../llm/agents/src/agents/socialEvidenceReasoner";
+
+// Dynamic import so Vercel build succeeds without the agents package
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFn = (...args: any[]) => Promise<any>;
+let _runBedrockSocialEvidenceReasoner: AnyFn | null = null;
+async function loadEvidenceReasoner(): Promise<AnyFn> {
+  if (!_runBedrockSocialEvidenceReasoner) {
+    const p = ["../../../../llm/agents/src/agents/socialEvidenceReasoner"].join("");
+    const mod = await import(/* webpackIgnore: true */ p);
+    _runBedrockSocialEvidenceReasoner = mod.runBedrockSocialEvidenceReasoner;
+  }
+  return _runBedrockSocialEvidenceReasoner!;
+}
 
 export interface GetSocialEvidenceReasonerInput {
   candidateId?: string;
@@ -11,7 +23,8 @@ export interface GetSocialEvidenceReasonerInput {
 
 export interface GetSocialEvidenceReasonerSuccess {
   ok: true;
-  result: Awaited<ReturnType<typeof runBedrockSocialEvidenceReasoner>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: any;
 }
 
 export interface GetSocialEvidenceReasonerFailure {
@@ -45,6 +58,7 @@ export async function getSocialScreenFromEvidencePacket(
       };
     }
 
+    const runBedrockSocialEvidenceReasoner = await loadEvidenceReasoner();
     const result = await runBedrockSocialEvidenceReasoner({
       evidencePacketPath,
       candidateId: cleanText(input.candidateId),
