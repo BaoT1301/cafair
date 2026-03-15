@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "social-capture-artifact/v1",
+  "generatedAt": "2026-03-13T03:05:08.661710Z",
+  "candidateName": "Nguyen Phan Nguyen",
+  "mode": "api-key",
+  "input": {
+    "linkedin": "https://www.linkedin.com/in/nguyenpn1/",
+    "github": "https://github.com/ngstephen1",
+    "webQueries": [
+      "Nguyen Phan Nguyen Virginia Tech"
+    ]
+  },
+  "workflow": {
+    "workflowRunId": null,
+    "workflowDefinitionName": null,
+    "timedOut": false,
+    "modelId": "nova-act-preview"
+  },
+  "paths": {
+    "artifactDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T030508Z",
+    "capturePath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T030508Z/capture.json",
+    "referencedPaths": [],
+    "htmlRunFilePath": null,
+    "logsDir": null,
+    "screenshots": [],
+    "rawOutputPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/20260313T030508Z/raw-output.json",
+    "actResultPath": null
+  },
+  "rawActResultSummary": null,
+  "normalized": {
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "found": true,
+      "headline": "Captured via Nova Act stub",
+      "currentCompany": "Unknown",
+      "school": null,
+      "skills": [],
+      "experienceCount": 0
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1",
+      "found": true,
+      "username": "ngstephen1",
+      "displayName": null,
+      "bio": "Stub capture only",
+      "followers": null,
+      "following": null,
+      "contributionsLastYear": null,
+      "topLanguages": [],
+      "pinnedRepoCount": 0,
+      "pinnedRepos": []
+    },
+    "web": {
+      "queries": [
+        "Nguyen Phan Nguyen Virginia Tech"
+      ],
+      "resultCount": 1,
+      "results": [
+        {
+          "title": "Search result placeholder for: Nguyen Phan Nguyen Virginia Tech",
+          "snippet": "Stub result generated locally.",
+          "source": "stub",
+          "url": null
+        }
+      ]
+    }
+  },
+  "warnings": [
+    "API-key mode currently returns stub capture placeholders in this script.",
+    "Hook API-key mode into a real Nova Act endpoint when available."
+  ]
+}

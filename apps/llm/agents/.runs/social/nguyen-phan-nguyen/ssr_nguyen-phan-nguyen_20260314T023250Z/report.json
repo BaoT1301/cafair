@@ -1,0 +1,209 @@
+{
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "socialScore": 0,
+  "risk": "high",
+  "recommendation": "REVIEW",
+  "verifiedFindings": [
+    {
+      "text": "GitHub display name appears to be 'Stephen Nguyen'.",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "github",
+          "url": "https://github.com/ngstephen1",
+          "quote": "GitHub display name appears to be 'Stephen Nguyen'.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+        }
+      ]
+    },
+    {
+      "text": "GitHub bio: Virginia Tech '27",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "github",
+          "url": "https://github.com/ngstephen1",
+          "quote": "GitHub bio: Virginia Tech '27",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+        }
+      ]
+    },
+    {
+      "text": "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually.",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "linkedin",
+          "url": "https://www.linkedin.com/in/nguyenpn1/",
+          "quote": "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+        }
+      ]
+    },
+    {
+      "text": "Visible portfolio owner name appears to be 'Lam Anh Truong'.",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong'.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+        }
+      ]
+    },
+    {
+      "text": "Portfolio title: Anh Portfolio",
+      "severity": "info",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "Portfolio title: Anh Portfolio",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+        }
+      ]
+    }
+  ],
+  "concerns": [
+    {
+      "text": "Portfolio appears owned by Lam Anh Truong, not Nguyen Phan Nguyen.",
+      "severity": "critical",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+        }
+      ]
+    },
+    {
+      "text": "Github capture partial; structured evidence is limited.",
+      "severity": "warning",
+      "citations": [
+        {
+          "source": "github",
+          "url": "https://github.com/ngstephen1",
+          "quote": "GitHub display name appears to be 'Stephen Nguyen'."
+        }
+      ]
+    },
+    {
+      "text": "Linkedin capture blocked; structured evidence is limited.",
+      "severity": "warning",
+      "citations": [
+        {
+          "source": "linkedin",
+          "url": "https://www.linkedin.com/in/nguyenpn1/",
+          "quote": "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually."
+        }
+      ]
+    },
+    {
+      "text": "Portfolio capture partial; structured evidence is limited.",
+      "severity": "warning",
+      "citations": [
+        {
+          "source": "portfolio",
+          "url": "https://lamanhtruong.com",
+          "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong'."
+        }
+      ]
+    },
+    {
+      "text": "Web capture partial; structured evidence is limited.",
+      "severity": "warning",
+      "citations": [
+        {
+          "source": "system",
+          "quote": "web stage completed with status partial."
+        }
+      ]
+    }
+  ],
+  "nextSteps": [
+    "Verify portfolio ownership with the candidate before relying on portfolio evidence.",
+    "Request candidate confirmation for any portfolio or personal website links.",
+    "Verify LinkedIn profile details manually because LinkedIn capture is partial.",
+    "Verify GitHub profile and repository evidence manually because GitHub capture is partial.",
+    "Review the portfolio site manually and confirm that it belongs to the candidate.",
+    "Confirm portfolio ownership before using portfolio signals."
+  ],
+  "citations": [
+    {
+      "source": "github",
+      "url": "https://github.com/ngstephen1",
+      "quote": "GitHub display name appears to be 'Stephen Nguyen'.",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+    },
+    {
+      "source": "github",
+      "url": "https://github.com/ngstephen1",
+      "quote": "GitHub bio: Virginia Tech '27",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+    },
+    {
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "quote": "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually.",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+    },
+    {
+      "source": "portfolio",
+      "url": "https://lamanhtruong.com",
+      "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong'.",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+    },
+    {
+      "source": "portfolio",
+      "url": "https://lamanhtruong.com",
+      "quote": "Portfolio title: Anh Portfolio",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+    },
+    {
+      "source": "portfolio",
+      "url": "https://lamanhtruong.com",
+      "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.",
+      "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T023250Z/evidence_packet.json"
+    },
+    {
+      "source": "github",
+      "url": "https://github.com/ngstephen1",
+      "quote": "GitHub display name appears to be 'Stephen Nguyen'."
+    },
+    {
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "quote": "LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually."
+    },
+    {
+      "source": "portfolio",
+      "url": "https://lamanhtruong.com",
+      "quote": "Visible portfolio owner name appears to be 'Lam Anh Truong'."
+    },
+    {
+      "source": "system",
+      "quote": "web stage completed with status partial."
+    }
+  ],
+  "flags": [
+    "IDENTITY_MISMATCH_WEBSITE_OWNER"
+  ],
+  "stageStatus": {
+    "linkedin": "blocked",
+    "github": "partial",
+    "portfolio": "partial",
+    "web": "partial"
+  },
+  "provider": "deterministic-fallback",
+  "modelId": "deterministic-fallback",
+  "parseOk": false,
+  "validationOk": true,
+  "usedFallback": true,
+  "degraded": true,
+  "metrics": {
+    "inputTokensEstimated": 381,
+    "timestampISO": "2026-03-14T02:46:15.731Z"
+  }
+}

@@ -1,0 +1,12 @@
+Candidate Label: Nguyen Phan Nguyen
+Stage Status: linkedin=blocked, github=partial, portfolio=partial, web=partial
+Flags: IDENTITY_MISMATCH_WEBSITE_OWNER
+Top Claims:
+- [critical] Portfolio owner mismatch: Portfolio appears owned by Lam Anh Truong, not Nguyen Phan Nguyen. Evidence: Visible portfolio owner name appears to be 'Lam Anh Truong', which does not match candidate label 'Nguyen Phan Nguyen'.
+- [warning] Github stage incomplete: Github capture partial; structured evidence is limited. Evidence: GitHub display name appears to be 'Stephen Nguyen'.
+- [warning] Linkedin stage incomplete: Linkedin capture blocked; structured evidence is limited. Evidence: LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually.
+- [warning] Portfolio stage incomplete: Portfolio capture partial; structured evidence is limited. Evidence: Visible portfolio owner name appears to be 'Lam Anh Truong'.
+- [warning] Web stage incomplete: Web capture partial; structured evidence is limited. Evidence: web stage completed with status partial.
+- [info] Github evidence: GitHub display name appears to be 'Stephen Nguyen'. Evidence: GitHub display name appears to be 'Stephen Nguyen'.
+- [info] Github evidence: GitHub bio: Virginia Tech '27 Evidence: GitHub bio: Virginia Tech '27
+- [info] Linkedin evidence: LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually. Evidence: LinkedIn capture may be restricted by authentication or anti-bot measures; verify manually.

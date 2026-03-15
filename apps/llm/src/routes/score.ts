@@ -1,20 +1,20 @@
 /**
- * POST /api/score — Candidate Scoring via Amazon Nova (with Gemini fallback)
+ * POST /api/score — Candidate Scoring via Bedrock/Nova (with Gemini fallback)
  *
  * Accepts candidate resume + job description, returns a structured fit assessment.
  * Does NOT update the database — the web-client persists via tRPC `scoreCandidate`.
  *
  * Provider resolution:
- *   FORCE_LLM_PROVIDER=nova   → Nova only (fail if unavailable)
+ *   FORCE_LLM_PROVIDER=bedrock|nova → Bedrock/Nova only (fail if unavailable)
  *   FORCE_LLM_PROVIDER=gemini → Gemini only
- *   FORCE_LLM_PROVIDER=auto   → Nova first, Gemini fallback (default)
+ *   FORCE_LLM_PROVIDER=auto   → Bedrock first, Gemini fallback (default)
  */
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { formatPrompt } from "../lib/prompt-formatter.js";
-import { generateNovaJSONWithRetry } from "../lib/nova.js";
 import { generateJSONWithRetry } from "../lib/gemini.js";
+import { scoreCandidateWithBedrock } from "../lib/candidate-score-bedrock.js";
 import { getCachedResponse, setCachedResponse } from "../lib/redis.js";
 import crypto from "crypto";
 
@@ -34,6 +34,11 @@ const scoreOutputSchema = z.object({
   gaps: z.array(z.string()),
   risk_level: z.enum(["low", "medium", "high"]),
   summary: z.string(),
+});
+
+const cachedScoreSchema = z.object({
+  provider: z.string(),
+  data: scoreOutputSchema,
 });
 
 // ─── Cache helper ────────────────────────────────────────
@@ -71,8 +76,30 @@ router.post("/", async (req: Request, res: Response) => {
     const cached = await getCachedResponse(cacheKey);
     if (cached) {
       console.log(`✓ Cache hit for candidate ${candidateId}`);
-      const cachedData = JSON.parse(cached);
-      res.json({ success: true, candidateId, cached: true, ...cachedData });
+      const parsedCache = cachedScoreSchema.safeParse(JSON.parse(cached));
+
+      if (parsedCache.success) {
+        res.json({
+          success: true,
+          candidateId,
+          cached: true,
+          provider: parsedCache.data.provider,
+          ...parsedCache.data.data,
+        });
+        return;
+      }
+
+      console.warn(
+        `⚠ Legacy score cache payload for candidate ${candidateId}; provider unavailable.`,
+      );
+      const legacyCache = scoreOutputSchema.parse(JSON.parse(cached));
+      res.json({
+        success: true,
+        candidateId,
+        cached: true,
+        provider: "unknown-cache",
+        ...legacyCache,
+      });
       return;
     }
 
@@ -127,6 +154,20 @@ router.post("/", async (req: Request, res: Response) => {
     const forceProvider = (
       process.env.FORCE_LLM_PROVIDER ?? "auto"
     ).toLowerCase();
+    console.log(
+      JSON.stringify({
+        type: "score_provider_selection",
+        candidateId,
+        forceProvider,
+        useRealBedrock: process.env.USE_REAL_BEDROCK ?? null,
+        bedrockModelId:
+          process.env.BEDROCK_MODEL_ID ?? process.env.NOVA_MODEL_ID ?? null,
+        hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
+        redisEnabled: Boolean(process.env.REDIS_URL),
+        cacheKey,
+      }),
+    );
+
     let rawResult: unknown;
     let provider: string;
 
@@ -135,21 +176,45 @@ router.post("/", async (req: Request, res: Response) => {
       console.log(`→ Scoring candidate ${candidateId} via Gemini (forced)...`);
       rawResult = await generateJSONWithRetry<unknown>(prompt);
       provider = "gemini";
-    } else if (forceProvider === "nova") {
-      // ── Nova only ───────────────────────────────────────
-      console.log(`→ Scoring candidate ${candidateId} via Nova (forced)...`);
-      rawResult = await generateNovaJSONWithRetry<unknown>(prompt);
-      provider = "nova";
+    } else if (forceProvider === "nova" || forceProvider === "bedrock") {
+      // ── Bedrock only ────────────────────────────────────
+      console.log(`→ Scoring candidate ${candidateId} via Bedrock (forced)...`);
+      const bedrockResult = await scoreCandidateWithBedrock({
+        candidateId,
+        resumeText: resume,
+        jobDescription,
+      });
+
+      if (bedrockResult.provider === "stub") {
+        throw new Error(
+          "Bedrock scoring resolved to stub mode. Enable USE_REAL_BEDROCK or use Gemini.",
+        );
+      }
+
+      rawResult = bedrockResult;
+      provider = bedrockResult.provider;
     } else {
-      // ── Auto: Nova → Gemini fallback ────────────────────
+      // ── Auto: Bedrock → Gemini fallback ────────────────
       try {
-        console.log(`→ Scoring candidate ${candidateId} via Nova...`);
-        rawResult = await generateNovaJSONWithRetry<unknown>(prompt);
-        provider = "nova";
-      } catch (novaErr) {
+        console.log(`→ Scoring candidate ${candidateId} via Bedrock...`);
+        const bedrockResult = await scoreCandidateWithBedrock({
+          candidateId,
+          resumeText: resume,
+          jobDescription,
+        });
+
+        if (bedrockResult.provider === "stub") {
+          throw new Error(
+            "Bedrock scoring resolved to stub mode. Falling back to Gemini.",
+          );
+        }
+
+        rawResult = bedrockResult;
+        provider = bedrockResult.provider;
+      } catch (bedrockErr) {
         console.warn(
-          `⚠ Nova failed for candidate ${candidateId}, falling back to Gemini:`,
-          (novaErr as Error).message,
+          `⚠ Bedrock failed for candidate ${candidateId}, falling back to Gemini:`,
+          (bedrockErr as Error).message,
         );
         rawResult = await generateJSONWithRetry<unknown>(prompt);
         provider = "gemini";
@@ -172,7 +237,13 @@ router.post("/", async (req: Request, res: Response) => {
     }
 
     // Cache the result (1 hour default)
-    await setCachedResponse(cacheKey, JSON.stringify(validated.data));
+    await setCachedResponse(
+      cacheKey,
+      JSON.stringify({
+        provider,
+        data: validated.data,
+      }),
+    );
 
     console.log(
       `✓ Scored candidate ${candidateId} via ${provider}: fit_score=${validated.data.fit_score}, risk=${validated.data.risk_level}`,

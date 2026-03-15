@@ -1,0 +1,26 @@
+{
+  "runId": "ssr_nguyen-phan-nguyen_20260314T024755Z",
+  "candidateId": "cand_np_001",
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "candidateSlug": "nguyen-phan-nguyen",
+  "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T024755Z",
+  "status": "completed",
+  "startedAtISO": "2026-03-14T02:47:55.798Z",
+  "updatedAtISO": "2026-03-14T02:48:04.129Z",
+  "stageStatus": {
+    "linkedin": "blocked",
+    "github": "partial",
+    "portfolio": "partial",
+    "web": "partial"
+  },
+  "paths": {
+    "runJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T024755Z/run.json",
+    "eventsJsonl": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T024755Z/events.jsonl",
+    "captureJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T024755Z/capture.json",
+    "evidencePacketJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T024755Z/evidence_packet.json",
+    "evidencePacketMarkdown": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T024755Z/evidence_packet.md",
+    "reportJson": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T024755Z/report.json"
+  },
+  "errors": [],
+  "finishedAtISO": "2026-03-14T02:48:04.128Z"
+}

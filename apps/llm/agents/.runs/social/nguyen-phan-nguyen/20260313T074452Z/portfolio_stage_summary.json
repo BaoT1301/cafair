@@ -1,0 +1,36 @@
+{
+  "url": "https://lamanhtruong.com",
+  "found": true,
+  "status": "partial",
+  "ownerName": "unknown",
+  "candidateLabel": "Nguyen Phan Nguyen",
+  "mismatchFlag": true,
+  "evidence": [
+    "Visible portfolio owner name appears to be 'unknown', which does not match candidate label 'Nguyen Phan Nguyen'.",
+    "Portfolio stage status: partial."
+  ],
+  "projectsReviewed": 0,
+  "projectHighlights": [
+    "No project highlights captured."
+  ],
+  "resumeFound": false,
+  "githubLinkFound": false,
+  "githubLinkMatchesExpected": "unknown",
+  "retroFound": false,
+  "warnings": [
+    "Nova Act failed during the portfolio stage:",
+    "At most 25 actions total in this stage.",
+    "Max 2 consecutive scrolls; after that, use navigation, anchors, or mark the section missing.",
+    "Prefer visible navigation such as Projects, Resume, GitHub, Retro, About, Experience, or headings before scrolling.",
+    "Open at most 8 project cards total, but stop earlier once strong evidence is gathered.",
+    "Open at most 1 Resume target, 1 GitHub target from the portfolio, and 1 Retro entry.",
+    "Identity mismatch: visible portfolio owner name differs from the candidate label.",
+    "Nova Act failed during the portfolio stage:",
+    "At most 25 actions total in this stage.",
+    "Max 2 consecutive scrolls; after that, use navigation, anchors, or mark the section missing.",
+    "Prefer visible navigation such as Projects, Resume, GitHub, Retro, About, Experience, or headings before scrolling.",
+    "Open at most 8 project cards total, but stop earlier once strong evidence is gathered.",
+    "Open at most 1 Resume target, 1 GitHub target from the portfolio, and 1 Retro entry."
+  ],
+  "notes": "Portfolio stage parsed from the Nova Act structured return block."
+}

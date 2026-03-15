@@ -1,0 +1,148 @@
+{
+  "stages": {
+    "linkedin": {
+      "status": "partial",
+      "summaryText": "LINKEDIN_STATUS: partial\nLINKEDIN_EVIDENCE:\n- Linkedin stage status: partial.\nMISSING:\n- Linkedin stage completed without an explicit summary payload.",
+      "warnings": [],
+      "error": null,
+      "guardrails": null,
+      "actResult": {
+        "metadata": {
+          "session_id": "019ce78d-44f0-7d3a-ab85-0e334c619276",
+          "act_id": "019ce78e-38e8-7359-a928-d31f237085c9",
+          "num_steps_executed": 12,
+          "start_time": 1773411383.562599,
+          "end_time": 1773411472.4683788,
+          "step_server_times_s": [
+            2.076,
+            2.857,
+            3.272,
+            3.112,
+            5.996,
+            4.089,
+            3.449,
+            4.944,
+            4.154,
+            3.171,
+            3.104,
+            6.404
+          ],
+          "time_worked_s": 88.90577983856201,
+          "human_wait_time_s": 0.0,
+          "prompt": "You are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nLINKEDIN STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE CHECKLIST STEPS\nLinkedIn hard limits:\n- At most 18 actions total in this stage.\n- Max 2 consecutive scrolls.\n- Open at most 1 Featured item and at most 1 Show all experiences view.\n- Do not click Show all skills.\nL1. The human operator already signed in manually before this stage starts.\nL2. Click the LinkedIn global search bar.\nL3. Search this exact query in LinkedIn: Nguyen Phan Nguyen Virginia Tech\nL4. If a People filter is visible, click it once.\nL5. Open the most relevant visible result for Nguyen Phan Nguyen. If the provided profile is already open, stay on it.\nL6. Confirm whether the profile page is visible.\nL7. If redirected to login, authwall, or 'Sign in to see more', set LINKEDIN_STATUS: blocked and stop this stage.\nL8. Capture the visible profile URL and visible profile name exactly as shown.\nL9. Capture the headline exactly as shown.\nL10. Capture the location exactly as shown.\nL11. Capture the current role or company from the top card if visible.\nL12. Capture the visible education summary from the top card if visible.\nL13. Check for Contact info or visible links and capture any website, portfolio, or public profile links shown.\nL14. If About, Experience, Education, or Skills anchors are visible, prefer clicking an anchor instead of scrolling.\nL15. If About text is visible, capture 1 or 2 key phrases only.\nL16. If About is not visible, use at most 2 scrolls to try to reveal it; if still not visible, record About missing and continue.\nL17. If Featured is visible, capture the visible featured item titles.\nL18. Open at most 1 Featured item only if it looks relevant and clearly visible.\nL19. If you opened a Featured item, capture its title, type, and one visible fact, then return to the profile.\nL20. Move to Experience using an anchor if visible; otherwise use at most 2 scrolls.\nL21. Capture the latest visible role title, company, and dates.\nL22. Capture one additional visible role, internship, or research position if present.\nL23. If Show all experiences is visible and needed, open it once only.\nL24. If you opened Show all experiences, capture at most one additional role and then return to the main profile.\nL25. Capture one visible impact statement, technology, or responsibility only if explicitly written.\nL26. Move to Education using an anchor if visible; otherwise use at most 2 scrolls.\nL27. Capture school name, degree or field, and dates if visible.\nL28. Capture honors, societies, or organizations only if visibly attached to education or nearby sections.\nL29. Move to Skills using an anchor if visible; otherwise use at most 2 scrolls. Capture up to 8 top visible skills exactly as labeled on the current page.\nL30. Record factual missing pieces such as hidden sections, authwall blocks, or sections not visible within the action budget, then stop LinkedIn immediately after you have 6 to 10 evidence bullets or you reach the action budget.\nFINAL REPORT:\nF1. Call return() immediately after the LinkedIn stage is complete.\nF2. Use LINKEDIN_STATUS: ok if the profile was reviewed with multiple sections captured.\nF3. Use LINKEDIN_STATUS: partial if only the top card or a subset of sections were captured before limits or page issues.\nF4. Use LINKEDIN_STATUS: blocked if LinkedIn authwall or login blocking prevented visible profile review.\nF5. The final return() must contain a single machine-readable block with no extra prose:\nF6. BEGIN_CAPTURE_JSON\nF7. {\"stageStatus\":{\"linkedin\":\"ok|partial|blocked\"},\"linkedin\":{\"profileUrl\":\"...\",\"profileName\":\"...\",\"headline\":\"...\",\"location\":\"...\",\"currentCompany\":\"...\",\"school\":\"...\",\"topLinks\":[\"...\"],\"skills\":[\"...\"],\"evidence\":[\"...\"],\"missing\":[\"...\"]},\"github\":null,\"portfolio\":null,\"finalSummaryText\":\"short recruiter-style LinkedIn summary\"}\nF8. END_CAPTURE_JSON\nF9. Ensure the JSON is valid and compact.\nF10. Do not include GitHub or Portfolio facts in this stage return."
+        }
+      }
+    },
+    "github": {
+      "status": "partial",
+      "summaryText": "GITHUB_STATUS: partial\nGITHUB_EVIDENCE:\n- Github stage status: partial.\nMISSING:\n- Github stage completed without an explicit summary payload.",
+      "warnings": [],
+      "error": null,
+      "guardrails": null,
+      "actResult": {
+        "metadata": {
+          "session_id": "019ce78d-44f0-7d3a-ab85-0e334c619276",
+          "act_id": "019ce78f-975e-7a8e-bdd0-47e56d54323b",
+          "num_steps_executed": 9,
+          "start_time": 1773411473.27657,
+          "end_time": 1773411546.413481,
+          "step_server_times_s": [
+            2.536,
+            5.449,
+            3.702,
+            5.03,
+            2.914,
+            3.22,
+            3.017,
+            3.744,
+            7.564
+          ],
+          "time_worked_s": 73.13691091537476,
+          "human_wait_time_s": 0.0,
+          "prompt": "You are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nGITHUB STAGE: COMPLETE THESE 30 EVIDENCE-CAPTURE CHECKLIST STEPS\nGitHub hard limits:\n- At most 18 actions total in this stage.\n- Max 2 consecutive scrolls.\n- Open at most 2 repos total, prefer pinned repos first.\n- Do not open Issues, Pull Requests, Actions, or Security tabs in this stage.\nG1. Navigate directly to this GitHub URL: https://github.com/ngstephen1\nG2. Wait for the profile page to load.\nG3. Confirm whether the profile is visible. If the page fails to load properly, use GITHUB_STATUS: partial and continue with whatever is visible.\nG4. Capture the visible profile URL and username.\nG5. Capture the display name if shown.\nG6. Capture the bio or tagline if shown.\nG7. Capture location, organization, website, or employer links if shown.\nG8. Capture followers and following counts if visible.\nG9. Capture contribution count or contribution summary if visible.\nG10. Capture all visible pinned repository names.\nG11. Capture visible pinned repo languages and stars if shown.\nG12. Capture visible topics, highlights, organizations, or achievements if shown.\nG13. If pinned repos are not enough, click Repositories once to surface visible facts.\nG14. Capture total public repository count if visible.\nG15. Identify the strongest visible repository based on visible description, stars, and relevance.\nG16. Open the first strongest repository.\nG17. Capture repo name, description, language, stars, and last updated if visible.\nG18. Capture first-screen README quality signals such as install, run, demo, or badges.\nG19. Capture whether the visible file tree suggests organized structure.\nG20. Capture whether tests, CI config, Docker, notebooks, or build files are visibly present.\nG21. If there is a clear demo link on the first screen, capture its text only.\nG22. Return to the GitHub profile.\nG23. Decide whether a second repo is meaningfully different. If not, do not open a second repo.\nG24. If a second repo is worth opening, open only one more repo total.\nG25. Capture the second repo name, purpose, language, stars, and README quality quickly.\nG26. Return to the GitHub profile after the second repo if you opened it.\nG27. Record overall technical themes across the visible profile and repos such as ML, full-stack, data, systems, music tech, or hackathon work.\nG28. Record factual risk or weakness signals only if visible, such as missing README, no visible recent activity, or minimal repo descriptions.\nG29. Stop GitHub after 6 to 10 evidence bullets or after opening 2 repos total.\nG30. End the GitHub stage immediately and proceed no further in GitHub.\nFINAL REPORT:\nF1. Call return() immediately after the GitHub stage is complete.\nF2. Use GITHUB_STATUS: ok if the profile and at least one repo were reviewed.\nF3. Use GITHUB_STATUS: partial if only the profile or incomplete repo evidence was captured.\nF4. The final return() must contain a single machine-readable block with no extra prose:\nF5. BEGIN_CAPTURE_JSON\nF6. {\"stageStatus\":{\"github\":\"ok|partial\"},\"linkedin\":null,\"github\":{\"profileUrl\":\"...\",\"username\":\"...\",\"displayName\":\"...\",\"bio\":\"...\",\"followers\":null,\"following\":null,\"contributionsLastYear\":null,\"topLanguages\":[\"...\"],\"pinnedRepos\":[{\"name\":\"...\",\"language\":\"...\",\"stars\":null}],\"evidence\":[\"...\"],\"missing\":[\"...\"]},\"portfolio\":null,\"finalSummaryText\":\"short recruiter-style GitHub summary\"}\nF7. END_CAPTURE_JSON\nF8. Ensure the JSON is valid and compact.\nF9. Do not include LinkedIn or Portfolio facts in this stage return."
+        }
+      }
+    },
+    "portfolio": {
+      "status": "partial",
+      "summaryText": "PORTFOLIO_STATUS: partial\nPORTFOLIO_URL: https://lamanhtruong.com\nPORTFOLIO_OWNER_NAME: unknown\nCANDIDATE_LABEL: Nguyen Phan Nguyen\nMISMATCH_FLAG: no\nEVIDENCE:\n- Portfolio stage status: partial.\nPROJECTS_REVIEWED: 0\nPROJECT_HIGHLIGHTS:\n- No project highlights captured.\nRESUME_FOUND: no\nGITHUB_LINK_FOUND: no\nGITHUB_LINK_MATCHES_EXPECTED: unknown\nRETRO_FOUND: no\nWARNINGS:\n- Portfolio stage completed without an explicit summary payload.\nMISSING:\n- Portfolio stage completed without an explicit summary payload.",
+      "warnings": [],
+      "error": null,
+      "guardrails": null,
+      "actResult": {
+        "metadata": {
+          "session_id": "019ce78d-44f0-7d3a-ab85-0e334c619276",
+          "act_id": "019ce790-b7e9-78bb-acc2-ecb66fe8e209",
+          "num_steps_executed": 14,
+          "start_time": 1773411547.142704,
+          "end_time": 1773411658.586161,
+          "step_server_times_s": [
+            2.438,
+            4.753,
+            3.047,
+            3.568,
+            2.845,
+            3.966,
+            8.374,
+            3.227,
+            3.22,
+            3.258,
+            3.209,
+            3.469,
+            2.947,
+            10.866
+          ],
+          "time_worked_s": 111.44345688819885,
+          "human_wait_time_s": 0.0,
+          "prompt": "You are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nPORTFOLIO STAGE: COMPLETE THIS RECRUITER-STYLE INTERACTIVE PORTFOLIO REVIEW\nPortfolio hard limits:\n- At most 25 actions total in this stage.\n- Max 2 consecutive scrolls; after that, use navigation, anchors, or mark the section missing.\n- Prefer visible navigation such as Projects, Resume, GitHub, Retro, About, Experience, or headings before scrolling.\n- Open at most 8 project cards total, but stop earlier once strong evidence is gathered.\n- Open at most 1 Resume target, 1 GitHub target from the portfolio, and 1 Retro entry.\nP1. Navigate directly to the portfolio URL: https://lamanhtruong.com\nP2. Confirm the site is visible. If the page is blocked or fails to load, set PORTFOLIO_STATUS: blocked and stop.\nP3. Capture the visible landing-page title, hero name, and title or role text exactly as shown.\nP4. Capture the first visible owner name from the hero, header, or top navigation.\nP5. Compare the visible owner name to the candidate label 'Nguyen Phan Nguyen'. If the visible owner looks like a different person, record that clearly.\nP6. Bias toward flagging a mismatch if 'Lam Anh Truong' appears prominently in the hero, header, title, or repeated branding.\nP7. Capture the visible top navigation labels and recruiter-relevant links.\nP8. Navigate to Projects using a visible Projects tab, button, anchor, or heading if available.\nP9. Capture the visible project section heading and count how many project cards are visible before opening anything.\nP10. Open the strongest visible project card.\nP11. Capture the project name, the problem or theme, and one visible engineering fact such as stack, demo, or README-style description.\nP12. Return to the project list or portfolio landing after the first project review.\nP13. Open a second clearly different project card if available.\nP14. Capture the second project's name, theme, and one visible engineering fact, then return.\nP15. If more strong projects are clearly visible and action budget remains, open up to 2 more project cards total; never exceed 8.\nP16. Open Resume using a visible Resume link, button, or section if present.\nP17. Capture whether a resume page or downloadable resume was found and 2 or 3 visible facts from it, then return to the portfolio.\nP18. Open the GitHub link from the portfolio if visible.\nP19. Compare the opened GitHub destination to the expected GitHub URL 'https://github.com/ngstephen1'.\nP20. Capture whether the GitHub link exists and whether it appears to match the expected GitHub profile, then return to the portfolio.\nP21. Click Retro if a Retro section, button, or nav item is visible.\nP22. Inside Retro, perform up to 10 recruiter-style inspection checks using headings, visible links, and one recruiter-relevant deep open if available.\nP23. Capture visible themes from Retro such as reflections, lessons learned, project reviews, timelines, or process notes.\nP24. Record factual warnings only, such as owner-name mismatch, missing resume, missing GitHub link, broken navigation, or sections not visible within the budget.\nP25. Stop the portfolio stage immediately once you have enough evidence. Do not continue browsing after the structured return is ready.\nFINAL REPORT:\nF1. Call return() immediately after the portfolio stage is complete.\nF2. The final return() must contain a single machine-readable block with no extra prose:\nF3. BEGIN_CAPTURE_JSON\nF4. {\"stageStatus\":{\"portfolio\":\"ok|partial|blocked\"},\"linkedin\":null,\"github\":null,\"portfolio\":{\"url\":\"https://lamanhtruong.com\",\"ownerName\":\"...\",\"candidateLabel\":\"Nguyen Phan Nguyen\",\"mismatchFlag\":true,\"evidence\":[\"...\"],\"projectsReviewed\":0,\"projectHighlights\":[\"...\"],\"resumeFound\":false,\"githubLinkFound\":false,\"githubLinkMatchesExpected\":\"yes|no|unknown\",\"retroFound\":false,\"warnings\":[\"...\"],\"missing\":[\"...\"]},\"finalSummaryText\":\"short recruiter-style portfolio summary\"}\nF5. END_CAPTURE_JSON\nF6. If a visible owner looks like Lam Anh Truong and differs from the candidate label, set mismatchFlag to true and mention the visible text in evidence.\nF7. Ensure the JSON is valid and compact.\nF8. Only record visible facts. Do not contact anyone. Do not make personal judgments."
+        }
+      }
+    }
+  },
+  "metadata": {
+    "session_id": "019ce78d-44f0-7d3a-ab85-0e334c619276",
+    "act_id": "019ce790-b7e9-78bb-acc2-ecb66fe8e209",
+    "num_steps_executed": 35,
+    "start_time": null,
+    "end_time": null,
+    "step_server_times_s": [
+      "2.076",
+      "2.857",
+      "3.272",
+      "3.112",
+      "5.996",
+      "4.089",
+      "3.449",
+      "4.944",
+      "4.154",
+      "3.171",
+      "3.104",
+      "6.404",
+      "2.536",
+      "5.449",
+      "3.702",
+      "5.03",
+      "2.914",
+      "3.22",
+      "3.017",
+      "3.744",
+      "7.564",
+      "2.438",
+      "4.753",
+      "3.047",
+      "3.568",
+      "2.845",
+      "3.966",
+      "8.374",
+      "3.227",
+      "3.22",
+      "3.258",
+      "3.209",
+      "3.469",
+      "2.947",
+      "10.866"
+    ],
+    "time_worked_s": 273.486,
+    "prompt": "You are performing a recruiter-style browser evidence capture demo.\nCandidate label for notes: Nguyen Phan Nguyen.\nUse only the URLs and search queries explicitly provided in this prompt.\nVisible facts only. No outreach, no messages, no personal judgments, no private inferences.\nTreat steps as checklist items, not as permission to loop.\nPrefer clicking section anchors, tabs, and clearly labeled navigation before scrolling.\nMax 2 consecutive scrolls. If the target is still not visible, mark it missing and continue.\nIf the footer is visible, stop scrolling immediately.\nOnce enough evidence is captured for the current stage, stop and return.\nPORTFOLIO STAGE: COMPLETE THIS RECRUITER-STYLE INTERACTIVE PORTFOLIO REVIEW\nPortfolio hard limits:\n- At most 25 actions total in this stage.\n- Max 2 consecutive scrolls; after that, use navigation, anchors, or mark the section missing.\n- Prefer visible navigation such as Projects, Resume, GitHub, Retro, About, Experience, or headings before scrolling.\n- Open at most 8 project cards total, but stop earlier once strong evidence is gathered.\n- Open at most 1 Resume target, 1 GitHub target from the portfolio, and 1 Retro entry.\nP1. Navigate directly to the portfolio URL: https://lamanhtruong.com\nP2. Confirm the site is visible. If the page is blocked or fails to load, set PORTFOLIO_STATUS: blocked and stop.\nP3. Capture the visible landing-page title, hero name, and title or role text exactly as shown.\nP4. Capture the first visible owner name from the hero, header, or top navigation.\nP5. Compare the visible owner name to the candidate label 'Nguyen Phan Nguyen'. If the visible owner looks like a different person, record that clearly.\nP6. Bias toward flagging a mismatch if 'Lam Anh Truong' appears prominently in the hero, header, title, or repeated branding.\nP7. Capture the visible top navigation labels and recruiter-relevant links.\nP8. Navigate to Projects using a visible Projects tab, button, anchor, or heading if available.\nP9. Capture the visible project section heading and count how many project cards are visible before opening anything.\nP10. Open the strongest visible project card.\nP11. Capture the project name, the problem or theme, and one visible engineering fact such as stack, demo, or README-style description.\nP12. Return to the project list or portfolio landing after the first project review.\nP13. Open a second clearly different project card if available.\nP14. Capture the second project's name, theme, and one visible engineering fact, then return.\nP15. If more strong projects are clearly visible and action budget remains, open up to 2 more project cards total; never exceed 8.\nP16. Open Resume using a visible Resume link, button, or section if present.\nP17. Capture whether a resume page or downloadable resume was found and 2 or 3 visible facts from it, then return to the portfolio.\nP18. Open the GitHub link from the portfolio if visible.\nP19. Compare the opened GitHub destination to the expected GitHub URL 'https://github.com/ngstephen1'.\nP20. Capture whether the GitHub link exists and whether it appears to match the expected GitHub profile, then return to the portfolio.\nP21. Click Retro if a Retro section, button, or nav item is visible.\nP22. Inside Retro, perform up to 10 recruiter-style inspection checks using headings, visible links, and one recruiter-relevant deep open if available.\nP23. Capture visible themes from Retro such as reflections, lessons learned, project reviews, timelines, or process notes.\nP24. Record factual warnings only, such as owner-name mismatch, missing resume, missing GitHub link, broken navigation, or sections not visible within the budget.\nP25. Stop the portfolio stage immediately once you have enough evidence. Do not continue browsing after the structured return is ready.\nFINAL REPORT:\nF1. Call return() immediately after the portfolio stage is complete.\nF2. The final return() must contain a single machine-readable block with no extra prose:\nF3. BEGIN_CAPTURE_JSON\nF4. {\"stageStatus\":{\"portfolio\":\"ok|partial|blocked\"},\"linkedin\":null,\"github\":null,\"portfolio\":{\"url\":\"https://lamanhtruong.com\",\"ownerName\":\"...\",\"candidateLabel\":\"Nguyen Phan Nguyen\",\"mismatchFlag\":true,\"evidence\":[\"...\"],\"projectsReviewed\":0,\"projectHighlights\":[\"...\"],\"resumeFound\":false,\"githubLinkFound\":false,\"githubLinkMatchesExpected\":\"yes|no|unknown\",\"retroFound\":false,\"warnings\":[\"...\"],\"missing\":[\"...\"]},\"finalSummaryText\":\"short recruiter-style portfolio summary\"}\nF5. END_CAPTURE_JSON\nF6. If a visible owner looks like Lam Anh Truong and differs from the candidate label, set mismatchFlag to true and mention the visible text in evidence.\nF7. Ensure the JSON is valid and compact.\nF8. Only record visible facts. Do not contact anyone. Do not make personal judgments."
+  }
+}

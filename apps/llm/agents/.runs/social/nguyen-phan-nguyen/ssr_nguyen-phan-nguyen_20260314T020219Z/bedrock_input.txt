@@ -1,0 +1,6 @@
+Candidate Label: Nguyen Phan Nguyen
+Stage Status: linkedin=skipped, github=skipped, portfolio=skipped, web=skipped
+Flags: none
+Top Claims:
+- [info] Portfolio evidence: missing structured block Evidence: missing structured block
+- [info] Portfolio evidence: No structured portfolio payload was captured. Evidence: No structured portfolio payload was captured.

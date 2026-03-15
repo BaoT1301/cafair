@@ -1,0 +1,167 @@
+{
+  "version": "1.0",
+  "createdAtISO": "2026-03-14T01:27:00.619Z",
+  "candidate": {
+    "label": "Nguyen Phan Nguyen"
+  },
+  "run": {
+    "runDir": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T012332Z"
+  },
+  "stageStatus": {
+    "linkedin": "skipped",
+    "github": "skipped",
+    "portfolio": "skipped",
+    "web": "skipped"
+  },
+  "sources": {
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/nguyenpn1/",
+      "found": true
+    },
+    "github": {
+      "url": "https://github.com/ngstephen1",
+      "found": true
+    },
+    "portfolio": {
+      "url": "https://lamanhtruong.com",
+      "found": false
+    },
+    "web": {
+      "queries": [
+        "Nguyen Phan Nguyen Virginia Tech"
+      ]
+    }
+  },
+  "flags": [],
+  "claims": [
+    {
+      "id": "claim_40274c2faabc",
+      "severity": "info",
+      "title": "Portfolio evidence",
+      "statement": "missing structured block",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "quote": "missing structured block",
+          "url": "https://lamanhtruong.com",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T012332Z/capture.json"
+        }
+      ]
+    },
+    {
+      "id": "claim_9947475f4f91",
+      "severity": "info",
+      "title": "Portfolio evidence",
+      "statement": "No structured portfolio payload was captured.",
+      "evidence": [
+        {
+          "source": "portfolio",
+          "quote": "No structured portfolio payload was captured.",
+          "url": "https://lamanhtruong.com",
+          "artifactPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T012332Z/capture.json"
+        }
+      ]
+    }
+  ],
+  "novaReturn": {
+    "rawTextPath": "/Users/macbook/Hack/cafair/apps/llm/agents/.runs/social/nguyen-phan-nguyen/ssr_nguyen-phan-nguyen_20260314T012332Z/nova_return_block.txt",
+    "parseOk": false
+  },
+  "trace": {
+    "mode": "synthetic",
+    "summary": "Nova Act trace was missing or redacted; generated synthetic trace from return block, parsed outputs, and flags.",
+    "steps": [
+      {
+        "stage": "linkedin",
+        "action": "Opened URL",
+        "observed": "linkedin source URL: https://www.linkedin.com/in/nguyenpn1/"
+      },
+      {
+        "stage": "linkedin",
+        "action": "Reviewed stage status",
+        "observed": "linkedin stage status: skipped"
+      },
+      {
+        "stage": "linkedin",
+        "action": "Recorded limitation",
+        "observed": "No structured return captured; stage partial."
+      },
+      {
+        "stage": "github",
+        "action": "Opened URL",
+        "observed": "github source URL: https://github.com/ngstephen1"
+      },
+      {
+        "stage": "github",
+        "action": "Reviewed stage status",
+        "observed": "github stage status: skipped"
+      },
+      {
+        "stage": "github",
+        "action": "Recorded limitation",
+        "observed": "No structured return captured; stage partial."
+      },
+      {
+        "stage": "portfolio",
+        "action": "Opened URL",
+        "observed": "portfolio source URL: https://lamanhtruong.com"
+      },
+      {
+        "stage": "portfolio",
+        "action": "Reviewed stage status",
+        "observed": "portfolio stage status: skipped"
+      },
+      {
+        "stage": "portfolio",
+        "action": "Captured evidence",
+        "observed": "missing structured block"
+      },
+      {
+        "stage": "portfolio",
+        "action": "Captured evidence",
+        "observed": "No structured portfolio payload was captured."
+      },
+      {
+        "stage": "web",
+        "action": "Prepared web queries",
+        "observed": "Web queries recorded: Nguyen Phan Nguyen Virginia Tech"
+      },
+      {
+        "stage": "web",
+        "action": "Reviewed stage status",
+        "observed": "web stage status: skipped"
+      },
+      {
+        "stage": "web",
+        "action": "Recorded limitation",
+        "observed": "No structured return captured; stage partial."
+      }
+    ]
+  },
+  "metrics": {
+    "thinkCount": 0,
+    "actionCounts": {
+      "agentClick": 0,
+      "agentType": 0,
+      "agentScroll": 0,
+      "goToUrl": 0,
+      "return": 0
+    },
+    "evidenceSnippetsCount": 2,
+    "claimsCount": 2
+  },
+  "highlights": {
+    "positives": [
+      "missing structured block",
+      "No structured portfolio payload was captured."
+    ],
+    "concerns": [],
+    "missing": [
+      "missing structured block",
+      "No structured portfolio payload was captured."
+    ]
+  },
+  "bedrockInput": {
+    "socialEvidencePacket": "Candidate Label: Nguyen Phan Nguyen\nStage Status: linkedin=skipped, github=skipped, portfolio=skipped, web=skipped\nFlags: none\nTop Claims:\n- [info] Portfolio evidence: missing structured block Evidence: missing structured block\n- [info] Portfolio evidence: No structured portfolio payload was captured. Evidence: No structured portfolio payload was captured."
+  }
+}
