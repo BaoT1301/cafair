@@ -924,28 +924,40 @@ export function SocialScreenModal({
         </motion.div>
       </div>
 
-      {/* Debug panel */}
-      <div style={{ position: "fixed", bottom: 12, right: 12, zIndex: 99999 }}>
-        <button
-          onClick={() => setShowDebug(p => !p)}
-          style={{ background: "#1e293b", color: "#94a3b8", fontSize: 11, padding: "4px 8px", borderRadius: 6, border: "1px solid #334155", cursor: "pointer" }}
-        >
-          SSE Debug ({debugLog.length})
-        </button>
-        {showDebug && (
-          <div style={{ position: "absolute", bottom: 32, right: 0, width: 420, maxHeight: 320, overflowY: "auto", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, padding: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ color: "#64748b", fontSize: 10 }}>SSE stream log — latest first</span>
-              <button onClick={() => setDebugLog([])} style={{ color: "#64748b", fontSize: 10, background: "none", border: "none", cursor: "pointer" }}>clear</button>
-            </div>
-            {debugLog.length === 0 && <p style={{ color: "#475569", fontSize: 11 }}>No events yet</p>}
-            {debugLog.map((line, i) => (
-              <div key={i} style={{ color: line.includes("ERROR") || line.includes("error") || line.includes("threw") || line.includes("failed") ? "#f87171" : line.includes("finding") ? "#34d399" : "#94a3b8", fontSize: 10, fontFamily: "monospace", marginBottom: 2, wordBreak: "break-all" }}>
-                {line}
-              </div>
-            ))}
+      {/* SSE Debug Terminal */}
+      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 720, zIndex: 99999, fontFamily: "monospace" }}>
+        <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderBottom: "none", borderRadius: "8px 8px 0 0", overflow: "hidden" }}>
+          <div
+            onClick={() => setShowDebug(p => !p)}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", cursor: "pointer", background: "#1e293b" }}
+          >
+            <span style={{ color: "#4ade80", fontSize: 10 }}>● SSE Agent Stream</span>
+            <span style={{ color: "#64748b", fontSize: 10 }}>
+              {debugLog.length} events · {sseFindings.length} findings · {showDebug ? "▼ hide" : "▲ show"}
+            </span>
           </div>
-        )}
+          {showDebug && (
+            <div style={{ maxHeight: 180, overflowY: "auto", padding: "6px 10px" }}>
+              {debugLog.length === 0
+                ? <p style={{ color: "#475569", fontSize: 10, margin: 0 }}>Waiting for stream...</p>
+                : debugLog.map((line, i) => (
+                  <div key={i} style={{
+                    color: line.includes("ERROR") || line.includes("error") || line.includes("threw") || line.includes("failed") || line.includes("404") || line.includes("500")
+                      ? "#f87171"
+                      : line.includes("finding")
+                        ? "#4ade80"
+                        : line.includes("OPEN") || line.includes("done")
+                          ? "#facc15"
+                          : "#94a3b8",
+                    fontSize: 10, marginBottom: 1, wordBreak: "break-all"
+                  }}>
+                    {line}
+                  </div>
+                ))
+              }
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
