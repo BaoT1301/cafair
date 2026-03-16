@@ -834,17 +834,17 @@ export default function CandidateDetailPage() {
               Run Social Screen
             </motion.button>
 
-            {/* Get Notified on Agent — OpenClaw */}
+            {/* Sync up with Agent — OpenClaw */}
             <motion.button
               onClick={() => setOpenClawOpen(true)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.96 }}
               transition={{ type: "spring", stiffness: 400, damping: 22 }}
-              className="w-full flex flex-col items-start gap-0.5 py-2 px-3 rounded-lg border"
-              style={{ background: "#f0fdf4", borderColor: "#bbf7d0" }}
+              className="w-full flex flex-col items-start gap-0 py-2 px-3 rounded-lg"
+              style={{ background: "linear-gradient(135deg, #0e3d27 0%, #1f6b43 100%)", color: "#fff" }}
             >
-              <span className="text-sm font-semibold text-[#15803d]">Get Notified on Agent</span>
-              <span className="text-[10px] text-[#6b7280]">powered by GPT 5.4 Codex · OpenClaw</span>
+              <span className="text-sm font-semibold text-white">⚡ Sync up with Agent</span>
+              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.55)" }}>powered by GPT 5.4 Codex · OpenClaw</span>
             </motion.button>
 
             <motion.button
