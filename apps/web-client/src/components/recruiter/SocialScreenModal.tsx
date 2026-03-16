@@ -445,9 +445,9 @@ export function SocialScreenModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ candidateLabel: candidateName || "Demo Candidate", mode: "demo" }),
         });
-        if (!res.ok) return;`); return; }
+        if (!res.ok) return;
         const data = await res.json() as { ok: boolean; streamUrl?: string; reportUrl?: string };
-        if (!data.ok || !data.streamUrl) return;`); return; }
+        if (!data.ok || !data.streamUrl) return;
         if (sseClosedRef.current) return;
         const es = new EventSource(data.streamUrl);
         esRef.current = es;
