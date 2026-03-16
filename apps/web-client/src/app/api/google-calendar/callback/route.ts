@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return NextResponse.redirect(`${base}/hiring-center?gcal=connected`);
+    return NextResponse.redirect(`${base}/recruiter/hiring-center?gcal=connected`);
   } catch {
     return NextResponse.redirect(`${base}/recruiter/settings?gcal=error`);
   }
