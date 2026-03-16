@@ -497,9 +497,10 @@ export async function startSocialScreenRun(
   }
 
   if (input.mode === "demo") {
+    // Return immediately — no filesystem access. Stream uses bundled static events.
     return {
       runId: "demo",
-      runDir: path.join(findRepoRoot(), "apps", "llm", "agents", ".runs", "social", "demo", "demo"),
+      runDir: "",
       streamUrl: "/api/aihire/social-screen/stream?runId=demo",
       reportUrl: "/api/aihire/social-screen/report?runId=demo",
       status: "completed",
