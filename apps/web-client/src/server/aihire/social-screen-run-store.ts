@@ -629,12 +629,27 @@ export function appendSocialScreenRunEvent(
 
 export function readSocialScreenRunEvents(runId: string): SocialScreenRunEvent[] {
   const manifest = getSocialScreenRunManifest(runId);
-  if (!manifest || !fs.existsSync(manifest.paths.eventsJsonl)) {
-    return [];
+  if (!manifest) return [];
+
+  let eventsPath = manifest.paths.eventsJsonl;
+  if (!fs.existsSync(eventsPath)) {
+    // Stored path may be from a different OS (e.g. Windows path on Linux).
+    // Reconstruct from repo root using the known demo location or relative segment.
+    try {
+      const repoRoot = findRepoRoot();
+      if (runId === "demo") {
+        eventsPath = path.join(repoRoot, "apps", "llm", "agents", ".runs", "social", "demo", "demo", "events.jsonl");
+      } else {
+        const rel = manifest.runDir.replace(/\\/g, "/").replace(/^.*\/apps\//, "apps/");
+        eventsPath = path.join(repoRoot, rel, "events.jsonl");
+      }
+    } catch { return []; }
   }
 
+  if (!fs.existsSync(eventsPath)) return [];
+
   return fs
-    .readFileSync(manifest.paths.eventsJsonl, "utf-8")
+    .readFileSync(eventsPath, "utf-8")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
