@@ -425,10 +425,6 @@ export function SocialScreenModal({
   const esRef = useRef<EventSource | null>(null);
   const sseClosedRef = useRef(false);
 
-  // Debug state
-  const [debugLog, setDebugLog] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
-  const addDebug = (msg: string) => setDebugLog(prev => [`[${new Date().toISOString().slice(11,19)}] ${msg}`, ...prev].slice(0, 50));
 
   // Cleanup on unmount
   useEffect(() => {
@@ -444,24 +440,17 @@ export function SocialScreenModal({
 
     async function startSSE() {
       try {
-        addDebug("POST /api/aihire/social-screen/run ...");
         const res = await fetch("/api/aihire/social-screen/run", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ candidateLabel: candidateName || "Demo Candidate", mode: "demo" }),
         });
-        addDebug(`POST status: ${res.status}`);
-        if (!res.ok) { addDebug(`POST failed: ${res.statusText}`); return; }
-        const data = await res.json() as { ok: boolean; streamUrl?: string; reportUrl?: string; error?: string };
-        addDebug(`POST body: ${JSON.stringify(data)}`);
-        if (!data.ok || !data.streamUrl) { addDebug(`No streamUrl: ${data.error ?? "unknown"}`); return; }
+        if (!res.ok) return;`); return; }
+        const data = await res.json() as { ok: boolean; streamUrl?: string; reportUrl?: string };
+        if (!data.ok || !data.streamUrl) return;`); return; }
         if (sseClosedRef.current) return;
-
-        addDebug(`Opening EventSource: ${data.streamUrl}`);
         const es = new EventSource(data.streamUrl);
         esRef.current = es;
-        es.onopen = () => addDebug("EventSource OPEN");
-        es.onerror = (e) => addDebug(`EventSource ERROR readyState=${es.readyState} type=${e.type}`);
 
         es.addEventListener("finding", (evt: MessageEvent) => {
           try {
@@ -497,8 +486,7 @@ export function SocialScreenModal({
               platform,
             };
             setSseFindings(prev => [...prev, finding]);
-            addDebug(`finding[${kind}] ${platform}: ${finding.title}`);
-          } catch (err) { addDebug(`finding parse error: ${String(err)}`); }
+          } catch { /* skip malformed event */ }
         });
 
         es.addEventListener("status", (evt: MessageEvent) => {
@@ -506,13 +494,11 @@ export function SocialScreenModal({
             const parsed = JSON.parse(evt.data as string) as { message?: string };
             if (typeof parsed.message === "string" && parsed.message.trim()) {
               setSseLogs(prev => [...prev, parsed.message!.trim()]);
-              addDebug(`status: ${parsed.message.slice(0, 60)}`);
             }
           } catch { /* skip */ }
         });
 
         es.addEventListener("done", (evt: MessageEvent) => {
-          addDebug("done event received");
           try {
             const parsed = JSON.parse(evt.data as string) as {
               data?: { risk?: string; recommendation?: string; flags?: string[] };
@@ -532,8 +518,8 @@ export function SocialScreenModal({
           }
         });
 
-        es.onerror = (e) => { addDebug(`EventSource error → closing. readyState=${es.readyState} type=${e.type}`); es.close(); };
-      } catch (err) { addDebug(`startSSE threw: ${String(err)}`); }
+        es.onerror = () => { es.close(); };
+      } catch { /* fall back to hardcoded data */ }
     }
 
     void startSSE();
@@ -924,41 +910,6 @@ export function SocialScreenModal({
         </motion.div>
       </div>
 
-      {/* SSE Debug Terminal */}
-      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 720, zIndex: 99999, fontFamily: "monospace" }}>
-        <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderBottom: "none", borderRadius: "8px 8px 0 0", overflow: "hidden" }}>
-          <div
-            onClick={() => setShowDebug(p => !p)}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", cursor: "pointer", background: "#1e293b" }}
-          >
-            <span style={{ color: "#4ade80", fontSize: 10 }}>● SSE Agent Stream</span>
-            <span style={{ color: "#64748b", fontSize: 10 }}>
-              {debugLog.length} events · {sseFindings.length} findings · {showDebug ? "▼ hide" : "▲ show"}
-            </span>
-          </div>
-          {showDebug && (
-            <div style={{ maxHeight: 180, overflowY: "auto", padding: "6px 10px" }}>
-              {debugLog.length === 0
-                ? <p style={{ color: "#475569", fontSize: 10, margin: 0 }}>Waiting for stream...</p>
-                : debugLog.map((line, i) => (
-                  <div key={i} style={{
-                    color: line.includes("ERROR") || line.includes("error") || line.includes("threw") || line.includes("failed") || line.includes("404") || line.includes("500")
-                      ? "#f87171"
-                      : line.includes("finding")
-                        ? "#4ade80"
-                        : line.includes("OPEN") || line.includes("done")
-                          ? "#facc15"
-                          : "#94a3b8",
-                    fontSize: 10, marginBottom: 1, wordBreak: "break-all"
-                  }}>
-                    {line}
-                  </div>
-                ))
-              }
-            </div>
-          )}
-        </div>
-      </div>
     </>
   );
 }
