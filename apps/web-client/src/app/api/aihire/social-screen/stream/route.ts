@@ -3,6 +3,7 @@ import {
   readSocialScreenRunEvents,
   resolveSocialScreenRunAlias,
 } from "@/server/aihire/social-screen-run-store";
+import { DEMO_SSE_EVENTS } from "@/server/aihire/social-screen/demoEvents";
 import type { SocialScreenStreamEvent } from "@/server/aihire/social-screen/types";
 
 const encoder = new TextEncoder();
@@ -20,6 +21,27 @@ export async function GET(request: Request) {
 
   if (!runIdParam) {
     return Response.json({ ok: false, error: "Missing required query param: runId" }, { status: 400 });
+  }
+
+  // Demo mode: serve bundled static events — no filesystem access needed
+  if (runIdParam === "demo") {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(sseFrame("status", "bootstrap", { runId: "demo", status: "completed" }));
+        for (const event of DEMO_SSE_EVENTS) {
+          controller.enqueue(sseFrame(event.type ?? "status", event.eventId ?? String(Math.random()), event));
+        }
+        try { controller.close(); } catch { /* ignore */ }
+      },
+    });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
   }
 
   const resolved = resolveSocialScreenRunAlias(runIdParam, candidate);
