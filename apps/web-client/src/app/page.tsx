@@ -82,6 +82,11 @@ const globalStyle = `
     100% { transform: translateX(0); }
   }
   .lp .marquee-track-left { display: flex; width: max-content; animation: marquee-left 60s linear infinite; }
+
+  .lp .int-logo-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: default; }
+  .lp .int-logo-wrap:hover img { opacity: 1 !important; filter: grayscale(0%) !important; transition: opacity 0.22s, filter 0.22s; }
+  .lp .int-logo-label { opacity: 0; transform: translateY(5px); transition: opacity 0.2s ease, transform 0.2s ease; position: absolute; bottom: -22px; white-space: nowrap; font-size: 10px; color: #527060; font-weight: 600; font-family: 'DM Sans', sans-serif; background: rgba(237,243,238,0.96); padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(62,122,82,0.18); pointer-events: none; }
+  .lp .int-logo-wrap:hover .int-logo-label { opacity: 1; transform: translateY(0); }
 `;
 
 const LOGO_URL = "https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504";
@@ -278,14 +283,34 @@ function ATSViz() {
 
 // ── Agent Flowchart (candidate side) ─────────────────────────────────────────
 function AgentFlowchart() {
-  const ref = useRef(null); const inView = useInView(ref, { once: true, margin: "-50px" });
+  const ref = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-50px" });
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const tipArrowRef = useRef<HTMLDivElement>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const W = 780; const H = 390;
   const cx0 = 88; const cx1 = 264; const cx2 = 468; const cx3 = 664;
   const ry = [80, 195, 310]; const agY = 195;
   const nW = 144; const nH = 56; const aW = 172; const aH = 66;
-  const iNodes = [{ id: "Resume", icon: "📄" }, { id: "Job Desc", icon: "📋" }, { id: "User Profile", icon: "🤝" }];
-  const pNodes = [{ id: "JD Analyzer", icon: "🔍" }, { id: "Skill Matcher", icon: "🎯" }, { id: "Resume Tailor", icon: "✨" }];
-  const oNodes = [{ id: "Submit App", icon: "🚀" }, { id: "Confirmation", icon: "✅" }, { id: "Book Chat Slot", icon: "📅" }];
+
+  const nodeMap: Record<string, { cx: number; cy: number; w: number; h: number; icon: string; desc: string }> = {
+    "Resume":         { cx: cx0, cy: ry[0], w: nW, h: nH, icon: "📄", desc: "Your uploaded resume — skills, experience, and education extracted to power every tailored application." },
+    "Job Desc":       { cx: cx0, cy: ry[1], w: nW, h: nH, icon: "📋", desc: "The job posting text or URL — parsed for role requirements, keywords, and fit criteria." },
+    "User Profile":   { cx: cx0, cy: ry[2], w: nW, h: nH, icon: "🤝", desc: "Your saved profile: contact info, work history, and preferences that pre-fill every form field." },
+    "JD Analyzer":    { cx: cx1, cy: ry[0], w: nW, h: nH, icon: "🔍", desc: "Breaks the job description into required skills, nice-to-haves, culture signals, and red flags." },
+    "Skill Matcher":  { cx: cx1, cy: ry[1], w: nW, h: nH, icon: "🎯", desc: "Cross-references your profile against the JD to score fit, surface gaps, and prioritize strong role matches." },
+    "Resume Tailor":  { cx: cx1, cy: ry[2], w: nW, h: nH, icon: "✨", desc: "Rewrites and reformats your resume sections to align with role-specific keywords and requirements." },
+    "Nova Act Agent": { cx: cx2, cy: agY,   w: aW, h: aH, icon: "🤖", desc: "The orchestration brain — spawns parallel sub-agents per role, manages field mapping, and enforces the safe-stop gate." },
+    "Submit App":     { cx: cx3, cy: ry[0], w: nW, h: nH, icon: "🚀", desc: "Agent fills and submits the ATS form — only after you approve at the safe-stop review step." },
+    "Confirmation":   { cx: cx3, cy: ry[1], w: nW, h: nH, icon: "✅", desc: "Captures submission confirmation, application ID, and timestamps stored in your history." },
+    "Book Chat Slot": { cx: cx3, cy: ry[2], w: nW, h: nH, icon: "📅", desc: "Auto-schedules a follow-up coffee chat or recruiter intro call post-application." },
+  };
+
+  const iNodes = [{ id: "Resume" }, { id: "Job Desc" }, { id: "User Profile" }];
+  const pNodes = [{ id: "JD Analyzer" }, { id: "Skill Matcher" }, { id: "Resume Tailor" }];
+  const oNodes = [{ id: "Submit App" }, { id: "Confirmation" }, { id: "Book Chat Slot" }];
 
   const paths: { d: string; base: number }[] = [];
   for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
@@ -301,11 +326,58 @@ function AgentFlowchart() {
     paths.push({ d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`, base: 1.0 + k * 0.12 });
   }
 
+  const handleSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!svgRef.current || !ref.current || !tooltipRef.current) return;
+    const svgRect = svgRef.current.getBoundingClientRect();
+    const svgX = (e.clientX - svgRect.left) * (W / svgRect.width);
+    const svgY = (e.clientY - svgRect.top)  * (H / svgRect.height);
+    let found: typeof nodeMap[string] | null = null;
+    let foundKey = "";
+    for (const [key, n] of Object.entries(nodeMap)) {
+      if (svgX >= n.cx - n.w / 2 && svgX <= n.cx + n.w / 2 &&
+          svgY >= n.cy - n.h / 2 && svgY <= n.cy + n.h / 2) {
+        found = n; foundKey = key; break;
+      }
+    }
+    if (!found) return;
+    if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; }
+    const containerRect = ref.current.getBoundingClientRect();
+    const x = found.cx * (svgRect.width / W) + (svgRect.left - containerRect.left);
+    const y = found.cy * (svgRect.height / H) + (svgRect.top  - containerRect.top);
+    const aboveNode = found.cy > 80;
+    const tip = tooltipRef.current;
+    tip.style.left = `${x}px`;
+    tip.style.top = aboveNode ? `${y - 12}px` : `${y + 12}px`;
+    tip.style.transform = aboveNode ? "translate(-50%, calc(-100% - 8px))" : "translate(-50%, 8px)";
+    tip.style.opacity = "1";
+    const titleEl = tip.querySelector<HTMLElement>("[data-tip-title]");
+    const descEl  = tip.querySelector<HTMLElement>("[data-tip-desc]");
+    if (titleEl) titleEl.textContent = `${found.icon} ${foundKey}`;
+    if (descEl)  descEl.textContent  = found.desc;
+    if (tipArrowRef.current) {
+      const a = tipArrowRef.current;
+      if (aboveNode) {
+        a.style.bottom = "-5px"; a.style.top = "";
+        a.style.borderTop = "5px solid rgba(13,30,20,0.93)"; a.style.borderBottom = "";
+      } else {
+        a.style.top = "-5px"; a.style.bottom = "";
+        a.style.borderBottom = "5px solid rgba(13,30,20,0.93)"; a.style.borderTop = "";
+      }
+    }
+  };
+
+  const handleSvgMouseLeave = () => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
+    }, 120);
+  };
+
   interface FNProps { cx: number; cy: number; wide?: boolean; label: string; icon: string; acc: string; idx?: number }
   const FN = ({ cx, cy, wide, label, icon, acc, idx }: FNProps) => {
     const w = wide ? aW : nW, h = wide ? aH : nH;
     return (
-      <motion.g initial={{ opacity: 0, y: 8 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: (idx || 0) * 0.1, duration: 0.44 }}>
+      <motion.g initial={{ opacity: 0, y: 8 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: (idx || 0) * 0.1, duration: 0.44 }} style={{ cursor: "default" }}>
         <rect x={cx - w / 2} y={cy - h / 2} width={w} height={h} rx="11" fill="rgba(255,255,255,0.92)" stroke={acc} strokeWidth="1.6" />
         <rect x={cx - w / 2} y={cy - h / 2 + 4} width="4" height={h - 8} rx="2" fill={acc} opacity="0.85" />
         <text x={cx + 5} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fontSize={wide ? "14.5" : "12.5"} fontWeight={wide ? "700" : "600"} fontFamily="'DM Sans',sans-serif" fill="#0D2318">{icon} {label}</text>
@@ -315,9 +387,9 @@ function AgentFlowchart() {
 
   const chips = ["Fit Ranker (pick best roles)", "Field Mapper (reduce copy/paste errors)", "Safe-stop review (human before submit)", "Follow-up drafts (thank-you + next steps)"];
   return (
-    <div ref={ref} style={{ background: "rgba(255,255,255,0.56)", borderRadius: 22, border: "1px solid rgba(62,122,82,0.16)", padding: "22px 14px 18px", boxShadow: C.shadow, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", inset: 0, borderRadius: 22, zIndex: 0, opacity: 0.38, backgroundImage: "linear-gradient(rgba(62,122,82,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(62,122,82,.08) 1px,transparent 1px)", backgroundSize: "26px 26px" }} />
-      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ position: "relative", zIndex: 2, display: "block", overflow: "visible" }}>
+    <div ref={ref} style={{ background: "rgba(255,255,255,0.56)", borderRadius: 22, border: "1px solid rgba(62,122,82,0.16)", padding: "22px 14px 18px", boxShadow: C.shadow, position: "relative", overflow: "visible" }}>
+      <div style={{ position: "absolute", inset: 0, borderRadius: 22, zIndex: 0, opacity: 0.38, overflow: "hidden", backgroundImage: "linear-gradient(rgba(62,122,82,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(62,122,82,.08) 1px,transparent 1px)", backgroundSize: "26px 26px" }} />
+      <svg ref={svgRef} width="100%" viewBox={`0 0 ${W} ${H}`} style={{ position: "relative", zIndex: 2, display: "block", overflow: "visible" }} onMouseMove={handleSvgMouseMove} onMouseLeave={handleSvgMouseLeave}>
         <defs>
           <marker id="arr-c" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto">
             <path d="M0,1 L5.5,3 L0,5 Z" fill="rgba(122,174,138,0.5)" />
@@ -335,13 +407,22 @@ function AgentFlowchart() {
             transition={{ delay: (p.base % 2.5) + 0.4, duration: 1.9, repeat: Infinity, repeatDelay: 1.6, ease: "easeInOut" }}
           />
         ))}
-        {iNodes.map((n, i) => <FN key={n.id} cx={cx0} cy={ry[i]} label={n.id} icon={n.icon} acc="#7B68EE" idx={i} />)}
-        {pNodes.map((n, i) => <FN key={n.id} cx={cx1} cy={ry[i]} label={n.id} icon={n.icon} acc="#7B68EE" idx={3 + i} />)}
+        {iNodes.map((n, i) => <FN key={n.id} cx={cx0} cy={ry[i]} label={n.id} icon={nodeMap[n.id].icon} acc="#7B68EE" idx={i} />)}
+        {pNodes.map((n, i) => <FN key={n.id} cx={cx1} cy={ry[i]} label={n.id} icon={nodeMap[n.id].icon} acc="#7B68EE" idx={3 + i} />)}
         <FN cx={cx2} cy={agY} wide label="Nova Act Agent" icon="🤖" acc="#3E7A52" idx={7} />
-        {oNodes.map((n, i) => <FN key={n.id} cx={cx3} cy={ry[i]} label={n.id} icon={n.icon} acc="#3E7A52" idx={8 + i} />)}
+        {oNodes.map((n, i) => <FN key={n.id} cx={cx3} cy={ry[i]} label={n.id} icon={nodeMap[n.id].icon} acc="#3E7A52" idx={8 + i} />)}
       </svg>
       <div style={{ position: "relative", zIndex: 3, marginTop: 14, display: "flex", flexWrap: "wrap", gap: 7 }}>
         {chips.map(c => <span key={c} style={{ background: C.accentXs, border: "1px solid rgba(62,122,82,0.22)", borderRadius: 99, padding: "4px 12px", fontSize: 10.5, color: C.accent, fontWeight: 500 }}>{c}</span>)}
+      </div>
+
+      {/* ── Node Tooltip ── */}
+      <div ref={tooltipRef} style={{ position: "absolute", opacity: 0, transition: "opacity 0.18s ease", zIndex: 50, pointerEvents: "none", maxWidth: 220, left: 0, top: 0 }}>
+        <div ref={tipArrowRef} style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", bottom: -5, borderTop: "5px solid rgba(13,30,20,0.93)" }} />
+        <div style={{ background: "rgba(13,30,20,0.93)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 10, padding: "10px 13px", boxShadow: "0 8px 28px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.06)" }}>
+          <div data-tip-title style={{ fontSize: 11, fontWeight: 700, color: "#7FD4A0", marginBottom: 4, letterSpacing: "0.01em" }} />
+          <div data-tip-desc  style={{ fontSize: 11.5, color: "rgba(255,255,255,0.82)", lineHeight: 1.55 }} />
+        </div>
       </div>
     </div>
   );
@@ -483,10 +564,20 @@ function RecruiterFlowchart({ onRewardClick }: { onRewardClick: () => void }) {
         <text x={n.cx + 5} y={n.cy - 7} textAnchor="middle" dominantBaseline="middle" fontSize="9.5" fontWeight="700" fontFamily="'DM Sans',sans-serif"
           fill={n.ck === "green" ? "#1A5A2A" : n.ck === "orange" ? "#C24A10" : n.ck === "amber" ? "#92520A" : "#3D2ECC"}>{n.icon} {n.label}</text>
         <text x={n.cx + 5} y={n.cy + 10} textAnchor="middle" dominantBaseline="middle" fontSize="8.5" fontFamily="'DM Sans',sans-serif" fill="#6B7A6B">{n.sub}</text>
-        {isClickable && (
-          <motion.circle cx={n.cx + n.w / 2 - 10} cy={n.cy - n.h / 2 + 10} r="4.5" fill="#EA580C"
-            animate={{ scale: [1, 1.6, 1], opacity: [0.85, 0.1, 0.85] }} transition={{ repeat: Infinity, duration: 1.7 }} />
-        )}
+        {isClickable && (() => {
+          // Same position as the original glowing circle: top-right corner of node
+          const px = n.cx + n.w / 2 - 14;
+          const py = n.cy - n.h / 2 + 3;
+          // Classic cursor arrow, tip at (px, py), pointing top-left
+          const cur = `M${px},${py} L${px},${py+11} L${px+2.5},${py+8} L${px+4.5},${py+13} L${px+6},${py+12.5} L${px+4},${py+7.5} L${px+7.5},${py+7.5} Z`;
+          return (
+            <motion.g
+              animate={{ opacity: [0.85, 0.1, 0.85] }}
+              transition={{ repeat: Infinity, duration: 1.7, ease: "easeInOut" }}>
+              <path d={cur} fill="#EA580C" stroke="#fff" strokeWidth="0.7" />
+            </motion.g>
+          );
+        })()}
       </motion.g>
     );
   };
@@ -568,10 +659,11 @@ function AgentConfigModal({ onClose }: { onClose: () => void }) {
   ];
   return (
     <AnimatePresence>
-      <motion.div className="modal-back" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-        <motion.div initial={{ opacity: 0, scale: 0.91, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 12 }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} onClick={e => e.stopPropagation()}
-          style={{ background: "#fff", borderRadius: 22, padding: "26px 26px 22px", maxWidth: 660, width: "100%", boxShadow: "0 24px 64px rgba(13,35,24,0.22)", maxHeight: "90vh", overflowY: "auto", fontFamily: "'DM Sans', sans-serif" }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
+        style={{ position: "fixed", inset: 0, background: "rgba(13,35,24,0.48)", backdropFilter: "blur(7px)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <motion.div initial={{ opacity: 0, scale: 0.91, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 12 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} onClick={e => e.stopPropagation()}
+        style={{ background: "#fff", borderRadius: 22, padding: "26px 26px 22px", maxWidth: 660, width: "100%", boxShadow: "0 24px 64px rgba(13,35,24,0.22)", maxHeight: "90vh", overflowY: "auto", fontFamily: "'DM Sans', sans-serif" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
             <div>
               <div style={{ fontSize: 19, fontWeight: 700, color: C.fg }}>Agent Config</div>
@@ -704,7 +796,7 @@ export default function HomePage() {
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.52, delay: 0.33 }}
               style={{ display: "flex", gap: 11, justifyContent: "center", flexWrap: "wrap", marginBottom: 22 }}>
               <button className="btn-primary" style={{ padding: "14px 32px", fontSize: 14.5 }} onClick={handleGetStarted}>Get Started</button>
-              <button className="btn-secondary" style={{ padding: "14px 32px", fontSize: 14.5 }}>Watch Demo</button>
+              <a href="https://devpost.com/software/my-valentine" target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{ padding: "14px 32px", fontSize: 14.5, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Learn More</a>
             </motion.div>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ fontSize: 11.5, color: "#8A9A8A", letterSpacing: "0.04em" }}>
               Powered by Amazon Nova / Bedrock + action agents.
@@ -741,9 +833,10 @@ export default function HomePage() {
             { src: "/logos/gmail-clean.png",          name: "Gmail"           },
             { src: "/logos/ashby.png",                name: "Ashby"           },
             { src: "/logos/google-drive.png",         name: "Google Drive"    },
-            { src: "/logos/vervoe.svg",               name: "Vervoe"          },
+            { src: "/logos/smartrecruiter.png",          name: "SmartRecruiters" },
             { src: "/logos/chrome.png",               name: "Chrome"          },
             { src: "/logos/safari.png",               name: "Safari"          },
+            { src: "/logos/discord.png",              name: "Discord"         },
           ];
           // 4 copies so the track is always wider than any viewport — prevents the gap/respawn glitch
           const repeated = [...logos, ...logos, ...logos, ...logos];
@@ -764,8 +857,9 @@ export default function HomePage() {
               <div style={{ overflow: "hidden", maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)" }}>
                 <div className="marquee-track-left" style={{ alignItems: "center" }}>
                   {repeated.map((logo, i) => (
-                    <div key={`m-${i}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0 44px", flexShrink: 0 }}>
-                      <img src={logo.src} alt={logo.name} style={{ height: 38, width: "auto", maxWidth: 120, objectFit: "contain", opacity: 0.65, filter: "grayscale(20%)", pointerEvents: "none" }} />
+                    <div key={`m-${i}`} className="int-logo-wrap" style={{ padding: "0 44px", flexShrink: 0, paddingBottom: 28 }}>
+                      <img src={logo.src} alt={logo.name} style={{ height: 38, width: "auto", maxWidth: 120, objectFit: "contain", opacity: 0.65, filter: "grayscale(20%)", pointerEvents: "none", transition: "opacity 0.22s, filter 0.22s" }} />
+                      <span className="int-logo-label">{logo.name}</span>
                     </div>
                   ))}
                 </div>
@@ -785,14 +879,18 @@ export default function HomePage() {
                     Apply in parallel with<br /><em style={{ color: C.accent }}>agentic workflows.</em>
                   </h2>
                   <p style={{ fontSize: 17, color: C.muted, lineHeight: 1.74, marginBottom: 32 }}>Your profile + resume + job description feed specialized agents that tailor your materials, answer questions, and prefill forms — then hand you a safe-stop review before submission.</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                    {[{ icon: "⚡", text: "Batch 10+ applications in parallel — minutes, not hours" }, { icon: "🗂️", text: "Field Mapper fills every form from your profile memory" }, { icon: "🛡️", text: "Safe-stop review: you see it before the agent submits" }].map(o => (
-                      <div key={o.text} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                        <span style={{ fontSize: 22, lineHeight: 1.1 }}>{o.icon}</span>
-                        <span style={{ fontSize: 17, color: C.fg, lineHeight: 1.58, fontWeight: 500 }}>{o.text}</span>
-                      </div>
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 0 }}>
+                    {[
+                      { stat: "10+", text: "applications batched simultaneously — minutes, not hours" },
+                      { stat: "1×", text: "Field Mapper fills every form from your profile memory" },
+                      { stat: "safe-stop", text: "you review every submission before the agent submits" },
+                    ].map(({ stat, text }) => (
+                      <li key={stat} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "14px 0", borderBottom: "1px solid rgba(62,122,82,0.1)" }}>
+                        <span style={{ minWidth: 72, fontWeight: 800, fontSize: 16, color: C.accent, paddingTop: 1, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{stat}</span>
+                        <span style={{ fontSize: 15, color: C.fg, lineHeight: 1.55, fontWeight: 500 }}>{text}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               </Reveal>
               <Reveal delay={0.1}><AgentFlowchart /></Reveal>
@@ -871,14 +969,12 @@ export default function HomePage() {
 
         {/* ── RECRUITER FLOWCHART ── */}
         <section style={{ padding: "0 24px 100px" }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "420px 1fr", gap: 60, alignItems: "center" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <Reveal><div style={{ textAlign: "center", marginBottom: 52 }}><span style={{ fontSize: 12, letterSpacing: "0.11em", color: C.accent, fontWeight: 700 }}>HOW RECRUITERS WORK WITH CANDIDATES (AGENTIC FLOW)</span></div></Reveal>
+          <div style={{ display: "grid", gridTemplateColumns: "420px 1fr", gap: 60, alignItems: "center" }}>
             {/* Left: heading + bullets */}
             <Reveal>
               <div>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(123,104,238,.1)", border: "1px solid rgba(123,104,238,.25)", borderRadius: 99, padding: "5px 16px", marginBottom: 20, fontSize: 11, color: "#7B68EE", fontWeight: 600, letterSpacing: "0.06em" }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7B68EE", display: "inline-block" }} />
-                  RECRUITER WORKFLOW
-                </span>
                 <h2 className="serif" style={{ fontSize: "clamp(26px,3.2vw,42px)", fontWeight: 700, letterSpacing: "-0.025em", lineHeight: 1.12, marginBottom: 14, color: C.fg }}>
                   Screen in minutes.<br /><em style={{ color: C.accent }}>Route in seconds.</em>
                 </h2>
@@ -904,6 +1000,7 @@ export default function HomePage() {
             <Reveal delay={0.1}>
               <RecruiterFlowchart onRewardClick={() => setShowModal(true)} />
             </Reveal>
+          </div>
           </div>
         </section>
 
@@ -1035,12 +1132,11 @@ export default function HomePage() {
           <Reveal style={{ maxWidth: 620, margin: "0 auto" }}>
             <div style={{ background: "linear-gradient(160deg, rgba(122,174,138,.1), rgba(62,122,82,.03))", border: "1px solid rgba(62,122,82,.17)", borderRadius: 26, padding: "58px 36px" }}>
               <h2 className="serif" style={{ fontSize: "clamp(29px,5vw,52px)", fontWeight: 700, letterSpacing: "-0.025em", marginBottom: 16, lineHeight: 1.11, color: C.fg }}>Ready to see AI Hire AI?</h2>
-              <p style={{ fontSize: 15, color: C.muted, marginBottom: 30, lineHeight: 1.68 }}>Start automating your candidate pipeline today.</p>
+              <p style={{ fontSize: 15, color: C.muted, marginBottom: 30, lineHeight: 1.68 }}>Start automating your candidate or recruiter pipeline today.</p>
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
                 <button className="btn-primary" style={{ padding: "14px 32px", fontSize: 14.5 }} onClick={handleGetStarted}>Get Started</button>
-                <button className="btn-secondary" style={{ padding: "14px 32px", fontSize: 14.5 }}>Watch Demo</button>
+                <a href="https://devpost.com/software/my-valentine" target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{ padding: "14px 32px", fontSize: 14.5, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Learn More</a>
               </div>
-              <p style={{ fontSize: 11, color: "#8A9A8A" }}>Human review before submit.</p>
             </div>
           </Reveal>
         </section>
