@@ -559,7 +559,21 @@ export function resolveSocialScreenRunId(
 ): string | null {
   const normalized = runIdOrAlias.trim();
   if (!normalized) return null;
-  if (normalized === "demo") return ensureDemoRun()?.runId ?? null;
+  if (normalized === "demo") {
+    try {
+      const result = ensureDemoRun();
+      if (result) return result.runId;
+    } catch {
+      // ensureDemoRun writes files — fails on read-only filesystems (Vercel)
+    }
+    // Fallback: verify demo events exist and return "demo" directly
+    try {
+      const repoRoot = findRepoRoot();
+      const eventsJsonl = path.join(repoRoot, "apps", "llm", "agents", ".runs", "social", "demo", "demo", "events.jsonl");
+      if (fs.existsSync(eventsJsonl)) return "demo";
+    } catch { /* ignore */ }
+    return null;
+  }
   if (normalized !== "latest") return normalized;
   return readLatestPointer(candidate)?.runId ?? scanLatestRunPointer(candidate)?.runId ?? null;
 }
