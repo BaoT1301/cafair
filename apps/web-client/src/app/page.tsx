@@ -810,7 +810,7 @@ export default function HomePage() {
           <Reveal style={{ maxWidth: 860, margin: "0 auto" }}>
             <div style={{ borderRadius: 22, overflow: "hidden", boxShadow: "0 20px 52px rgba(13,35,24,.18)", border: "1px solid rgba(122,174,138,.16)" }}>
               <video
-                src="/videos/AI.mov"
+                src="/videos/AI.mp4"
                 controls
                 playsInline
                 preload="metadata"
@@ -1165,7 +1165,7 @@ export default function HomePage() {
         <div onClick={() => setDemoOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 900, borderRadius: 16, overflow: "hidden", background: "#000", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", position: "relative" }}>
             <button onClick={() => setDemoOpen(false)} style={{ position: "absolute", top: 12, right: 14, background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, zIndex: 1 }}>✕ Close</button>
-            <video src="/videos/AI.mov" controls autoPlay style={{ width: "100%", display: "block" }} />
+            <video src="/videos/AI.mp4" controls autoPlay style={{ width: "100%", display: "block" }} />
           </div>
         </div>
       )}
