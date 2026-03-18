@@ -712,6 +712,7 @@ function AgentConfigModal({ onClose }: { onClose: () => void }) {
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   const router = useRouter();
   const { openSignIn } = useClerk();
 
@@ -807,17 +808,14 @@ export default function HomePage() {
         {/* ── DEMO VIDEO ── */}
         <section style={{ padding: "0 24px 88px" }}>
           <Reveal style={{ maxWidth: 860, margin: "0 auto" }}>
-            <div style={{ background: "linear-gradient(160deg,#12281A 0%,#08160D 100%)", borderRadius: 22, aspectRatio: "16/9", position: "relative", border: "1px solid rgba(122,174,138,.16)", boxShadow: "0 20px 52px rgba(13,35,24,.18)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden" }}>
-              <div style={{ position: "absolute", inset: 0, opacity: 0.055, backgroundImage: "linear-gradient(rgba(122,174,138,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(122,174,138,.6) 1px,transparent 1px)", backgroundSize: "36px 36px" }} />
-              <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-                <div style={{ marginBottom: 13 }}><PlayIcon /></div>
-                <div style={{ color: "#EDF3EE", fontSize: 15, fontWeight: 600 }}>Watch 90s demo</div>
-                <div style={{ color: "#7AAE8A", fontSize: 12, marginTop: 5 }}>See AI Hire AI in action</div>
-              </div>
-              <div style={{ position: "absolute", top: 14, left: 18, fontSize: 10, color: "#7AAE8A", fontWeight: 700, letterSpacing: "0.08em" }}>LIVE DEMO</div>
-              <div style={{ position: "absolute", top: 14, right: 18, display: "flex", gap: 5 }}>
-                {["#C25050", "#C2A040", "#40C265"].map(c => <span key={c} style={{ width: 8, height: 8, borderRadius: "50%", background: c, opacity: 0.82, display: "inline-block" }} />)}
-              </div>
+            <div style={{ borderRadius: 22, overflow: "hidden", boxShadow: "0 20px 52px rgba(13,35,24,.18)", border: "1px solid rgba(122,174,138,.16)" }}>
+              <video
+                src="/videos/AI.mov"
+                controls
+                playsInline
+                preload="metadata"
+                style={{ width: "100%", display: "block", background: "#000" }}
+              />
             </div>
           </Reveal>
         </section>
@@ -1161,6 +1159,16 @@ export default function HomePage() {
       </div>
 
       {showModal && <AgentConfigModal onClose={() => setShowModal(false)} />}
+
+      {/* ── DEMO VIDEO MODAL ── */}
+      {demoOpen && (
+        <div onClick={() => setDemoOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 900, borderRadius: 16, overflow: "hidden", background: "#000", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", position: "relative" }}>
+            <button onClick={() => setDemoOpen(false)} style={{ position: "absolute", top: 12, right: 14, background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: 8, padding: "4px 10px", cursor: "pointer", fontSize: 13, zIndex: 1 }}>✕ Close</button>
+            <video src="/videos/AI.mov" controls autoPlay style={{ width: "100%", display: "block" }} />
+          </div>
+        </div>
+      )}
     </>
   );
 }
