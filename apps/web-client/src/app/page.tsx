@@ -808,13 +808,13 @@ export default function HomePage() {
         {/* ── DEMO VIDEO ── */}
         <section style={{ padding: "0 24px 88px" }}>
           <Reveal style={{ maxWidth: 860, margin: "0 auto" }}>
-            <div style={{ borderRadius: 22, overflow: "hidden", boxShadow: "0 20px 52px rgba(13,35,24,.18)", border: "1px solid rgba(122,174,138,.16)" }}>
-              <video
-                src="/videos/AI.mp4#t=0.1"
-                controls
-                playsInline
-                preload="metadata"
-                style={{ width: "100%", display: "block", background: "#000", aspectRatio: "16/9" }}
+            <div style={{ borderRadius: 22, overflow: "hidden", boxShadow: "0 20px 52px rgba(13,35,24,.18)", border: "1px solid rgba(122,174,138,.16)", aspectRatio: "16/9", position: "relative" }}>
+              <iframe
+                src="https://www.youtube.com/embed/P7I0xYGE_fA"
+                title="AI Hire AI Demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
               />
             </div>
           </Reveal>
