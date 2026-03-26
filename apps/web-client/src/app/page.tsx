@@ -89,7 +89,7 @@ const globalStyle = `
   .lp .int-logo-wrap:hover .int-logo-label { opacity: 1; transform: translateY(0); }
 `;
 
-const LOGO_URL = "https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504";
+const LOGO_URL = "/logo.png";
 
 const C = {
   bg: "#EDF3EE", bgCard: "rgba(255,255,255,0.64)", fg: "#0D2318",
