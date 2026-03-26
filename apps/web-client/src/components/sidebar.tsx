@@ -85,7 +85,7 @@ export function Sidebar() {
           className={cn("flex items-center gap-1 min-w-0 shrink-0", isCollapsed && "justify-center")}
         >
           <img
-            src="https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504"
+            src="/aihire-logo.png"
             alt="AlHire logo"
             className="w-12 h-12 object-cover shrink-0"
           />

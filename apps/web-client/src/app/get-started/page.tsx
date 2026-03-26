@@ -5,9 +5,9 @@ import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-const LOGO_URL = "https://www.figma.com/api/mcp/asset/711a3b98-0750-4e7c-9876-6f715b363504";
-const ICON_RECRUITER = "https://www.figma.com/api/mcp/asset/863718f8-1e70-4049-bcf5-dac7999417e9";
-const ICON_CANDIDATE = "https://www.figma.com/api/mcp/asset/0811283c-95c2-4ebf-a13d-267e4f70bd66";
+const LOGO_URL = "/aihire-logo.png";
+const ICON_RECRUITER = "/logos/recruiter.png";
+const ICON_CANDIDATE = "/logos/candidate.png";
 
 export default function GetStartedPage() {
   const router = useRouter();

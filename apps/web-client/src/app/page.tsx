@@ -89,7 +89,7 @@ const globalStyle = `
   .lp .int-logo-wrap:hover .int-logo-label { opacity: 1; transform: translateY(0); }
 `;
 
-const LOGO_URL = "/logo.png";
+const LOGO_URL = "/aihire-logo.png";
 
 const C = {
   bg: "#EDF3EE", bgCard: "rgba(255,255,255,0.64)", fg: "#0D2318",
