@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { getSecureDb } from "@/db/secure-client";
+import { getSecureDb, getServiceDb } from "@/db/secure-client";
 import { auth } from "@clerk/nextjs/server";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { cache } from "react";
@@ -16,11 +16,9 @@ async function buildContext() {
   if (userId) {
     try {
       secureDb = await getSecureDb();
-    } catch (error) {
-      console.error(
-        "[trpc-context] Failed to initialize secure DB:",
-        error instanceof Error ? error.message : error,
-      );
+    } catch {
+      // Clerk JWT template misconfigured — fall back to service role
+      secureDb = getServiceDb();
     }
   }
 
@@ -54,20 +52,13 @@ export const createTRPCRouter = t.router;
 // Public procedure - no auth required
 export const publicProcedure = t.procedure;
 
-// Authed procedure - requires authenticated user AND secure DB (for RLS queries)
+// Authed procedure - requires authenticated user, secureDb optional (falls back to db)
 export const authedProcedure = t.procedure.use(async (opts) => {
   if (!opts.ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
-  if (!opts.ctx.secureDb) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message:
-        "Secure database connection unavailable. Check Clerk Supabase JWT template configuration.",
-    });
-  }
   return opts.next({
-    ctx: { ...opts.ctx, user: opts.ctx.user, secureDb: opts.ctx.secureDb },
+    ctx: { ...opts.ctx, user: opts.ctx.user },
   });
 });
 

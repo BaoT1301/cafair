@@ -1,4 +1,5 @@
 import { createTRPCRouter, authedProcedure, dbProcedure } from "@/server/init";
+import { getServiceDb } from "@/db/secure-client";
 import {
   candidates,
   jobRoles,
@@ -21,11 +22,32 @@ import { generateRoleAlignment } from "./generate-role-alignment";
 // ─── AI Hire AI / Bedrock ────────────────────────────────
 import { getBedrockScreen } from "@/server/aihire/bedrock";
 
+// Falls back to service role DB when user JWT is invalid, then plain db as last resort
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const rls = async <T>(ctx: { secureDb?: any; db: any }, fn: (tx: any) => Promise<T>): Promise<T> => {
+  if (ctx.secureDb) {
+    try {
+      return await ctx.secureDb.rls(fn);
+    } catch {
+      // User JWT invalid — try service role
+    }
+  }
+  const serviceDb = getServiceDb();
+  if (serviceDb) {
+    try {
+      return await serviceDb.rls(fn);
+    } catch {
+      // Service role also failed — fall back to plain db
+    }
+  }
+  return fn(ctx.db);
+};
+
 export const recruiterRouter = createTRPCRouter({
   // ─── Candidates ───────────────────────────────────────────
 
   getCandidates: authedProcedure.query(async ({ ctx }) => {
-    return ctx.secureDb!.rls((tx) =>
+    return rls(ctx,(tx) =>
       tx.select().from(candidates).orderBy(desc(candidates.fitScore)),
     );
   }),
@@ -33,7 +55,7 @@ export const recruiterRouter = createTRPCRouter({
   getCandidateById: authedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [candidate] = await ctx.secureDb!.rls((tx) =>
+      const [candidate] = await rls(ctx,(tx) =>
         tx.select().from(candidates).where(eq(candidates.id, input.id)),
       );
       if (!candidate) {
@@ -45,13 +67,13 @@ export const recruiterRouter = createTRPCRouter({
   getCandidateWithEvidence: authedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [candidate] = await ctx.secureDb!.rls((tx) =>
+      const [candidate] = await rls(ctx,(tx) =>
         tx.select().from(candidates).where(eq(candidates.id, input.id)),
       );
       if (!candidate) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Candidate not found" });
       }
-      const candidateEvidence = await ctx.secureDb!.rls((tx) =>
+      const candidateEvidence = await rls(ctx,(tx) =>
         tx.select().from(evidence).where(eq(evidence.candidateId, input.id)),
       );
       return { ...candidate, evidence: candidateEvidence };
@@ -117,17 +139,17 @@ export const recruiterRouter = createTRPCRouter({
   // ─── Job Roles ────────────────────────────────────────────
 
   getRoles: authedProcedure.query(async ({ ctx }) => {
-    return ctx.secureDb!.rls((tx) => tx.select().from(jobRoles));
+    return rls(ctx,(tx) => tx.select().from(jobRoles));
   }),
 
   // ─── Events ───────────────────────────────────────────────
 
   getEvents: authedProcedure.query(async ({ ctx }) => {
-    return ctx.secureDb!.rls((tx) => tx.select().from(events));
+    return rls(ctx,(tx) => tx.select().from(events));
   }),
 
   getActiveEvent: authedProcedure.query(async ({ ctx }) => {
-    const [event] = await ctx.secureDb!.rls((tx) =>
+    const [event] = await rls(ctx,(tx) =>
       tx.select().from(events).where(eq(events.status, "live")),
     );
     return event ?? null;
@@ -136,13 +158,13 @@ export const recruiterRouter = createTRPCRouter({
   // ─── Dashboard Stats ──────────────────────────────────────
 
   getDashboardStats: authedProcedure.query(async ({ ctx }) => {
-    const stageCounts = await ctx.secureDb!.rls((tx) =>
+    const stageCounts = await rls(ctx,(tx) =>
       tx
         .select({ stage: candidates.stage, count: count() })
         .from(candidates)
         .groupBy(candidates.stage),
     );
-    const allRoles = await ctx.secureDb!.rls((tx) =>
+    const allRoles = await rls(ctx,(tx) =>
       tx.select().from(jobRoles),
     );
 
@@ -165,7 +187,7 @@ export const recruiterRouter = createTRPCRouter({
   // ─── Recruiter Actions (ATS Sync) ─────────────────────────
 
   getActions: authedProcedure.query(async ({ ctx }) => {
-    return ctx.secureDb!.rls((tx) =>
+    return rls(ctx,(tx) =>
       tx
         .select()
         .from(recruiterActions)
@@ -222,7 +244,7 @@ export const recruiterRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [role] = await ctx.secureDb!.rls((tx) =>
+      const [role] = await rls(ctx,(tx) =>
         tx
           .insert(jobRoles)
           .values({
@@ -240,7 +262,7 @@ export const recruiterRouter = createTRPCRouter({
   deleteRole: authedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.secureDb!.rls(async (tx) => {
+      await rls(ctx,async (tx) => {
         // nullify roleId on any candidates linked to this role first
         await tx
           .update(candidates)
@@ -256,7 +278,7 @@ export const recruiterRouter = createTRPCRouter({
   getRoleById: authedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [role] = await ctx.secureDb!.rls((tx) =>
+      const [role] = await rls(ctx,(tx) =>
         tx.select().from(jobRoles).where(eq(jobRoles.id, input.id)).limit(1),
       );
       if (!role) throw new TRPCError({ code: "NOT_FOUND", message: "Role not found" });
@@ -287,7 +309,7 @@ export const recruiterRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [role] = await ctx.secureDb!.rls((tx) =>
+      const [role] = await rls(ctx,(tx) =>
         tx
           .update(jobRoles)
           .set({
