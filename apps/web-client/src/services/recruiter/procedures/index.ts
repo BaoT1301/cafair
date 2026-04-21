@@ -1,5 +1,6 @@
 import { createTRPCRouter, authedProcedure, dbProcedure } from "@/server/init";
 import { getServiceDb } from "@/db/secure-client";
+import { db as _db } from "@/db";
 import {
   candidates,
   jobRoles,
@@ -22,9 +23,12 @@ import { generateRoleAlignment } from "./generate-role-alignment";
 // ─── AI Hire AI / Bedrock ────────────────────────────────
 import { getBedrockScreen } from "@/server/aihire/bedrock";
 
+// Derive the Drizzle transaction type so callers get proper return-type inference
+type Tx = Parameters<typeof _db.transaction>[0] extends (tx: infer T) => unknown ? T : never;
+
 // Falls back to service role DB when user JWT is invalid, then plain db as last resort
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const rls = async <T>(ctx: { secureDb?: any; db: any }, fn: (tx: any) => Promise<T>): Promise<T> => {
+const rls = async <T>(ctx: { secureDb?: any; db: any }, fn: (tx: Tx) => Promise<T>): Promise<T> => {
   if (ctx.secureDb) {
     try {
       return await ctx.secureDb.rls(fn);
@@ -35,12 +39,13 @@ const rls = async <T>(ctx: { secureDb?: any; db: any }, fn: (tx: any) => Promise
   const serviceDb = getServiceDb();
   if (serviceDb) {
     try {
-      return await serviceDb.rls(fn);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return await serviceDb.rls(fn as (tx: any) => Promise<T>);
     } catch {
       // Service role also failed — fall back to plain db
     }
   }
-  return fn(ctx.db);
+  return fn(ctx.db as unknown as Tx);
 };
 
 export const recruiterRouter = createTRPCRouter({
@@ -169,15 +174,18 @@ export const recruiterRouter = createTRPCRouter({
     );
 
     const getCount = (stage: string) =>
-      stageCounts.find((s) => s.stage === stage)?.count ?? 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      stageCounts.find((s: any) => s.stage === stage)?.count ?? 0;
 
     return {
-      totalCandidates: stageCounts.reduce((sum, s) => sum + s.count, 0),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      totalCandidates: stageCounts.reduce((sum: number, s: any) => sum + s.count, 0),
       inQueue: getCount("fair"),
       inInterview: getCount("interview"),
       offers: getCount("offer"),
       projectedHires: allRoles.reduce(
-        (sum, r) => sum + (r.targetHires ?? 0),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (sum: number, r: any) => sum + (r.targetHires ?? 0),
         0,
       ),
       roles: allRoles,
