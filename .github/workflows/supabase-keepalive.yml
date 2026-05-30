@@ -1,0 +1,29 @@
+name: Supabase Keep-Alive
+
+# Keeps the free-tier Supabase project from pausing due to inactivity by
+# making one small read request on a schedule.
+
+on:
+  schedule:
+    # Runs every day at 08:00 UTC. Cron is in UTC.
+    - cron: "0 8 * * *"
+  # Allows manually running it from the Actions tab to test.
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/supabase-keepalive.mjs
