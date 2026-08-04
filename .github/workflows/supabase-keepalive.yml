@@ -2,6 +2,13 @@ name: Supabase Keep-Alive
 
 # Keeps the free-tier Supabase project from pausing due to inactivity by
 # making one small read request on a schedule.
+#
+# Two separate timers have to be kept alive here:
+#   1. Supabase pauses a free project after ~7 days with no requests.
+#      -> the "Ping Supabase" step below handles that.
+#   2. GitHub disables `schedule` triggers after 60 days with no repository
+#      activity, which silently kills timer 1 with no failed run to notice.
+#      -> the "Keep this schedule alive" step below handles that.
 
 on:
   schedule:
@@ -10,12 +17,18 @@ on:
   # Allows manually running it from the Actions tab to test.
   workflow_dispatch:
 
+# Needed so the anti-inactivity step can push its empty commit.
+permissions:
+  contents: write
+
 jobs:
   keepalive:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -27,3 +40,30 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/supabase-keepalive.mjs
+
+      # GitHub disables scheduled workflows on repos that have had no activity
+      # for 60 days. That is what stopped this workflow before: the runs did not
+      # fail, they just stopped happening. Pushing an empty commit resets that
+      # 60-day clock. Commits pushed with GITHUB_TOKEN deliberately do not
+      # trigger further workflow runs, so this cannot loop.
+      #
+      # `always()` so a Supabase outage can't also cost us the schedule.
+      - name: Keep this schedule alive
+        if: always()
+        run: |
+          set -euo pipefail
+          age_days=$(( ( $(date +%s) - $(git log -1 --format=%ct) ) / 86400 ))
+          echo "Last commit on ${{ github.ref_name }} was ${age_days} day(s) ago."
+
+          # 50 gives ~10 days of slack before GitHub's 60-day cutoff.
+          if [ "$age_days" -lt 50 ]; then
+            echo "Below the 50-day threshold — no commit needed."
+            exit 0
+          fi
+
+          echo "Approaching the 60-day cutoff — pushing an empty commit."
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty \
+            -m "chore: keepalive commit to reset the Actions 60-day inactivity timer"
+          git push origin HEAD:${{ github.ref_name }}

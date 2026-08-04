@@ -9,14 +9,24 @@
  *   SUPABASE_URL              e.g. https://<project-ref>.supabase.co
  *   SUPABASE_SERVICE_ROLE_KEY service-role key (bypasses RLS for the read)
  *
+ * Optional:
+ *   SUPABASE_KEEPALIVE_TABLE  override the first table tried
+ *
  * No npm dependencies — uses Node 18+ built-in fetch.
  */
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Table to touch. `users` exists in this project's schema; change if needed.
-const TABLE = process.env.SUPABASE_KEEPALIVE_TABLE ?? "users";
+// Tables are tried in order. Several are listed so that renaming or dropping
+// one table doesn't silently turn the keep-alive into a daily 404 — the whole
+// point is that this never fails quietly.
+const TABLES = [
+  process.env.SUPABASE_KEEPALIVE_TABLE,
+  "users",
+  "candidates",
+  "events",
+].filter(Boolean);
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error(
@@ -25,10 +35,10 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   process.exit(1);
 }
 
-const endpoint = `${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/${TABLE}?select=id&limit=1`;
+const BASE = SUPABASE_URL.replace(/\/$/, "");
 
-async function ping() {
-  const res = await fetch(endpoint, {
+async function pingTable(table) {
+  const res = await fetch(`${BASE}/rest/v1/${table}?select=*&limit=1`, {
     method: "GET",
     headers: {
       apikey: SERVICE_ROLE_KEY,
@@ -40,14 +50,28 @@ async function ping() {
   });
 
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Supabase responded ${res.status}: ${body}`);
+    throw new Error(`${res.status} ${await res.text()}`);
   }
 
-  const contentRange = res.headers.get("content-range") ?? "n/a";
-  console.log(
-    `[${new Date().toISOString()}] Keep-alive OK — ${TABLE} reachable (content-range: ${contentRange})`,
-  );
+  return res.headers.get("content-range") ?? "n/a";
+}
+
+async function ping() {
+  const failures = [];
+
+  for (const table of TABLES) {
+    try {
+      const contentRange = await pingTable(table);
+      console.log(
+        `[${new Date().toISOString()}] Keep-alive OK — ${table} reachable (content-range: ${contentRange})`,
+      );
+      return;
+    } catch (err) {
+      failures.push(`${table}: ${err.message}`);
+    }
+  }
+
+  throw new Error(`No table could be read.\n  ${failures.join("\n  ")}`);
 }
 
 ping().catch((err) => {
