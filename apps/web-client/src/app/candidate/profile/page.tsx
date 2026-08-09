@@ -10,9 +10,14 @@
 
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { Sparkles, FileText, Loader2, CheckCircle2, Upload } from "lucide-react";
+import {
+  extractResumeText,
+  ResumeExtractionError,
+  ACCEPTED_RESUME_TYPES,
+} from "@/lib/extract-resume-text";
 import {
   PageShell,
   Card,
@@ -46,6 +51,32 @@ export default function CandidateProfilePage() {
   const [resume, setResume] = useState("");
   const [roleId, setRoleId] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setExtracting(true);
+    setFileName(null);
+    try {
+      const text = await extractResumeText(file);
+      setResume(text);
+      setFileName(file.name);
+      setToast(`Read ${text.length.toLocaleString()} characters from ${file.name}`);
+    } catch (err) {
+      setToast(
+        err instanceof ResumeExtractionError
+          ? err.message
+          : "Couldn't read that file. Try pasting the text instead.",
+      );
+    } finally {
+      setExtracting(false);
+      // Reset so picking the same file twice still fires onChange.
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  };
 
   // Seed the form once the profile arrives. Guarded on `profile.id` so a
   // background refetch can't clobber what the user is mid-way through typing.
@@ -188,10 +219,64 @@ export default function CandidateProfilePage() {
               </select>
             </div>
 
+            {/* ── Upload dropzone ── */}
+            <input
+              ref={fileInput}
+              type="file"
+              accept={ACCEPTED_RESUME_TYPES}
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0])}
+            />
+            <div
+              onClick={() => !extracting && fileInput.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                handleFile(e.dataTransfer.files?.[0]);
+              }}
+              className={`flex flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed px-4 py-6 transition-colors ${
+                extracting
+                  ? "cursor-wait border-[#e2e8e5] bg-[#f7f7f7]"
+                  : dragging
+                    ? "cursor-copy border-[#1f6b43] bg-[#e8f5ee]"
+                    : "cursor-pointer border-[#e2e8e5] hover:border-[#1f6b43] hover:bg-[#e8f5ee]/40"
+              }`}
+            >
+              {extracting ? (
+                <>
+                  <Loader2 className="w-5 h-5 text-[#1f6b43] animate-spin" />
+                  <span className="text-[13px] font-medium text-[#4b5563]">
+                    Reading your file…
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5 text-[#1f6b43]" />
+                  <span className="text-[13px] font-semibold text-[#111827]">
+                    {fileName ?? "Upload your resume"}
+                  </span>
+                  <span className="text-[12px] text-[#9ca3af] text-center">
+                    Drop a PDF or .txt here, or click to browse — we read it in your
+                    browser, the file never leaves your device
+                  </span>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-[#e2e8e5]" />
+              <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">
+                or paste
+              </span>
+              <div className="h-px flex-1 bg-[#e2e8e5]" />
+            </div>
+
             <textarea
               className={`${inputCls} min-h-[190px] resize-y font-normal leading-5`}
               value={resume}
-              onChange={(e) => setResume(e.target.value)}
+              onChange={(e) => { setResume(e.target.value); setFileName(null); }}
               placeholder="Paste your resume here — experience, projects, skills, coursework…"
             />
 

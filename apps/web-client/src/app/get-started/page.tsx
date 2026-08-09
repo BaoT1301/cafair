@@ -53,10 +53,13 @@ export default function GetStartedPage() {
       </motion.div>
 
       {/* Cards */}
-      <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center", maxWidth: 720 }}>
+      {/* `alignItems: stretch` + `height: 100%` on the buttons keeps both cards
+          the same height regardless of copy length; the CTAs then pin to the
+          bottom with `marginTop: auto` so they line up. */}
+      <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center", alignItems: "stretch", maxWidth: 720 }}>
 
         {/* Recruiter card */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.38, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.38, delay: 0.16, ease: [0.22, 1, 0.36, 1] }} style={{ display: "flex" }}>
         <button
           onClick={isSignedIn ? goToRecruiter : triggerRecruiterSignIn}
           onMouseEnter={() => setHovered("recruiter")}
@@ -67,6 +70,7 @@ export default function GetStartedPage() {
             borderRadius: 16,
             padding: 32,
             width: 324,
+            height: "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -81,8 +85,8 @@ export default function GetStartedPage() {
         </button>
         </motion.div>
 
-        {/* Candidate card — coming soon */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.38, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}>
+        {/* Candidate card */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.38, delay: 0.24, ease: [0.22, 1, 0.36, 1] }} style={{ display: "flex" }}>
         <button
           onClick={isSignedIn ? goToCandidate : triggerCandidateSignIn}
           onMouseEnter={() => setHovered("candidate")}
@@ -93,6 +97,7 @@ export default function GetStartedPage() {
             borderRadius: 16,
             padding: 32,
             width: 324,
+            height: "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -139,7 +144,7 @@ function RecruiterCardContent() {
         Access the AI-driven command center to review candidates, approve decisions, and manage hiring
       </p>
       <div style={{
-        marginTop: 8,
+        marginTop: "auto",
         background: "linear-gradient(90deg, #1A4A2E 0%, #3E7A52 100%)",
         color: "white",
         borderRadius: 99,
@@ -164,7 +169,7 @@ function CandidateCardContent() {
         Build your profile packet, discover matched roles, and track your applications
       </p>
       <div style={{
-        marginTop: 8,
+        marginTop: "auto",
         background: "linear-gradient(90deg, #1A4A2E 0%, #3E7A52 100%)",
         color: "white",
         borderRadius: 99,
