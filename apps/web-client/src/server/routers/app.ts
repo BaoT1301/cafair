@@ -5,6 +5,7 @@ import { usersRouter } from "@/services/users/procedures";
 import { examplesRouter } from "@/services/examples/procedures";
 import { uploadsRouter } from "@/services/uploads/procedures";
 import { recruiterRouter } from "@/services/recruiter/procedures";
+import { candidateRouter } from "@/services/candidate/procedures";
 
 export const appRouter = createTRPCRouter({
   hello: publicProcedure
@@ -43,6 +44,7 @@ export const appRouter = createTRPCRouter({
   examples: examplesRouter,
   uploads: uploadsRouter,
   recruiter: recruiterRouter,
+  candidate: candidateRouter,
 });
 
 export type AppRouter = typeof appRouter;
